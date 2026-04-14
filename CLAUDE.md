@@ -73,11 +73,20 @@ https://script.google.com/home/projects/1Z_0LkvuRHTIb4FfpjWOtZiOL24Rr124COmEeiC2
 
 **Test & utility functions** (run in Apps Script editor, select function then click Run):
 ```javascript
-runAllTests()        // Basic sanity checks
+runSmokeTest()       // Verifica infrastruttura: spreadsheet, sheets, soci, saldo
 runEndToEndTest()    // Full cycle: create → products → order → close → verify
+setupMembers()       // Adds/updates all members (3 admin + 1 member)
 createDemoCycle()    // Creates open cycle with 18 realistic products
-addNewMembers()      // Adds preconfigured members
 ```
+
+### Current Members (via setupMembers)
+
+| Name | Email | Role |
+|------|-------|------|
+| Manuel Rizzo | manuel.rizzo@portamoneta.org | admin |
+| Nadia Di Simine | nadia.disimine@portamoneta.org | admin |
+| Maria Malacrino | maria.malacrino@portamoneta.org | admin |
+| Maria Fois | maria.fois@portamoneta.org | member |
 
 ## Architecture
 
