@@ -1,64 +1,30 @@
 <script>
 /* ───────────────────────────────────────────
-   ComponentAdminLedger — Bonifici e saldi
+   ComponentAdminLedger — Cassa (bonifici + storico per socio)
    ─────────────────────────────────────────── */
 
 PM.components.adminLedger = {
 
+  state: {
+    balances: [],
+    members: [],
+    expandedMemberId: null,
+    memberEntries: null,
+    editingEntryId: null
+  },
+
   render: function(container) {
     PM.showLoading(container);
     var self = PM.components.adminLedger;
+    self._container = container;
 
     Promise.all([
       PM.api('adminGetBalances'),
       PM.api('adminGetMembers')
     ]).then(function(results) {
-      var balances = results[0];
-      var members = results[1].filter(function(m) { return String(m.active) !== 'false'; });
-
-      var html = '';
-
-      // Form bonifico
-      html +=
-        '<h2 class="mb-8">Registra bonifico</h2>' +
-        '<div class="card">' +
-          '<div class="form-group">' +
-            '<label class="form-label">Socio</label>' +
-            '<select class="form-select" id="topup-member">' +
-              '<option value="">Seleziona socio...</option>';
-      members.sort(function(a,b){ return a.full_name.localeCompare(b.full_name); }).forEach(function(m) {
-        html += '<option value="' + m.member_id + '">' + PM._esc(m.full_name) + '</option>';
-      });
-      html +=
-            '</select>' +
-          '</div>' +
-          '<div class="form-group">' +
-            '<label class="form-label">Importo (€)</label>' +
-            '<input class="form-input" id="topup-amount" type="number" step="0.01" min="0.01" placeholder="50.00">' +
-          '</div>' +
-          '<div class="form-group">' +
-            '<label class="form-label">Data</label>' +
-            '<input class="form-input" id="topup-date" type="date" value="' + new Date().toISOString().substring(0,10) + '">' +
-          '</div>' +
-          '<div class="form-group">' +
-            '<label class="form-label">Nota (opzionale)</label>' +
-            '<input class="form-input" id="topup-note" placeholder="es. Bonifico gennaio">' +
-          '</div>' +
-          '<button class="btn btn-primary btn-block" onclick="PM.components.adminLedger.recordTopup()">Registra bonifico</button>' +
-        '</div>';
-
-      // Tabella saldi
-      html +=
-        '<h2 class="mt-16 mb-8">Saldi soci</h2>' +
-        '<div class="card"><div class="table-wrap"><table>' +
-          '<thead><tr><th>Socio</th><th class="text-right">Saldo</th></tr></thead><tbody>';
-      balances.forEach(function(b) {
-        var cls = b.balance < 0 ? 'balance-negative' : (b.balance > 0 ? 'balance-positive' : '');
-        html += '<tr><td>' + PM._esc(b.full_name) + '</td><td class="text-right ' + cls + '" style="font-weight:600;">' + PM.formatCurrency(b.balance) + '</td></tr>';
-      });
-      html += '</tbody></table></div></div>';
-
-      PM.html(container, html);
+      self.state.balances = results[0];
+      self.state.members = results[1].filter(function(m) { return String(m.active) !== 'false'; });
+      self._renderAll();
     }).catch(function(err) {
       PM.html(container,
         '<div style="text-align:center;padding:40px 0;">' +
@@ -66,6 +32,214 @@ PM.components.adminLedger = {
         '<p class="text-muted mt-8">' + PM._esc(err.message) + '</p>' +
         '<button class="btn btn-primary mt-16" onclick="PM.components.adminLedger.render(\'admin-ledger-panel\')">Riprova</button></div>');
     });
+  },
+
+  _renderAll: function() {
+    var self = PM.components.adminLedger;
+    var members = self.state.members.slice().sort(function(a,b){ return a.full_name.localeCompare(b.full_name); });
+    var balances = self.state.balances;
+
+    var html = '';
+
+    // Form bonifico
+    html +=
+      '<h2 class="mb-8">Registra bonifico</h2>' +
+      '<div class="card">' +
+        '<div class="form-group">' +
+          '<label class="form-label">Socio</label>' +
+          '<select class="form-select" id="topup-member">' +
+            '<option value="">Seleziona socio...</option>';
+    members.forEach(function(m) {
+      html += '<option value="' + m.member_id + '">' + PM._esc(m.full_name) + '</option>';
+    });
+    html +=
+          '</select>' +
+        '</div>' +
+        '<div class="form-group">' +
+          '<label class="form-label">Importo (€)</label>' +
+          '<input class="form-input" id="topup-amount" type="number" step="0.01" min="0.01" placeholder="50.00">' +
+        '</div>' +
+        '<div class="form-group">' +
+          '<label class="form-label">Data</label>' +
+          '<input class="form-input" id="topup-date" type="date" value="' + new Date().toISOString().substring(0,10) + '">' +
+        '</div>' +
+        '<div class="form-group">' +
+          '<label class="form-label">Nota (opzionale)</label>' +
+          '<input class="form-input" id="topup-note" placeholder="es. Bonifico gennaio">' +
+        '</div>' +
+        '<button class="btn btn-primary btn-block" onclick="PM.components.adminLedger.recordTopup()">Registra bonifico</button>' +
+      '</div>';
+
+    // Tabella saldi — click espande dettaglio
+    html +=
+      '<h2 class="mt-16 mb-8">Saldi soci</h2>' +
+      '<p class="text-muted mb-8" style="font-size:13px;">Clicca un socio per vedere e modificare il suo storico movimenti.</p>' +
+      '<div class="card" style="padding:0;"><div class="table-wrap"><table>' +
+        '<thead><tr><th>Socio</th><th class="text-right">Saldo</th></tr></thead><tbody id="ledger-members-tbody">';
+    balances.forEach(function(b) {
+      var cls = b.balance < 0 ? 'balance-negative' : (b.balance > 0 ? 'balance-positive' : '');
+      var expanded = self.state.expandedMemberId === b.member_id;
+      html +=
+        '<tr class="clickable" onclick="PM.components.adminLedger.toggleMember(\'' + b.member_id + '\')" style="cursor:pointer;' + (expanded ? 'background:var(--color-surface-subtle);' : '') + '">' +
+          '<td>' +
+            '<span style="display:inline-block;width:12px;margin-right:6px;transform:' + (expanded ? 'rotate(90deg)' : 'rotate(0)') + ';transition:transform 0.2s;">▶</span>' +
+            PM._esc(b.full_name) +
+          '</td>' +
+          '<td class="text-right ' + cls + '" style="font-weight:600;">' + PM.formatCurrency(b.balance) + '</td>' +
+        '</tr>';
+      if (expanded) {
+        html += '<tr><td colspan="2" style="padding:0;background:var(--color-surface-subtle);">' +
+                  '<div id="ledger-member-detail" style="padding:16px;">' +
+                    self._renderMemberDetail() +
+                  '</div>' +
+                '</td></tr>';
+      }
+    });
+    html += '</tbody></table></div></div>';
+
+    PM.html(self._container, html);
+  },
+
+  _renderMemberDetail: function() {
+    var self = PM.components.adminLedger;
+    if (!self.state.memberEntries) {
+      return '<div class="text-muted" style="text-align:center;padding:20px;">Caricamento storico...</div>';
+    }
+    if (self.state.memberEntries.length === 0) {
+      return '<div class="text-muted" style="text-align:center;padding:20px;">Nessun movimento per questo socio.</div>';
+    }
+
+    var rows = self.state.memberEntries.map(function(e) {
+      return self._renderEntryRow(e);
+    }).join('');
+
+    return '<div class="table-wrap"><table style="font-size:13px;">' +
+      '<thead><tr>' +
+        '<th>Data</th><th>Tipo</th><th class="text-right">Importo</th><th>Ordine</th><th>Nota</th><th></th>' +
+      '</tr></thead>' +
+      '<tbody>' + rows + '</tbody>' +
+    '</table></div>';
+  },
+
+  _renderEntryRow: function(e) {
+    var self = PM.components.adminLedger;
+    var typeLabel = {
+      'topup': 'Bonifico',
+      'order_charge': 'Addebito ordine',
+      'adjustment': 'Rettifica'
+    }[e.type] || e.type;
+    var amtCls = e.amount < 0 ? 'balance-negative' : (e.amount > 0 ? 'balance-positive' : '');
+    var isEditing = self.state.editingEntryId === e.entry_id;
+
+    if (isEditing) {
+      return '<tr>' +
+        '<td><input class="form-input" type="date" id="edit-date-' + e.entry_id + '" value="' + PM._esc((e.entry_date || '').substring(0,10)) + '" style="padding:4px 6px;font-size:12px;"></td>' +
+        '<td>' + PM._esc(typeLabel) + '</td>' +
+        '<td><input class="form-input" type="number" step="0.01" id="edit-amount-' + e.entry_id + '" value="' + e.amount + '" style="padding:4px 6px;font-size:12px;text-align:right;width:90px;"></td>' +
+        '<td>' + PM._esc(e.cycle_title || '—') + '</td>' +
+        '<td><input class="form-input" id="edit-note-' + e.entry_id + '" value="' + PM._esc(e.note || '') + '" style="padding:4px 6px;font-size:12px;"></td>' +
+        '<td style="white-space:nowrap;">' +
+          '<button class="btn btn-primary btn-sm" style="padding:4px 8px;font-size:11px;" onclick="PM.components.adminLedger.saveEntry(\'' + e.entry_id + '\')">Salva</button> ' +
+          '<button class="btn btn-outline btn-sm" style="padding:4px 8px;font-size:11px;" onclick="PM.components.adminLedger.cancelEdit()">Annulla</button>' +
+        '</td>' +
+      '</tr>';
+    }
+
+    return '<tr>' +
+      '<td>' + PM._esc((e.entry_date || '').substring(0,10)) + '</td>' +
+      '<td>' + PM._esc(typeLabel) + '</td>' +
+      '<td class="text-right ' + amtCls + '" style="font-weight:600;">' + PM.formatCurrency(e.amount) + '</td>' +
+      '<td>' + PM._esc(e.cycle_title || '—') + '</td>' +
+      '<td>' + PM._esc(e.note || '') + '</td>' +
+      '<td style="white-space:nowrap;text-align:right;">' +
+        '<button class="btn btn-outline btn-sm" style="padding:4px 8px;font-size:11px;" title="Modifica" onclick="PM.components.adminLedger.beginEdit(\'' + e.entry_id + '\')">✎</button> ' +
+        '<button class="btn btn-outline btn-sm" style="padding:4px 8px;font-size:11px;color:var(--color-danger);" title="Elimina" onclick="PM.components.adminLedger.deleteEntry(\'' + e.entry_id + '\', \'' + e.type + '\')">×</button>' +
+      '</td>' +
+    '</tr>';
+  },
+
+  toggleMember: function(memberId) {
+    var self = PM.components.adminLedger;
+    if (self.state.expandedMemberId === memberId) {
+      self.state.expandedMemberId = null;
+      self.state.memberEntries = null;
+      self.state.editingEntryId = null;
+      self._renderAll();
+      return;
+    }
+    self.state.expandedMemberId = memberId;
+    self.state.memberEntries = null;
+    self.state.editingEntryId = null;
+    self._renderAll();
+
+    PM.api('adminGetMemberLedger', { member_id: memberId }).then(function(entries) {
+      if (self.state.expandedMemberId !== memberId) return;
+      self.state.memberEntries = entries;
+      self._renderAll();
+    }).catch(function(err) {
+      PM.toast(err.message, 'error');
+    });
+  },
+
+  beginEdit: function(entryId) {
+    var self = PM.components.adminLedger;
+    self.state.editingEntryId = entryId;
+    self._renderAll();
+  },
+
+  cancelEdit: function() {
+    var self = PM.components.adminLedger;
+    self.state.editingEntryId = null;
+    self._renderAll();
+  },
+
+  saveEntry: function(entryId) {
+    var self = PM.components.adminLedger;
+    var date = document.getElementById('edit-date-' + entryId).value;
+    var amountRaw = document.getElementById('edit-amount-' + entryId).value;
+    var note = document.getElementById('edit-note-' + entryId).value.trim();
+
+    if (!date) { PM.toast('Inserisci una data', 'error'); return; }
+    if (amountRaw === '' || isNaN(parseFloat(amountRaw))) { PM.toast('Importo non valido', 'error'); return; }
+
+    PM.api('adminUpdateLedgerEntry', {
+      entry_id:   entryId,
+      amount:     parseFloat(amountRaw),
+      note:       note,
+      entry_date: date
+    }).then(function(res) {
+      PM.toast('Movimento aggiornato. Saldo: ' + PM.formatCurrency(res.new_balance));
+      self.state.editingEntryId = null;
+      self._reloadAfterMutation();
+    }).catch(function(err) { PM.toast(err.message, 'error'); });
+  },
+
+  deleteEntry: function(entryId, type) {
+    var self = PM.components.adminLedger;
+    var msg = type === 'order_charge'
+      ? 'ATTENZIONE: stai eliminando un addebito ordine. Questa operazione altera il saldo del socio e non rimuove le righe ordine relative. Procedere?'
+      : 'Eliminare questo movimento?';
+
+    PM.confirm('Elimina movimento', msg).then(function(ok) {
+      if (!ok) return;
+      PM.api('adminDeleteLedgerEntry', { entry_id: entryId }).then(function(res) {
+        PM.toast('Movimento eliminato. Saldo: ' + PM.formatCurrency(res.new_balance));
+        self._reloadAfterMutation();
+      }).catch(function(err) { PM.toast(err.message, 'error'); });
+    });
+  },
+
+  _reloadAfterMutation: function() {
+    var self = PM.components.adminLedger;
+    var memberId = self.state.expandedMemberId;
+    Promise.all([
+      PM.api('adminGetBalances'),
+      memberId ? PM.api('adminGetMemberLedger', { member_id: memberId }) : Promise.resolve(null)
+    ]).then(function(results) {
+      self.state.balances = results[0];
+      if (results[1]) self.state.memberEntries = results[1];
+      self._renderAll();
+    }).catch(function(err) { PM.toast(err.message, 'error'); });
   },
 
   recordTopup: function() {

@@ -5,67 +5,18 @@
 
 PM.components.adminMembers = {
 
+  _filter: '',
+  _allMembers: [],
+
   render: function(container) {
     PM.showLoading(container);
+    var self = PM.components.adminMembers;
+    self._container = container;
 
     PM.api('adminGetMembers')
       .then(function(members) {
-        var self = PM.components.adminMembers;
-        var active  = members.filter(function(m) { return String(m.active) !== 'false'; });
-        var inactive = members.filter(function(m) { return String(m.active) === 'false'; });
-
-        var admins  = active.filter(function(m) { return m.role === 'admin'; });
-        var attivi  = active.filter(function(m) { return m.role === 'attivo' || m.role === 'member'; });
-        var soci    = active.filter(function(m) { return m.role === 'socio'; });
-
-        var sortName = function(a, b) { return a.full_name.localeCompare(b.full_name); };
-        admins.sort(sortName); attivi.sort(sortName); soci.sort(sortName);
-
-        var html = '';
-
-        // Form nuovo socio
-        html +=
-          '<h2 class="mb-8">Aggiungi socio</h2>' +
-          '<div class="card">' +
-            '<div class="form-group">' +
-              '<label class="form-label">Nome completo</label>' +
-              '<input class="form-input" id="mem-name" placeholder="Mario Rossi">' +
-            '</div>' +
-            '<div class="form-group">' +
-              '<label class="form-label">Email Google</label>' +
-              '<input class="form-input" id="mem-email" type="email" placeholder="mario.rossi@gmail.com">' +
-            '</div>' +
-            '<div class="form-group">' +
-              '<label class="form-label">Ruolo</label>' +
-              '<select class="form-select" id="mem-role">' +
-                '<option value="socio">Socio</option>' +
-                '<option value="attivo" selected>Attivo</option>' +
-                '<option value="admin">Amministratore</option>' +
-              '</select>' +
-            '</div>' +
-            '<button class="btn btn-primary btn-block" onclick="PM.components.adminMembers.addMember()">Aggiungi</button>' +
-          '</div>';
-
-        // Tabella soci attivi con cambio ruolo
-        html += self._renderGroup('Amministratori', admins, 'admin');
-        html += self._renderGroup('Attivi', attivi, 'attivo');
-        html += self._renderGroup('Soci', soci, 'socio');
-
-        // Inattivi
-        if (inactive.length) {
-          html += '<h2 class="mt-16 mb-8">Disattivati (' + inactive.length + ')</h2>';
-          html += '<div class="card"><div class="table-wrap"><table><tbody>';
-          inactive.forEach(function(m) {
-            html += '<tr>' +
-              '<td>' + PM._esc(m.full_name) + '<br><span class="text-muted text-sm">' + PM._esc(m.email || '—') + '</span></td>' +
-              '<td><button class="btn btn-sm btn-primary" onclick="PM.components.adminMembers.toggleActive(\'' +
-                PM._esc(m.email) + '\',\'' + PM._esc(m.full_name) + '\',\'' + PM._esc(m.role) + '\',true)">Riattiva</button></td>' +
-            '</tr>';
-          });
-          html += '</tbody></table></div></div>';
-        }
-
-        PM.html(container, html);
+        self._allMembers = members;
+        self._renderList();
       })
       .catch(function(err) {
         PM.html(container,
@@ -74,6 +25,93 @@ PM.components.adminMembers = {
           '<p class="text-muted mt-8">' + PM._esc(err.message) + '</p>' +
           '<button class="btn btn-primary mt-16" onclick="PM.components.adminMembers.render(\'admin-members-panel\')">Riprova</button></div>');
       });
+  },
+
+  onFilterInput: function(value) {
+    PM.components.adminMembers._filter = value;
+    PM.components.adminMembers._renderList();
+  },
+
+  _renderList: function() {
+    var self = PM.components.adminMembers;
+    var members = self._allMembers;
+    var q = (self._filter || '').trim().toLowerCase();
+    var match = function(m) {
+      if (!q) return true;
+      return (m.full_name || '').toLowerCase().indexOf(q) !== -1 ||
+             (m.email || '').toLowerCase().indexOf(q) !== -1;
+    };
+
+    var active  = members.filter(function(m) { return String(m.active) !== 'false' && match(m); });
+    var inactive = members.filter(function(m) { return String(m.active) === 'false' && match(m); });
+
+    var admins  = active.filter(function(m) { return m.role === 'admin'; });
+    var attivi  = active.filter(function(m) { return m.role === 'attivo' || m.role === 'member'; });
+    var soci    = active.filter(function(m) { return m.role === 'socio'; });
+
+    var sortName = function(a, b) { return a.full_name.localeCompare(b.full_name); };
+    admins.sort(sortName); attivi.sort(sortName); soci.sort(sortName);
+
+    var html = '';
+
+    // Form nuovo socio
+    html +=
+      '<h2 class="mb-8">Aggiungi socio</h2>' +
+      '<div class="card">' +
+        '<div class="form-group">' +
+          '<label class="form-label">Nome completo</label>' +
+          '<input class="form-input" id="mem-name" placeholder="Mario Rossi">' +
+        '</div>' +
+        '<div class="form-group">' +
+          '<label class="form-label">Email Google</label>' +
+          '<input class="form-input" id="mem-email" type="email" placeholder="mario.rossi@gmail.com">' +
+        '</div>' +
+        '<div class="form-group">' +
+          '<label class="form-label">Ruolo</label>' +
+          '<select class="form-select" id="mem-role">' +
+            '<option value="socio">Socio</option>' +
+            '<option value="attivo" selected>Attivo</option>' +
+            '<option value="admin">Amministratore</option>' +
+          '</select>' +
+        '</div>' +
+        '<button class="btn btn-primary btn-block" onclick="PM.components.adminMembers.addMember()">Aggiungi</button>' +
+      '</div>';
+
+    // Filtro nome/email
+    html +=
+      '<h2 class="mt-16 mb-8">Soci</h2>' +
+      '<div class="card" style="padding:10px 12px;margin-bottom:8px;">' +
+        '<input class="form-input" id="mem-filter" placeholder="Filtra per nome o email..." value="' + PM._esc(self._filter) + '" oninput="PM.components.adminMembers.onFilterInput(this.value)">' +
+      '</div>';
+
+    // Tabella soci attivi con cambio ruolo
+    html += self._renderGroup('Amministratori', admins, 'admin');
+    html += self._renderGroup('Attivi', attivi, 'attivo');
+    html += self._renderGroup('Soci', soci, 'socio');
+
+    // Inattivi
+    if (inactive.length) {
+      html += '<h2 class="mt-16 mb-8">Disattivati (' + inactive.length + ')</h2>';
+      html += '<div class="card"><div class="table-wrap"><table><tbody>';
+      inactive.forEach(function(m) {
+        html += '<tr>' +
+          '<td>' + PM._esc(m.full_name) + '<br><span class="text-muted text-sm">' + PM._esc(m.email || '—') + '</span></td>' +
+          '<td><button class="btn btn-sm btn-primary" onclick="PM.components.adminMembers.toggleActive(\'' +
+            PM._esc(m.email) + '\',\'' + PM._esc(m.full_name) + '\',\'' + PM._esc(m.role) + '\',true)">Riattiva</button></td>' +
+        '</tr>';
+      });
+      html += '</tbody></table></div></div>';
+    }
+
+    PM.html(self._container, html);
+
+    // Mantieni focus sul filtro dopo re-render
+    var filterEl = document.getElementById('mem-filter');
+    if (filterEl && q) {
+      filterEl.focus();
+      var len = filterEl.value.length;
+      filterEl.setSelectionRange(len, len);
+    }
   },
 
   _renderGroup: function(title, members, groupRole) {

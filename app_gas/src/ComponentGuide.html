@@ -9,8 +9,7 @@ PM.components.guide = {
     var isAdmin = PM.state.session && PM.state.session.role === 'admin';
     var html = '';
 
-    html +=
-      '<h1 class="mb-16">Guida</h1>';
+    html += '<h1 class="mb-16">Guida</h1>';
 
     // ── SEZIONE SOCI ──
     html +=
@@ -25,22 +24,23 @@ PM.components.guide = {
           '<div class="guide-step">' +
             '<div class="guide-num">2</div>' +
             '<div><strong>Controlla se c\'è un ordine aperto</strong><br>' +
-              '<span class="text-muted text-sm">Nella Home vedrai se l\'ordine della settimana è aperto e quando chiude. Se è chiuso, dovrai aspettare il prossimo.</span></div>' +
+              '<span class="text-muted text-sm">Nella Home vedrai se c\'è un ordine aperto, il fornitore e quando chiude. Se è chiuso, dovrai aspettare il prossimo.</span></div>' +
           '</div>' +
           '<div class="guide-step">' +
             '<div class="guide-num">3</div>' +
-            '<div><strong>Vai al tab Ordine</strong><br>' +
-              '<span class="text-muted text-sm">Clicca sull\'icona del carrello in basso. Vedrai la lista dei prodotti disponibili.</span></div>' +
+            '<div><strong>Vai al tab Ordini</strong><br>' +
+              '<span class="text-muted text-sm">Clicca sull\'icona del carrello in basso. Sul sotto-tab <strong>Aperti</strong> vedrai i prodotti disponibili.</span></div>' +
           '</div>' +
           '<div class="guide-step">' +
             '<div class="guide-num">4</div>' +
             '<div><strong>Scegli le quantità</strong><br>' +
-              '<span class="text-muted text-sm">Usa i pulsanti <strong>+</strong> e <strong>−</strong> per ogni prodotto. Il totale si aggiorna automaticamente in basso.</span></div>' +
+              '<span class="text-muted text-sm">Usa i pulsanti <strong>+</strong> e <strong>−</strong> per ogni prodotto. Il totale e il saldo residuo si aggiornano in basso.</span></div>' +
           '</div>' +
           '<div class="guide-step">' +
             '<div class="guide-num">5</div>' +
             '<div><strong>Salva l\'ordine</strong><br>' +
-              '<span class="text-muted text-sm">Premi il pulsante verde <strong>Salva ordine</strong> in basso. Vedrai una conferma. Puoi modificare l\'ordine finché il ciclo è aperto.</span></div>' +
+              '<span class="text-muted text-sm">Premi il pulsante verde <strong>Salva ordine</strong>. Puoi modificarlo finché l\'ordine è aperto. ' +
+              'Se il saldo residuo è negativo, il pulsante si disabilita: riduci l\'ordine o chiedi alla tesoriera di registrare un bonifico.</span></div>' +
           '</div>' +
         '</div>' +
       '</div>';
@@ -50,21 +50,23 @@ PM.components.guide = {
       '<div class="card">' +
         '<h2 style="color:var(--brand-deep);">Saldo e pagamenti</h2>' +
         '<ul class="guide-list">' +
-          '<li>Il tuo <strong>saldo</strong> è visibile nella Home. Rappresenta il tuo credito presso l\'associazione.</li>' +
-          '<li>Quando un ciclo d\'ordine viene chiuso, il costo del tuo ordine viene <strong>addebitato automaticamente</strong> dal saldo.</li>' +
+          '<li>Il <strong>saldo</strong> è visibile nella Home. Rappresenta il tuo credito presso l\'associazione.</li>' +
+          '<li>Alla chiusura di un ordine, il costo viene <strong>addebitato automaticamente</strong> dal saldo.</li>' +
+          '<li>Non puoi salvare un ordine che porterebbe il saldo sotto zero: aggiungi un bonifico o riduci l\'ordine.</li>' +
           '<li>Per ricaricare il saldo, effettua un <strong>bonifico</strong> sul conto dell\'associazione. La tesoriera lo registrerà nell\'app.</li>' +
-          '<li>Se il saldo è <span style="color:var(--danger);font-weight:600;">negativo</span> (rosso), significa che devi effettuare un bonifico.</li>' +
+          '<li>Se il saldo è <span style="color:var(--danger);font-weight:600;">negativo</span>, significa che devi effettuare un bonifico.</li>' +
         '</ul>' +
       '</div>';
 
-    // Storico
+    // Storico ordini e movimenti
     html +=
       '<div class="card">' +
         '<h2 style="color:var(--brand-deep);">Storico</h2>' +
         '<ul class="guide-list">' +
-          '<li>Nel tab <strong>Storico</strong> trovi due sezioni:</li>' +
-          '<li><strong>Ordini</strong>: i tuoi ordini passati. Tocca un ordine per vedere il dettaglio dei prodotti.</li>' +
-          '<li><strong>Movimenti</strong>: tutti i movimenti del tuo saldo (bonifici, addebiti ordini, rettifiche).</li>' +
+          '<li>Dentro al tab <strong>Ordini</strong> trovi tre sotto-tab:</li>' +
+          '<li><strong>Aperti</strong>: l\'ordine in corso, se c\'è.</li>' +
+          '<li><strong>Storico ordini</strong>: i tuoi ordini passati. Tocca un ordine per vedere il dettaglio dei prodotti.</li>' +
+          '<li><strong>Storico movimenti</strong>: tutti i movimenti del saldo (bonifici, addebiti ordini, rettifiche).</li>' +
         '</ul>' +
       '</div>';
 
@@ -73,8 +75,8 @@ PM.components.guide = {
       '<div class="card" style="background:var(--brand-light);">' +
         '<h2>Aggiungi alla schermata Home</h2>' +
         '<ul class="guide-list">' +
-          '<li><strong>iPhone (Safari)</strong>: tocca l\'icona di condivisione (quadrato con freccia) → "Aggiungi a schermata Home"</li>' +
-          '<li><strong>Android (Chrome)</strong>: tocca i tre puntini in alto → "Aggiungi a schermata Home"</li>' +
+          '<li><strong>iPhone (Safari)</strong>: tocca l\'icona di condivisione (quadrato con freccia) → "Aggiungi a schermata Home".</li>' +
+          '<li><strong>Android (Chrome)</strong>: tocca i tre puntini in alto → "Aggiungi a schermata Home".</li>' +
         '</ul>' +
       '</div>';
 
@@ -87,57 +89,116 @@ PM.components.guide = {
 
       html +=
         '<div class="card">' +
+          '<h2>Struttura del pannello Admin</h2>' +
+          '<ul class="guide-list">' +
+            '<li><strong>Fornitori</strong>: anagrafica fornitori (nome, contatti, indirizzo) + catalogo prodotti per ogni fornitore.</li>' +
+            '<li><strong>Prodotti</strong>: vista trasversale del catalogo (tutti i fornitori). Filtri, prezzo modificabile inline, import Excel per fornitore.</li>' +
+            '<li><strong>Ordini</strong>: creazione, modifica e chiusura degli ordini settimanali. Selezione prodotti per ciascun ordine.</li>' +
+            '<li><strong>Cassa</strong>: registra i bonifici e visualizza lo storico movimenti di ogni socio (modificabile).</li>' +
+            '<li><strong>Soci</strong>: gestione anagrafica soci con filtro per nome.</li>' +
+          '</ul>' +
+        '</div>';
+
+      html +=
+        '<div class="card">' +
           '<h2>Flusso settimanale</h2>' +
           '<div class="guide-steps">' +
             '<div class="guide-step">' +
               '<div class="guide-num">1</div>' +
-              '<div><strong>Crea il ciclo d\'ordine</strong><br>' +
-                '<span class="text-muted text-sm">Admin → Ciclo → inserisci titolo (es. "Settimana 14 aprile"), data chiusura ordine e data ritiro.</span></div>' +
+              '<div><strong>Verifica il catalogo del fornitore</strong><br>' +
+                '<span class="text-muted text-sm">Admin → <strong>Fornitori</strong>: espandi il fornitore e controlla che il catalogo sia aggiornato. ' +
+                'Per aggiornare massicciamente puoi usare Admin → <strong>Prodotti</strong> → "Sostituisci catalogo da Excel".</span></div>' +
             '</div>' +
             '<div class="guide-step">' +
               '<div class="guide-num">2</div>' +
-              '<div><strong>Carica i prodotti</strong><br>' +
-                '<span class="text-muted text-sm">Admin → Prodotti. Hai tre opzioni:<br>' +
-                '<strong>a) File Excel</strong> (consigliato): scarica il template, compilalo, e caricalo.<br>' +
-                '<strong>b) Duplica</strong> dal ciclo precedente (il più veloce se i prodotti non cambiano).<br>' +
-                '<strong>c) Testo</strong>: incolla righe con formato <code>Nome;Varietà;Formato;Prezzo</code></span></div>' +
+              '<div><strong>Crea l\'ordine</strong><br>' +
+                '<span class="text-muted text-sm">Admin → <strong>Ordini</strong> → "+ Nuovo ordine". Inserisci titolo, seleziona il <strong>fornitore</strong> (obbligatorio), data chiusura e data ritiro. ' +
+                'I prodotti attivi del catalogo del fornitore vengono <strong>caricati automaticamente</strong>.</span></div>' +
             '</div>' +
             '<div class="guide-step">' +
               '<div class="guide-num">3</div>' +
-              '<div><strong>Aspetta gli ordini</strong><br>' +
-                '<span class="text-muted text-sm">I soci ordinano dal loro telefono. Puoi monitorare in Admin → Ordini.</span></div>' +
+              '<div><strong>Scegli quali prodotti includere</strong><br>' +
+                '<span class="text-muted text-sm">Nel pannello dell\'ordine vedi la sezione <strong>Prodotti dell\'ordine</strong>: checkbox pre-selezionate per ogni prodotto del catalogo. ' +
+                'Togli la spunta a quelli che non vuoi offrire questa settimana e clicca "Salva selezione prodotti". ' +
+                'Puoi anche usare "Seleziona tutti" / "Deseleziona tutti".</span></div>' +
             '</div>' +
             '<div class="guide-step">' +
               '<div class="guide-num">4</div>' +
-              '<div><strong>Chiudi il ciclo</strong><br>' +
-                '<span class="text-muted text-sm">Admin → Ciclo → "Chiudi ciclo". Questo blocca le modifiche e <strong>genera automaticamente gli addebiti</strong> sul saldo di ogni socio.</span></div>' +
+              '<div><strong>Aspetta gli ordini dei soci</strong><br>' +
+                '<span class="text-muted text-sm">Puoi monitorare in tempo reale il riepilogo (per prodotto / per socio) in fondo al pannello dell\'ordine.</span></div>' +
             '</div>' +
             '<div class="guide-step">' +
               '<div class="guide-num">5</div>' +
               '<div><strong>Invia il riepilogo al fornitore</strong><br>' +
-                '<span class="text-muted text-sm">Admin → Ordini → "Per prodotto" → "Copia tabella". Incolla in un messaggio o email per il fornitore.</span></div>' +
+                '<span class="text-muted text-sm">Riepilogo → "Per prodotto" → "Copia tabella". Incolla in WhatsApp/email/Sheets.</span></div>' +
+            '</div>' +
+            '<div class="guide-step">' +
+              '<div class="guide-num">6</div>' +
+              '<div><strong>Chiudi l\'ordine</strong><br>' +
+                '<span class="text-muted text-sm">"Chiudi ordine" blocca le modifiche e <strong>genera gli addebiti automatici</strong> sul saldo di ogni socio. ' +
+                'Gli ordini chiusi non sono più modificabili: eventuali correzioni si fanno in <strong>Cassa</strong>.</span></div>' +
             '</div>' +
           '</div>' +
         '</div>';
 
       html +=
         '<div class="card">' +
-          '<h2>Gestione bonifici</h2>' +
+          '<h2>Gestione Fornitori</h2>' +
           '<ul class="guide-list">' +
-            '<li>Quando ricevi un bonifico da un socio, vai in Admin → <strong>Bonifici</strong>.</li>' +
-            '<li>Seleziona il socio, inserisci importo e data, poi clicca "Registra bonifico".</li>' +
-            '<li>Il saldo del socio si aggiorna immediatamente.</li>' +
-            '<li>Puoi controllare tutti i saldi in Admin → Bonifici (tabella in basso).</li>' +
+            '<li>Admin → <strong>Fornitori</strong> → filtro per nome in alto.</li>' +
+            '<li>Espandi una card per modificare nome, macro-categoria, contatti, indirizzo, note, attivo/disattivo.</li>' +
+            '<li>Sotto l\'anagrafica vedi il <strong>catalogo prodotti</strong> del fornitore con prezzi.</li>' +
+            '<li>Puoi eliminare un fornitore solo se non è associato a nessun ordine. Altrimenti disattivalo.</li>' +
           '</ul>' +
         '</div>';
 
       html +=
         '<div class="card">' +
-          '<h2>Gestione soci</h2>' +
+          '<h2>Gestione Prodotti (catalogo)</h2>' +
+          '<ul class="guide-list">' +
+            '<li>Admin → <strong>Prodotti</strong>: vista trasversale su tutti i fornitori.</li>' +
+            '<li>Filtri in alto per fornitore e categoria.</li>' +
+            '<li><strong>Prezzo inline</strong>: clicca sul prezzo di un prodotto, modificalo e premi Tab per salvare.</li>' +
+            '<li>Icona <strong>✎</strong>: modifica nome, varietà, formato, categoria, note, fornitore.</li>' +
+            '<li>Icona <strong>×</strong>: elimina il prodotto dal catalogo (soft delete).</li>' +
+            '<li><strong>Import Excel per fornitore</strong>: scarica il template pre-compilato, modificalo, ricarica. Sostituisce tutto il catalogo del fornitore scelto.</li>' +
+            '<li>Colonne template: <strong>Nome</strong>, Varietà, Formato, <strong>Prezzo</strong>, Fornitore, Categoria, Note.</li>' +
+          '</ul>' +
+        '</div>';
+
+      html +=
+        '<div class="card">' +
+          '<h2>Gestione Ordini</h2>' +
+          '<ul class="guide-list">' +
+            '<li>Selezione prodotti per ordine: le checkbox nel pannello <strong>"Prodotti dell\'ordine"</strong> decidono cosa vedranno i soci.</li>' +
+            '<li>Quando salvi la selezione, i prodotti già ordinati dai soci sono <strong>preservati</strong> (lo stesso prodotto mantiene il suo ID).</li>' +
+            '<li>Se togli la spunta a un prodotto già ordinato da qualcuno, quel prodotto scompare dal catalogo dell\'ordine: gli ordini esistenti restano ma non possono più essere modificati per quel prodotto.</li>' +
+            '<li>Puoi modificare titolo, fornitore, date e note finché l\'ordine è aperto.</li>' +
+            '<li>Gli ordini <strong>chiusi non sono più modificabili</strong>. Gli addebiti generati si correggono in Cassa.</li>' +
+          '</ul>' +
+        '</div>';
+
+      html +=
+        '<div class="card">' +
+          '<h2>Gestione Cassa</h2>' +
+          '<ul class="guide-list">' +
+            '<li>Admin → <strong>Cassa</strong> per registrare bonifici e vedere i saldi.</li>' +
+            '<li>Registra un bonifico: seleziona socio, importo, data, nota facoltativa, "Registra bonifico". Il saldo si aggiorna subito.</li>' +
+            '<li>La tabella saldi elenca tutti i soci: clicca su un socio per espandere lo <strong>storico movimenti</strong> (bonifici, addebiti, rettifiche).</li>' +
+            '<li>Per ogni movimento puoi <strong>modificare</strong> data/importo/nota (icona matita) o <strong>cancellarlo</strong> (icona ×).</li>' +
+            '<li>Modificare un addebito <code>order_charge</code> è ammesso ma richiede conferma rafforzata: usa solo per correggere errori.</li>' +
+          '</ul>' +
+        '</div>';
+
+      html +=
+        '<div class="card">' +
+          '<h2>Gestione Soci</h2>' +
           '<ul class="guide-list">' +
             '<li>Admin → <strong>Soci</strong> per aggiungere nuovi soci o disattivare chi non partecipa più.</li>' +
+            '<li>Filtro per nome o email in alto.</li>' +
             '<li>Serve la <strong>email Google</strong> del socio (quella con cui farà login).</li>' +
-            '<li>Disattivare un socio non cancella i suoi dati — può essere riattivato in futuro.</li>' +
+            '<li>Ruolo: <code>admin</code>, <code>attivo</code>, <code>socio</code>. Gli ordini con accesso "Solo attivi" sono invisibili ai <code>socio</code>.</li>' +
+            '<li>Disattivare un socio non cancella i dati: può essere riattivato in futuro.</li>' +
           '</ul>' +
         '</div>';
 
@@ -145,33 +206,9 @@ PM.components.guide = {
         '<div class="card">' +
           '<h2>Il tuo ordine personale</h2>' +
           '<ul class="guide-list">' +
-            '<li>Come admin puoi anche ordinare! Usa il tab <strong>Ordine</strong> (icona carrello) come un socio normale.</li>' +
-            '<li>Il pannello Admin è un tab separato che non interferisce con il tuo ordine.</li>' +
+            '<li>Come admin puoi anche ordinare: tab <strong>Ordini</strong> (icona carrello) → Aperti, come un socio normale.</li>' +
+            '<li>Il pannello Admin è un tab separato e non interferisce con il tuo ordine.</li>' +
           '</ul>' +
-        '</div>';
-
-      html +=
-        '<div class="card">' +
-          '<h2>Caricamento prodotti da Excel</h2>' +
-          '<ul class="guide-list">' +
-            '<li>In Admin → Prodotti, clicca <strong>"Scarica template Excel"</strong> per ottenere il file modello.</li>' +
-            '<li>Apri il template in Excel o Google Sheets e compila una riga per prodotto.</li>' +
-            '<li>Colonne: <strong>Nome</strong>, Varietà, Formato, <strong>Prezzo</strong>, Fornitore, Note. Solo Nome e Prezzo sono obbligatori.</li>' +
-            '<li>Salva il file e caricalo con <strong>"Carica prodotti da file"</strong>.</li>' +
-            '<li>Sono accettati file .xlsx, .xls e .csv.</li>' +
-          '</ul>' +
-        '</div>';
-
-      html +=
-        '<div class="card">' +
-          '<h2>Formato testo prodotti</h2>' +
-          '<div class="text-sm" style="font-family:monospace;background:var(--gray-100);padding:12px;border-radius:8px;margin-top:8px;">' +
-            'Carota;;500 g;1.75<br>' +
-            'Cavolo;verza;1 kg;3.50<br>' +
-            'Patata;pasta gialla;1 kg;2.30;Az. Miglio<br>' +
-            'Cipolla;dorata;500 g;1.75;;poca disponibilità' +
-          '</div>' +
-          '<div class="text-muted text-sm mt-8">Campi: Nome;Varietà;Formato;Prezzo;Fornitore;Note<br>Solo Nome e Prezzo sono obbligatori.</div>' +
         '</div>';
     }
 

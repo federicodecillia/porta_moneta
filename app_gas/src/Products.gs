@@ -30,10 +30,12 @@ function adminUpdateProducts(payload) {
       variant:    (p.variant || '').trim(),
       format:     (p.format || '').trim(),
       unit_price: toNumber_(p.unit_price),
-      supplier:   (p.supplier || '').trim(),
-      notes:      (p.notes || '').trim(),
-      sort_order: idx + 1,
-      active:     true
+      supplier:     (p.supplier || '').trim(),
+      notes:        (p.notes || '').trim(),
+      sort_order:   idx + 1,
+      active:       true,
+      supplier_id:  p.supplier_id || '',
+      category:     p.category || ''
     };
   });
 
@@ -59,10 +61,12 @@ function adminDuplicateProducts(payload) {
       variant:    p.variant,
       format:     p.format,
       unit_price: p.unit_price,
-      supplier:   p.supplier,
-      notes:      p.notes,
-      sort_order: idx + 1,
-      active:     true
+      supplier:    p.supplier || '',
+      notes:       p.notes || '',
+      sort_order:  idx + 1,
+      active:      true,
+      supplier_id: p.supplier_id || '',
+      category:    p.category || ''
     };
   });
 
