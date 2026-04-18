@@ -72,6 +72,74 @@ function setupMembers() {
 }
 
 /**
+ * Crea tutti i fornitori e il catalogo prodotti di Fabio.
+ * Eseguire una volta: setupSuppliersData()
+ */
+function setupSuppliersData() {
+  Logger.log('═══ SETUP FORNITORI ═══');
+
+  // ── Fabio (frutta e verdura settimanale) ──
+  var fabioResult = callApi('adminUpsertSupplier', {
+    name: 'Fabio', macro_category: 'Frutta e verdura',
+    contact_name: 'Fabio', notes: 'Fornitore principale settimanale di frutta e verdura'
+  });
+  Logger.log((fabioResult.ok ? '✓' : '✗') + ' Fabio');
+  if (!fabioResult.ok) { Logger.log('Errore: ' + fabioResult.error.message); return; }
+
+  // Trova il supplier_id di Fabio
+  var allSuppliers = readSheetObjects_(APP.SHEETS.SUPPLIERS);
+  var fabio = allSuppliers[allSuppliers.length - 1]; // appena creato = ultimo
+
+  var frutta   = ['Kiwi','Mela'];
+  var verdura  = ['Aglio','Aglio serpentino','Barbabietola','Batata','Carota','Cavolfiore','Cavolo',
+                  'Cipolla','Cipollotto','Finocchio','Ortica','Patata','Peperone','Porro',
+                  'Ramolaccio','Rapa','Scalogno','Topinambur','Zucca'];
+  var insalate = ['Bieta','Cicoria','Cima di rapa','Radicchio','Scarola','Spinacio',
+                  'Valeriana','Vasetto di basilico viola'];
+
+  var products = [];
+  frutta.forEach(function(n)   { products.push({ name: n, category: 'Frutta' }); });
+  verdura.forEach(function(n)  { products.push({ name: n, category: 'Verdura' }); });
+  insalate.forEach(function(n) { products.push({ name: n, category: 'Insalate' }); });
+
+  var ok = 0;
+  products.forEach(function(p) {
+    var r = callApi('adminUpsertCatalogProduct', { supplier_id: fabio.supplier_id, name: p.name, category: p.category });
+    if (r.ok) ok++;
+    else Logger.log('✗ ' + p.name + ': ' + r.error.message);
+  });
+  Logger.log('✓ Fabio: ' + ok + '/' + products.length + ' prodotti nel catalogo');
+
+  // ── Altri fornitori (senza prodotti) ──
+  var others = [
+    { name: 'Latteria sociale del Fornacione', macro_category: 'Latticini',             contact_name: 'Chiara Riva' },
+    { name: 'Girolomoni - Cooperativa Agricola', macro_category: 'Dispensa',            contact_name: 'Giuliana Miglierina' },
+    { name: 'Molino Agostini',                 macro_category: 'Dispensa',              contact_name: 'Susanna Villa',    phone: '0734 938166', email: 'info@molinoagostini.it', address: 'Contrada San Pietro, 60 - Massignano (AP)' },
+    { name: "Terra d'Arcoiris",                macro_category: 'Bevande e condimenti',  contact_name: 'Thomas Loesch',    email: 'info@terradarcoiris.com', address: 'Strada della Maglianella, 5 - Chianciano Terme (SI)' },
+    { name: 'Hosteria di Villalba',            macro_category: 'Bevande e condimenti',  contact_name: 'Silvia' },
+    { name: 'Le Galline Felici',               macro_category: 'Frutta e verdura',      contact_name: 'Eva Veroli',       notes: 'Consorzio Siciliano — Agrumi' },
+    { name: 'Roncaglia Serabial',              macro_category: 'Frutta e verdura',      email: 'info@roncagliabio.com',   address: 'Str. Roncaglia 25, Bricherasio (TO)', notes: 'Mele' },
+    { name: 'Azienda Agricola Rampelli',       macro_category: 'Frutta e verdura',      address: 'Spormaggiore, Val di Non (TN)', notes: 'Mele' },
+    { name: 'Agrimi Bio',                      macro_category: 'Frutta e verdura',      address: 'Via per Castellazzo 16, Basiano (MI)', notes: 'Soc. Coop. Sociale' },
+    { name: 'Cascina Biblioteca',              macro_category: 'Vari',                  contact_name: 'Maria Malacrinò' },
+    { name: 'Agripiccola',                     macro_category: 'Carni',                 contact_name: 'Marilù di Mauro',  email: 'info@agripiccola.com', address: 'Strada Provinciale 94/16, Casletto (BG)', notes: 'Società agricola' },
+    { name: 'Azienda Agricola Pian du Lares',  macro_category: 'Latticini',             contact_name: 'Matteo Spertini',  phone: '0332 558178', email: 'piandulares@gmail.com', address: 'Via Petrolo, 18 - Veddasca (VA)', notes: 'Formaggi vaccino e capra' },
+    { name: 'Azienda Agricola Zaffaroni',      macro_category: 'Latticini',             contact_name: 'Silvia Ballabio',  address: 'Via A. Grandi 100, Mozzate (CO)', notes: 'Formaggi e carne' },
+    { name: 'Cascina Nibai/Biblioteca',        macro_category: 'Uova' },
+    { name: 'La Saponaria',                    macro_category: 'Igiene e casa' },
+    { name: 'Officina Naturae',                macro_category: 'Igiene e casa' },
+    { name: 'Teanatura',                       macro_category: 'Igiene e casa' }
+  ];
+
+  others.forEach(function(s) {
+    var r = callApi('adminUpsertSupplier', s);
+    Logger.log((r.ok ? '✓' : '✗') + ' ' + s.name);
+  });
+
+  Logger.log('✓ Setup fornitori completato. Totale: ' + (1 + others.length) + ' fornitori.');
+}
+
+/**
  * Riepilogo completo di tutti i dati nel foglio.
  * listAllData()
  */

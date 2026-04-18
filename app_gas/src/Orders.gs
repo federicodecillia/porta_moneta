@@ -20,7 +20,19 @@ function getMemberDashboard(payload) {
 
   if (!cycle) return result;
 
-  result.cycle = cycle;
+  // Join supplier name per display
+  var cycleOut = {};
+  for (var k in cycle) cycleOut[k] = cycle[k];
+  if (cycle.supplier_id) {
+    var suppliers = readSheetObjects_(APP.SHEETS.SUPPLIERS);
+    for (var i = 0; i < suppliers.length; i++) {
+      if (suppliers[i].supplier_id === cycle.supplier_id) {
+        cycleOut.supplier_name = suppliers[i].name;
+        break;
+      }
+    }
+  }
+  result.cycle = cycleOut;
 
   // Verifica accesso: cicli 'attivi' escludono i soci
   var canOrder = cycle.access_level === APP.ACCESS_LEVEL.ALL ||
@@ -110,6 +122,15 @@ function saveMyOrder(payload) {
     });
   });
 
+  // Block se il saldo andrebbe sotto 0
+  var balance = getMemberBalance_(member.member_id);
+  var roundedTotal = Math.round(orderTotal * 100) / 100;
+  assert_(
+    balance - roundedTotal >= -0.0001,
+    'Saldo insufficiente. Saldo attuale: €' + balance.toFixed(2) +
+      ', totale ordine: €' + roundedTotal.toFixed(2) + '.'
+  );
+
   // Riscrivi tutti gli ordini del ciclo (altri + nuovi miei)
   var allCycleOrders = othersOrders.concat(newLines);
 
@@ -125,7 +146,7 @@ function saveMyOrder(payload) {
   return {
     saved:       true,
     lines_count: newLines.length,
-    order_total: Math.round(orderTotal * 100) / 100
+    order_total: roundedTotal
   };
 }
 

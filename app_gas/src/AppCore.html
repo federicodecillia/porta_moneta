@@ -49,10 +49,12 @@ var PM = {
         s.classList.remove('active');
       }
     }
-    // Sticky footer solo su ordine
+    // Sticky footer solo su Ordini > Aperti
     var footer = document.getElementById('sticky-footer');
     if (footer) {
-      if (PM.state.view === 'ordine') {
+      var onAperti = PM.state.view === 'ordini' &&
+        PM.components.orders && PM.components.orders.activeSubtab === 'aperti';
+      if (onAperti) {
         footer.classList.add('visible');
       } else {
         footer.classList.remove('visible');
@@ -153,11 +155,14 @@ var PM = {
       PM._onViewChange(hash);
     });
 
-    // Nav click
+    // Nav click — navigate sets hash; hashchange handler fires _onViewChange.
+    // If the hash is already the target, hashchange does NOT fire, so we call _onViewChange manually.
     document.querySelectorAll('.nav-item').forEach(function(item) {
       item.addEventListener('click', function() {
-        PM.navigate(item.dataset.view);
-        PM._onViewChange(item.dataset.view);
+        var target = item.dataset.view;
+        var currentHash = (window.location.hash || '').replace('#', '') || 'home';
+        PM.navigate(target);
+        if (currentHash === target) PM._onViewChange(target);
       });
     });
 
@@ -189,12 +194,15 @@ var PM = {
   },
 
   _onViewChange: function(view) {
+    // Legacy hash redirects
+    if (view === 'ordine' || view === 'storico') {
+      PM.navigate('ordini');
+      view = 'ordini';
+    }
     if (view === 'home' && PM.components.memberHome) {
       PM.components.memberHome.load();
-    } else if (view === 'ordine' && PM.components.orderForm) {
-      PM.components.orderForm.load();
-    } else if (view === 'storico' && PM.components.history) {
-      PM.components.history.load();
+    } else if (view === 'ordini' && PM.components.orders) {
+      PM.components.orders.load();
     } else if (view === 'guida' && PM.components.guide) {
       PM.components.guide.load();
     } else if (view === 'admin' && PM.components.admin) {

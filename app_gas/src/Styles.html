@@ -231,39 +231,46 @@ h2 {
 .btn-block { width: 100%; }
 
 /* ── Product Card ── */
+.category-header {
+  font-size: .68rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.8px;
+  color: var(--text-4); padding: var(--sp-3) 0 var(--sp-1);
+  border-bottom: 1px solid var(--border); margin-bottom: 2px; margin-top: var(--sp-2);
+}
+
 .product-card {
+  display: flex; align-items: center; gap: var(--sp-3);
   background: var(--surface);
-  border-radius: var(--radius);
-  padding: var(--sp-4) var(--sp-4) var(--sp-3);
-  margin-bottom: var(--sp-2);
-  box-shadow: var(--shadow-card);
+  border-radius: var(--radius-xs);
+  padding: 10px var(--sp-3);
+  margin-bottom: 3px;
   border: 1px solid var(--border);
   border-left: 3px solid transparent;
-  transition: border-color 200ms, background 200ms, opacity 200ms;
+  transition: border-color 150ms, background 150ms, opacity 150ms;
 }
 .product-card.has-qty {
   border-left-color: var(--brand);
   background: var(--brand-light);
 }
-.product-card.zero-qty { opacity: .75; }
-.product-name { font-weight: 600; font-size: 1rem; color: var(--text); letter-spacing: -0.01em; }
-.product-meta { color: var(--text-4); font-size: .82rem; margin-top: 2px; }
+.product-card.zero-qty { opacity: .78; }
+.product-info { flex: 1; min-width: 0; }
+.product-name { font-weight: 600; font-size: .9rem; color: var(--text); letter-spacing: -0.01em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.product-meta { color: var(--text-4); font-size: .75rem; margin-top: 1px; }
 
 .stepper {
-  display: flex; align-items: center; justify-content: center;
-  gap: var(--sp-4); margin-top: var(--sp-3);
+  display: flex; align-items: center; flex-shrink: 0;
+  gap: var(--sp-2);
 }
 .stepper-btn {
-  width: 44px; height: 44px;
+  width: 36px; height: 36px;
   border-radius: 50%;
   border: 1px solid var(--border-med);
   background: var(--surface);
   color: var(--text);
-  font-size: 1.3rem; font-weight: 600;
+  font-size: 1.15rem; font-weight: 600;
   cursor: pointer;
   display: flex; align-items: center; justify-content: center;
   -webkit-tap-highlight-color: transparent;
-  transition: background 150ms, border-color 150ms, transform 100ms;
+  transition: background 100ms, border-color 100ms, transform 80ms;
   touch-action: manipulation;
 }
 .stepper-btn:hover {
@@ -272,23 +279,23 @@ h2 {
 }
 .stepper-btn:active {
   background: var(--brand-light);
-  transform: scale(.92);
+  transform: scale(.9);
 }
 .stepper-qty {
-  font-size: 1.5rem; font-weight: 600;
-  min-width: 44px; text-align: center;
+  font-size: 1.15rem; font-weight: 600;
+  min-width: 28px; text-align: center;
   letter-spacing: -0.02em;
-  transition: transform 100ms;
+  transition: transform 80ms;
 }
 .stepper-qty.bump { animation: qtyBump 150ms ease; }
 @keyframes qtyBump {
   0%   { transform: scale(1); }
-  50%  { transform: scale(1.2); }
+  50%  { transform: scale(1.25); }
   100% { transform: scale(1); }
 }
 .stepper-sub {
-  text-align: right; color: var(--text-3);
-  font-size: .85rem; font-weight: 500; margin-top: var(--sp-1);
+  min-width: 46px; text-align: right; color: var(--text-3); flex-shrink: 0;
+  font-size: .8rem; font-weight: 500;
 }
 
 /* ── Sticky Order Footer ── */

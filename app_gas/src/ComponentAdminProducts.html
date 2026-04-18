@@ -1,95 +1,38 @@
 <script>
 /* ───────────────────────────────────────────
-   ComponentAdminProducts — Gestione prodotti
+   ComponentAdminProducts — Catalogo prodotti
+   Gestione di tutti i prodotti per fornitore e categoria
    ─────────────────────────────────────────── */
 
 PM.components.adminProducts = {
 
-  _TEMPLATE_HEADERS: ['Nome', 'Varietà', 'Formato', 'Prezzo', 'Fornitore', 'Note'],
-
-  _TEMPLATE_EXAMPLES: [
-    ['Carota', '', '500 g', 1.75, 'Az. Agr. Miglio', ''],
-    ['Cavolo', 'verza', '1 kg', 3.50, '', ''],
-    ['Patata', 'pasta gialla', '1 kg', 2.30, 'Az. Miglio', 'poca disponibilità']
+  _FIXED_CATEGORIES: [
+    'Frutta','Verdura','Insalate','Alimentare a lunga conservazione',
+    'Igiene casa e persona','Latticini','Carni','Uova','Bevande','Altro'
   ],
+
+  _TEMPLATE_HEADERS: ['Nome','Varietà','Formato','Prezzo','Fornitore','Categoria','Note'],
+
+  state: {
+    suppliers: [],
+    catalog: [],
+    categories: [],
+    filterSupplier: 'all',
+    filterCategory: 'all'
+  },
 
   render: function(container) {
     PM.showLoading(container);
+    var self = PM.components.adminProducts;
 
     Promise.all([
-      PM.api('getMemberDashboard'),
-      PM.api('adminGetRecentCycles')
+      PM.api('adminGetSuppliers'),
+      PM.api('adminGetAllCatalog')
     ]).then(function(results) {
-      var data = results[0];
-      var cycles = results[1];
-      var html = '';
-
-      if (!data.cycle) {
-        PM.html(container, '<div class="card"><div class="text-muted">Apri un ciclo prima di caricare i prodotti.</div></div>');
-        return;
-      }
-
-      var cycleId = data.cycle.cycle_id;
-
-      // Prodotti attuali
-      if (data.products && data.products.length) {
-        html += '<h2 class="mb-8">Prodotti attuali (' + data.products.length + ')</h2>';
-        html += '<div class="card"><div class="table-wrap"><table><thead><tr><th>Prodotto</th><th>Formato</th><th class="text-right">Prezzo</th></tr></thead><tbody>';
-        data.products.forEach(function(p) {
-          var name = p.name + (p.variant ? ' — ' + p.variant : '');
-          html += '<tr><td>' + PM._esc(name) + '</td><td>' + PM._esc(p.format) + '</td><td class="text-right">' + PM.formatCurrency(p.unit_price) + '</td></tr>';
-        });
-        html += '</tbody></table></div></div>';
-      }
-
-      // Caricamento da file Excel
-      html +=
-        '<h2 class="mt-16 mb-8">Carica da file Excel</h2>' +
-        '<div class="card">' +
-          '<div class="text-muted text-sm mb-8">Scarica il template, compilalo in Excel o Google Sheets, poi caricalo qui. Accetta file <strong>.xlsx</strong>, <strong>.xls</strong> e <strong>.csv</strong>.</div>' +
-          '<button class="btn btn-outline btn-block mb-8" onclick="PM.components.adminProducts.downloadTemplate()">' +
-            '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-3px;margin-right:6px;"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>' +
-            'Scarica template Excel' +
-          '</button>' +
-          '<div class="form-group mb-8">' +
-            '<input type="file" id="excel-file" accept=".xlsx,.xls,.csv" class="form-input" style="padding:8px;" />' +
-          '</div>' +
-          '<button class="btn btn-primary btn-block" onclick="PM.components.adminProducts.uploadExcel(\'' + cycleId + '\')">' +
-            '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-3px;margin-right:6px;"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>' +
-            'Carica prodotti da file' +
-          '</button>' +
-        '</div>';
-
-      // Duplica da ciclo precedente
-      var closedCycles = cycles.filter(function(c) { return c.cycle_id !== cycleId; });
-      if (closedCycles.length) {
-        html +=
-          '<h2 class="mt-16 mb-8">Duplica da ciclo precedente</h2>' +
-          '<div class="card">' +
-            '<div class="form-group">' +
-              '<select class="form-select" id="dup-source">';
-        closedCycles.forEach(function(c) {
-          html += '<option value="' + c.cycle_id + '">' + PM._esc(c.title) + '</option>';
-        });
-        html +=
-              '</select>' +
-            '</div>' +
-            '<button class="btn btn-outline btn-block" onclick="PM.components.adminProducts.duplicate(\'' + cycleId + '\')">Duplica prodotti</button>' +
-          '</div>';
-      }
-
-      // Caricamento testo libero
-      html +=
-        '<h2 class="mt-16 mb-8">Carica da testo</h2>' +
-        '<div class="card">' +
-          '<div class="text-muted text-sm mb-8">Un prodotto per riga: <strong>Nome;Varietà;Formato;Prezzo</strong><br>Campi opzionali: ;Fornitore;Note</div>' +
-          '<div class="form-group">' +
-            '<textarea class="form-textarea" id="products-text" rows="8" placeholder="Carota;;500 g;1.75;Az. Agr. Miglio&#10;Cavolo;verza;1 kg;3.50&#10;Patata;pasta gialla;1 kg;2.30"></textarea>' +
-          '</div>' +
-          '<button class="btn btn-outline btn-block" onclick="PM.components.adminProducts.loadFromText(\'' + cycleId + '\')">Carica prodotti da testo</button>' +
-        '</div>';
-
-      PM.html(container, html);
+      self.state.suppliers  = results[0].filter(function(s) { return String(s.active) !== 'false'; });
+      self.state.catalog    = results[1].catalog || [];
+      self.state.categories = results[1].categories || self._FIXED_CATEGORIES.slice();
+      self._renderAll(container);
     }).catch(function(err) {
       PM.html(container,
         '<div style="text-align:center;padding:40px 0;">' +
@@ -99,219 +42,442 @@ PM.components.adminProducts = {
     });
   },
 
-  /* ── Download template Excel ── */
+  _renderAll: function(container) {
+    var self = PM.components.adminProducts;
+    var st = self.state;
+
+    // Filtri
+    var supplierOpts = '<option value="all">Tutti i fornitori</option>';
+    st.suppliers.forEach(function(s) {
+      supplierOpts += '<option value="' + PM._esc(s.supplier_id) + '"' + (st.filterSupplier === s.supplier_id ? ' selected' : '') + '>' + PM._esc(s.name) + '</option>';
+    });
+    var catOpts = '<option value="all">Tutte le categorie</option>';
+    st.categories.forEach(function(c) {
+      catOpts += '<option value="' + PM._esc(c) + '"' + (st.filterCategory === c ? ' selected' : '') + '>' + PM._esc(c) + '</option>';
+    });
+
+    var html =
+      '<div style="display:flex;align-items:center;gap:var(--sp-2);margin-bottom:var(--sp-3);flex-wrap:wrap;">' +
+        '<h2 style="margin:0;flex:1;">Catalogo prodotti</h2>' +
+        '<button class="btn btn-primary btn-sm" onclick="PM.components.adminProducts.openAddModal()">+ Aggiungi prodotto</button>' +
+      '</div>' +
+
+      '<div class="card" style="margin-bottom:var(--sp-3);">' +
+        '<div style="display:grid;grid-template-columns:1fr 1fr;gap:var(--sp-2);">' +
+          '<div class="form-group" style="margin-bottom:0;">' +
+            '<label class="form-label">Fornitore</label>' +
+            '<select class="form-select" onchange="PM.components.adminProducts.applyFilter(\'supplier\', this.value)">' + supplierOpts + '</select>' +
+          '</div>' +
+          '<div class="form-group" style="margin-bottom:0;">' +
+            '<label class="form-label">Categoria</label>' +
+            '<select class="form-select" onchange="PM.components.adminProducts.applyFilter(\'category\', this.value)">' + catOpts + '</select>' +
+          '</div>' +
+        '</div>' +
+      '</div>';
+
+    // Catalog grouped by category
+    var filtered = st.catalog.filter(function(p) {
+      if (st.filterSupplier !== 'all' && p.supplier_id !== st.filterSupplier) return false;
+      if (st.filterCategory !== 'all' && p.category !== st.filterCategory) return false;
+      return true;
+    });
+
+    if (!filtered.length) {
+      html += '<div class="card"><div class="text-muted text-sm">Nessun prodotto corrisponde ai filtri.</div></div>';
+    } else {
+      // Raggruppa per categoria nell'ordine di `categories`
+      var byCat = {};
+      filtered.forEach(function(p) {
+        var c = p.category || 'Altro';
+        if (!byCat[c]) byCat[c] = [];
+        byCat[c].push(p);
+      });
+
+      st.categories.forEach(function(cat) {
+        if (!byCat[cat]) return;
+        html += '<div class="category-header">' + PM._esc(cat) + ' <span class="text-muted" style="font-weight:400;">· ' + byCat[cat].length + '</span></div>';
+        byCat[cat].forEach(function(p) {
+          html += self._renderProductRow(p);
+        });
+      });
+    }
+
+    // Sezione import Excel
+    html +=
+      '<h2 class="mt-16 mb-8">Sostituisci catalogo da Excel</h2>' +
+      '<div class="card">' +
+        '<div class="text-muted text-sm mb-8">Scegli un fornitore: scarica il template, compila, ricarica. Il catalogo del fornitore viene <strong>completamente sostituito</strong>. Accetta <strong>.xlsx</strong>, <strong>.xls</strong>, <strong>.csv</strong>.</div>' +
+        '<div class="form-group">' +
+          '<label class="form-label">Fornitore</label>' +
+          '<select class="form-select" id="bulk-supplier">' +
+            '<option value="">— Seleziona —</option>' +
+            st.suppliers.map(function(s) { return '<option value="' + PM._esc(s.supplier_id) + '">' + PM._esc(s.name) + '</option>'; }).join('') +
+          '</select>' +
+        '</div>' +
+        '<button class="btn btn-outline btn-block mb-8" onclick="PM.components.adminProducts.downloadTemplate()">Scarica template Excel</button>' +
+        '<div class="form-group mb-8">' +
+          '<input type="file" id="bulk-file" accept=".xlsx,.xls,.csv" class="form-input" style="padding:8px;" />' +
+        '</div>' +
+        '<button class="btn btn-primary btn-block" onclick="PM.components.adminProducts.uploadBulk()">Sostituisci catalogo del fornitore</button>' +
+      '</div>';
+
+    PM.html(container, html);
+  },
+
+  _renderProductRow: function(p) {
+    var cid = PM._esc(p.catalog_id);
+    return (
+      '<div class="product-card has-qty" style="align-items:center;">' +
+        '<div class="product-info">' +
+          '<div class="product-name">' + PM._esc(p.name) + '</div>' +
+          '<div class="product-meta">' +
+            (p.variant ? PM._esc(p.variant) + ' · ' : '') +
+            (p.format ? PM._esc(p.format) + ' · ' : '') +
+            PM._esc(p.supplier_name) +
+          '</div>' +
+        '</div>' +
+        '<div style="display:flex;align-items:center;gap:4px;">' +
+          '<span style="color:var(--text-4);">€</span>' +
+          '<input type="number" step="0.01" min="0" class="form-input" ' +
+            'value="' + (p.unit_price || 0).toFixed(2) + '" ' +
+            'style="width:72px;height:34px;padding:4px 6px;text-align:right;" ' +
+            'title="Modifica prezzo (salva al cambio focus)" ' +
+            'onblur="PM.components.adminProducts.updatePrice(\'' + cid + '\', this.value)">' +
+        '</div>' +
+        '<button class="btn btn-sm btn-outline" style="padding:4px 8px;" ' +
+          'onclick="PM.components.adminProducts.openEditModal(\'' + cid + '\')" ' +
+          'title="Modifica Prodotto (Nome, Prezzo)" aria-label="Modifica prodotto">✎</button>' +
+        '<button class="btn btn-sm btn-outline" style="padding:4px 8px;color:var(--danger);" ' +
+          'onclick="PM.components.adminProducts.deleteProduct(\'' + cid + '\')" ' +
+          'title="Cancella prodotto" aria-label="Cancella prodotto">×</button>' +
+      '</div>'
+    );
+  },
+
+  applyFilter: function(kind, value) {
+    var st = PM.components.adminProducts.state;
+    if (kind === 'supplier') st.filterSupplier = value;
+    else if (kind === 'category') st.filterCategory = value;
+    PM.components.adminProducts._renderAll('admin-products-panel');
+  },
+
+  updatePrice: function(catalogId, rawValue) {
+    var self = PM.components.adminProducts;
+    var p = self._findProduct(catalogId);
+    if (!p) return;
+    var newPrice = parseFloat(String(rawValue).replace(',', '.'));
+    if (isNaN(newPrice) || newPrice < 0) { PM.toast('Prezzo non valido', 'error'); return; }
+    if (Math.abs(newPrice - p.unit_price) < 0.001) return;
+
+    PM.api('adminUpsertCatalogProduct', {
+      catalog_id: catalogId,
+      supplier_id: p.supplier_id,
+      name: p.name,
+      variant: p.variant,
+      format: p.format,
+      unit_price: newPrice,
+      category: p.category,
+      notes: p.notes
+    })
+      .then(function() {
+        p.unit_price = newPrice;
+        PM.toast('Prezzo aggiornato');
+      })
+      .catch(function(err) { PM.toast(err.message, 'error'); });
+  },
+
+  deleteProduct: function(catalogId) {
+    var self = PM.components.adminProducts;
+    var p = self._findProduct(catalogId);
+    if (!p) return;
+    PM.confirm('Elimina prodotto?', 'Vuoi eliminare "' + p.name + '" dal catalogo di ' + p.supplier_name + '?')
+      .then(function(ok) {
+        if (!ok) return;
+        PM.api('adminDeleteCatalogProduct', { catalog_id: catalogId })
+          .then(function() {
+            PM.toast('Prodotto eliminato');
+            PM.components.adminProducts.render('admin-products-panel');
+          })
+          .catch(function(err) { PM.toast(err.message, 'error'); });
+      });
+  },
+
+  _findProduct: function(catalogId) {
+    var cat = PM.components.adminProducts.state.catalog;
+    for (var i = 0; i < cat.length; i++) if (cat[i].catalog_id === catalogId) return cat[i];
+    return null;
+  },
+
+  /* ── Modale add/edit ── */
+
+  openAddModal: function() {
+    PM.components.adminProducts._openModal(null);
+  },
+
+  openEditModal: function(catalogId) {
+    var p = PM.components.adminProducts._findProduct(catalogId);
+    if (!p) return;
+    PM.components.adminProducts._openModal(p);
+  },
+
+  _openModal: function(p) {
+    var self = PM.components.adminProducts;
+    var st = self.state;
+    var isEdit = !!p;
+
+    var supplierOpts = st.suppliers.map(function(s) {
+      return '<option value="' + PM._esc(s.supplier_id) + '"' +
+        (p && p.supplier_id === s.supplier_id ? ' selected' : '') + '>' + PM._esc(s.name) + '</option>';
+    }).join('');
+
+    var catOpts = self._FIXED_CATEGORIES.map(function(c) {
+      return '<option value="' + PM._esc(c) + '"' + (p && p.category === c ? ' selected' : '') + '>' + PM._esc(c) + '</option>';
+    }).join('');
+    if (p && p.category && self._FIXED_CATEGORIES.indexOf(p.category) === -1) {
+      catOpts += '<option value="' + PM._esc(p.category) + '" selected>' + PM._esc(p.category) + ' (custom)</option>';
+    }
+
+    var modal = document.getElementById('prod-edit-modal') || document.createElement('div');
+    modal.id = 'prod-edit-modal';
+    modal.className = 'modal-overlay show';
+    modal.innerHTML =
+      '<div class="modal" style="max-width:480px;">' +
+        '<h3>' + (isEdit ? 'Modifica prodotto' : 'Nuovo prodotto') + '</h3>' +
+        '<div class="form-group">' +
+          '<label class="form-label">Fornitore *</label>' +
+          '<select class="form-select" id="pm-supplier"><option value="">— Seleziona —</option>' + supplierOpts + '</select>' +
+        '</div>' +
+        '<div class="form-group">' +
+          '<label class="form-label">Nome *</label>' +
+          '<input class="form-input" id="pm-name" value="' + (p ? PM._esc(p.name) : '') + '">' +
+        '</div>' +
+        '<div style="display:grid;grid-template-columns:1fr 1fr;gap:var(--sp-2);">' +
+          '<div class="form-group">' +
+            '<label class="form-label">Varietà</label>' +
+            '<input class="form-input" id="pm-variant" value="' + (p ? PM._esc(p.variant) : '') + '">' +
+          '</div>' +
+          '<div class="form-group">' +
+            '<label class="form-label">Formato</label>' +
+            '<input class="form-input" id="pm-format" value="' + (p ? PM._esc(p.format) : '') + '">' +
+          '</div>' +
+        '</div>' +
+        '<div style="display:grid;grid-template-columns:1fr 1fr;gap:var(--sp-2);">' +
+          '<div class="form-group">' +
+            '<label class="form-label">Prezzo (€) *</label>' +
+            '<input class="form-input" id="pm-price" type="number" step="0.01" min="0" value="' + (p ? (p.unit_price || 0).toFixed(2) : '') + '">' +
+          '</div>' +
+          '<div class="form-group">' +
+            '<label class="form-label">Categoria</label>' +
+            '<select class="form-select" id="pm-category" onchange="PM.components.adminProducts._onCatChange(this.value)">' +
+              catOpts +
+              '<option value="__custom__">+ Altra categoria...</option>' +
+            '</select>' +
+            '<input class="form-input mt-8" id="pm-category-custom" placeholder="Nuova categoria" style="display:none;">' +
+          '</div>' +
+        '</div>' +
+        '<div class="form-group">' +
+          '<label class="form-label">Note</label>' +
+          '<textarea class="form-textarea" id="pm-notes" rows="2">' + (p ? PM._esc(p.notes) : '') + '</textarea>' +
+        '</div>' +
+        '<div class="modal-actions">' +
+          '<button class="btn btn-outline btn-sm" onclick="PM.components.adminProducts._closeModal()" style="flex:1;">Annulla</button>' +
+          '<button class="btn btn-primary btn-sm" onclick="PM.components.adminProducts._saveModal(\'' + (p ? PM._esc(p.catalog_id) : '') + '\')" style="flex:1;">Salva</button>' +
+        '</div>' +
+      '</div>';
+    if (!modal.parentNode) document.body.appendChild(modal);
+  },
+
+  _onCatChange: function(value) {
+    var custom = document.getElementById('pm-category-custom');
+    if (!custom) return;
+    custom.style.display = value === '__custom__' ? '' : 'none';
+    if (value === '__custom__') custom.focus();
+  },
+
+  _closeModal: function() {
+    var modal = document.getElementById('prod-edit-modal');
+    if (modal) modal.parentNode.removeChild(modal);
+  },
+
+  _saveModal: function(catalogId) {
+    var v = function(id) {
+      var el = document.getElementById(id);
+      return el ? (el.value || '').trim() : '';
+    };
+    var category = v('pm-category');
+    if (category === '__custom__') category = v('pm-category-custom') || 'Altro';
+
+    var payload = {
+      supplier_id: v('pm-supplier'),
+      name: v('pm-name'),
+      variant: v('pm-variant'),
+      format: v('pm-format'),
+      unit_price: parseFloat(v('pm-price').replace(',', '.')) || 0,
+      category: category,
+      notes: v('pm-notes')
+    };
+    if (catalogId) payload.catalog_id = catalogId;
+
+    if (!payload.supplier_id) { PM.toast('Seleziona il fornitore', 'error'); return; }
+    if (!payload.name) { PM.toast('Inserisci il nome', 'error'); return; }
+    if (payload.unit_price <= 0) { PM.toast('Prezzo non valido', 'error'); return; }
+
+    PM.api('adminUpsertCatalogProduct', payload)
+      .then(function() {
+        PM.toast(catalogId ? 'Prodotto aggiornato' : 'Prodotto aggiunto');
+        PM.components.adminProducts._closeModal();
+        PM.components.adminProducts.render('admin-products-panel');
+      })
+      .catch(function(err) { PM.toast(err.message, 'error'); });
+  },
+
+  /* ── Template Excel ── */
 
   downloadTemplate: function() {
     if (typeof XLSX === 'undefined') {
       PM.toast('Libreria Excel non caricata. Ricarica la pagina.', 'error');
       return;
     }
-
     var self = PM.components.adminProducts;
-    var data = [self._TEMPLATE_HEADERS].concat(self._TEMPLATE_EXAMPLES);
+    var supSelect = document.getElementById('bulk-supplier');
+    var supplierId = supSelect ? supSelect.value : '';
+    var supplierName = '';
+    if (supplierId) {
+      for (var i = 0; i < self.state.suppliers.length; i++) {
+        if (self.state.suppliers[i].supplier_id === supplierId) { supplierName = self.state.suppliers[i].name; break; }
+      }
+    }
 
-    var ws = XLSX.utils.aoa_to_sheet(data);
-
-    // Imposta larghezze colonne
-    ws['!cols'] = [
-      { wch: 20 }, // Nome
-      { wch: 18 }, // Varietà
-      { wch: 12 }, // Formato
-      { wch: 10 }, // Prezzo
-      { wch: 20 }, // Fornitore
-      { wch: 25 }  // Note
+    var examples = [
+      ['Carota', '', '500 g', 1.75, supplierName, 'Verdura', ''],
+      ['Mela', 'Golden', '1 kg', 2.50, supplierName, 'Frutta', ''],
+      ['Pasta', 'Spaghetti', '500 g', 1.80, supplierName, 'Alimentare a lunga conservazione', '']
     ];
-
+    var data = [self._TEMPLATE_HEADERS].concat(examples);
+    var ws = XLSX.utils.aoa_to_sheet(data);
+    ws['!cols'] = [{wch:20},{wch:18},{wch:12},{wch:10},{wch:20},{wch:24},{wch:25}];
     var wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, 'Prodotti');
-    XLSX.writeFile(wb, 'template_prodotti.xlsx');
+
+    var fname = 'template_prodotti' + (supplierName ? '_' + supplierName.replace(/\s+/g, '_') : '') + '.xlsx';
+    XLSX.writeFile(wb, fname);
     PM.toast('Template scaricato');
   },
 
-  /* ── Upload da file Excel ── */
-
-  uploadExcel: function(cycleId) {
+  uploadBulk: function() {
     var self = PM.components.adminProducts;
-    var fileInput = document.getElementById('excel-file');
+    var supSelect = document.getElementById('bulk-supplier');
+    var supplierId = supSelect ? supSelect.value : '';
+    if (!supplierId) { PM.toast('Seleziona prima il fornitore', 'error'); return; }
+
+    var fileInput = document.getElementById('bulk-file');
     if (!fileInput || !fileInput.files || !fileInput.files.length) {
       PM.toast('Seleziona un file Excel o CSV', 'error');
       return;
     }
     if (typeof XLSX === 'undefined') {
-      PM.toast('Libreria Excel non caricata. Ricarica la pagina.', 'error');
+      PM.toast('Libreria Excel non caricata', 'error');
       return;
+    }
+
+    var supplierName = '';
+    for (var i = 0; i < self.state.suppliers.length; i++) {
+      if (self.state.suppliers[i].supplier_id === supplierId) { supplierName = self.state.suppliers[i].name; break; }
     }
 
     var file = fileInput.files[0];
     var reader = new FileReader();
-
     reader.onload = function(e) {
       try {
         var data = new Uint8Array(e.target.result);
         var wb = XLSX.read(data, { type: 'array' });
         var ws = wb.Sheets[wb.SheetNames[0]];
         var rows = XLSX.utils.sheet_to_json(ws, { header: 1, defval: '' });
+        if (rows.length < 2) { PM.toast('File vuoto o senza dati', 'error'); return; }
 
-        if (rows.length < 2) {
-          PM.toast('Il file è vuoto o contiene solo l\'intestazione', 'error');
-          return;
-        }
+        var products = self._parseExcelRows(rows, supplierName);
+        if (!products) return;
 
-        var products = self._parseExcelRows(rows);
-        if (!products) return; // _parseExcelRows shows toast on error
-
-        PM.api('adminUpdateProducts', { cycle_id: cycleId, products: products })
-          .then(function(res) {
-            PM.toast(res.count + ' prodotti caricati da file');
-            PM.components.adminProducts.render('admin-products-panel');
-          })
-          .catch(function(err) { PM.toast(err.message, 'error'); });
-
+        PM.confirm('Sostituisci catalogo?',
+          products.length + ' prodotti sostituiranno completamente il catalogo di ' + supplierName + '.')
+          .then(function(ok) {
+            if (!ok) return;
+            PM.api('adminBulkReplaceSupplierCatalog', { supplier_id: supplierId, products: products })
+              .then(function(res) {
+                PM.toast(res.count + ' prodotti caricati');
+                PM.components.adminProducts.render('admin-products-panel');
+              })
+              .catch(function(err) { PM.toast(err.message, 'error'); });
+          });
       } catch (ex) {
         PM.toast('Errore lettura file: ' + ex.message, 'error');
       }
     };
-
     reader.readAsArrayBuffer(file);
   },
 
-  _parseExcelRows: function(rows) {
-    // Mappa header → indice colonna (case-insensitive, con alias comuni)
-    var headerAliases = {
-      'nome':      'name',
-      'prodotto':  'name',
-      'name':      'name',
-      'varietà':   'variant',
-      'varieta':   'variant',
-      'variant':   'variant',
-      'tipo':      'variant',
-      'formato':   'format',
-      'format':    'format',
-      'confezione':'format',
-      'prezzo':    'unit_price',
-      'price':     'unit_price',
-      'costo':     'unit_price',
-      'fornitore': 'supplier',
-      'supplier':  'supplier',
-      'note':      'notes',
-      'notes':     'notes'
+  _parseExcelRows: function(rows, expectedSupplierName) {
+    var aliases = {
+      'nome':'name','prodotto':'name','name':'name',
+      'varietà':'variant','varieta':'variant','variant':'variant','tipo':'variant',
+      'formato':'format','format':'format','confezione':'format',
+      'prezzo':'unit_price','price':'unit_price','costo':'unit_price',
+      'fornitore':'supplier','supplier':'supplier',
+      'categoria':'category','category':'category',
+      'note':'notes','notes':'notes'
     };
 
-    var rawHeaders = rows[0];
+    var headers = rows[0];
     var colMap = {};
-    rawHeaders.forEach(function(h, i) {
+    headers.forEach(function(h, i) {
       var key = String(h).trim().toLowerCase();
-      if (headerAliases[key]) {
-        colMap[headerAliases[key]] = i;
-      }
+      if (aliases[key]) colMap[aliases[key]] = i;
     });
-
-    if (colMap.name === undefined) {
-      PM.toast('Colonna "Nome" non trovata nel file. Usa il template.', 'error');
-      return null;
-    }
-    if (colMap.unit_price === undefined) {
-      PM.toast('Colonna "Prezzo" non trovata nel file. Usa il template.', 'error');
-      return null;
-    }
+    if (colMap.name === undefined)       { PM.toast('Colonna "Nome" non trovata', 'error'); return null; }
+    if (colMap.unit_price === undefined) { PM.toast('Colonna "Prezzo" non trovata', 'error'); return null; }
 
     var products = [];
     var errors = [];
+    var mismatch = false;
 
     for (var i = 1; i < rows.length; i++) {
       var row = rows[i];
-
-      // Salta righe completamente vuote
-      var hasContent = row.some(function(c) { return String(c).trim() !== ''; });
-      if (!hasContent) continue;
+      if (!row.some(function(c) { return String(c).trim() !== ''; })) continue;
 
       var name = String(row[colMap.name] || '').trim();
-      if (!name) {
-        errors.push('Riga ' + (i + 1) + ': nome mancante');
-        continue;
-      }
+      if (!name) { errors.push('Riga ' + (i+1) + ': nome mancante'); continue; }
 
-      var rawPrice = row[colMap.unit_price];
-      var price = parseFloat(String(rawPrice).replace(',', '.'));
-      if (isNaN(price) || price <= 0) {
-        errors.push('Riga ' + (i + 1) + ': prezzo non valido "' + rawPrice + '"');
-        continue;
+      var price = parseFloat(String(row[colMap.unit_price]).replace(',', '.'));
+      if (isNaN(price) || price <= 0) { errors.push('Riga ' + (i+1) + ': prezzo non valido'); continue; }
+
+      if (colMap.supplier !== undefined) {
+        var rowSup = String(row[colMap.supplier] || '').trim();
+        if (rowSup && expectedSupplierName && rowSup.toLowerCase() !== expectedSupplierName.toLowerCase()) {
+          mismatch = true;
+        }
       }
 
       products.push({
         name:       name,
-        variant:    colMap.variant !== undefined ? String(row[colMap.variant] || '').trim() : '',
-        format:     colMap.format !== undefined ? String(row[colMap.format] || '').trim() : '',
+        variant:    colMap.variant  !== undefined ? String(row[colMap.variant] || '').trim() : '',
+        format:     colMap.format   !== undefined ? String(row[colMap.format]  || '').trim() : '',
         unit_price: price,
-        supplier:   colMap.supplier !== undefined ? String(row[colMap.supplier] || '').trim() : '',
-        notes:      colMap.notes !== undefined ? String(row[colMap.notes] || '').trim() : ''
+        category:   colMap.category !== undefined ? String(row[colMap.category] || '').trim() || 'Altro' : 'Altro',
+        notes:      colMap.notes    !== undefined ? String(row[colMap.notes]   || '').trim() : ''
       });
     }
 
+    if (mismatch) {
+      PM.toast('Il fornitore nel file non corrisponde a quello selezionato', 'error');
+      return null;
+    }
     if (errors.length) {
-      PM.toast(errors[0] + (errors.length > 1 ? ' (+' + (errors.length - 1) + ' altri errori)' : ''), 'error');
+      PM.toast(errors[0] + (errors.length > 1 ? ' (+' + (errors.length - 1) + ' altri)' : ''), 'error');
       return null;
     }
-
-    if (!products.length) {
-      PM.toast('Nessun prodotto trovato nel file', 'error');
-      return null;
-    }
+    if (!products.length) { PM.toast('Nessun prodotto nel file', 'error'); return null; }
 
     return products;
-  },
-
-  /* ── Carica da testo ── */
-
-  loadFromText: function(cycleId) {
-    var text = document.getElementById('products-text').value.trim();
-    if (!text) { PM.toast('Inserisci almeno un prodotto', 'error'); return; }
-
-    var lines = text.split('\n').filter(function(l) { return l.trim(); });
-    var products = [];
-    var errors = [];
-
-    lines.forEach(function(line, idx) {
-      var parts = line.split(';').map(function(s) { return s.trim(); });
-      if (!parts[0]) { errors.push('Riga ' + (idx+1) + ': nome mancante'); return; }
-      var price = parseFloat((parts[3] || '0').replace(',', '.'));
-      if (isNaN(price) || price <= 0) { errors.push('Riga ' + (idx+1) + ': prezzo non valido "' + parts[3] + '"'); return; }
-
-      products.push({
-        name:       parts[0],
-        variant:    parts[1] || '',
-        format:     parts[2] || '',
-        unit_price: price,
-        supplier:   parts[4] || '',
-        notes:      parts[5] || ''
-      });
-    });
-
-    if (errors.length) {
-      PM.toast(errors[0], 'error');
-      return;
-    }
-
-    PM.api('adminUpdateProducts', { cycle_id: cycleId, products: products })
-      .then(function(res) {
-        PM.toast(res.count + ' prodotti caricati');
-        PM.components.adminProducts.render('admin-products-panel');
-      })
-      .catch(function(err) { PM.toast(err.message, 'error'); });
-  },
-
-  /* ── Duplica da ciclo precedente ── */
-
-  duplicate: function(targetCycleId) {
-    var sourceId = document.getElementById('dup-source').value;
-    if (!sourceId) return;
-
-    PM.api('adminDuplicateProducts', { source_cycle_id: sourceId, target_cycle_id: targetCycleId })
-      .then(function(res) {
-        PM.toast(res.count + ' prodotti duplicati');
-        PM.components.adminProducts.render('admin-products-panel');
-      })
-      .catch(function(err) { PM.toast(err.message, 'error'); });
   }
 };
 </script>

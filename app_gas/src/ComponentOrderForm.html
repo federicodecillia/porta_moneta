@@ -10,43 +10,53 @@ PM.components.orderForm = {
   cycleId: null,
   balance: 0,
   saving: false,
+  containerId: 'orders-aperti-panel',
 
-  load: function() {
-    PM.showLoading('order-content');
+  load: function(containerId) {
+    var of = PM.components.orderForm;
+    if (containerId) of.containerId = containerId;
+    PM.showLoading(of.containerId);
     PM.api('getMemberDashboard')
       .then(function(data) {
         PM.state.dashboard = data;
-        PM.components.orderForm.balance = data.balance;
+        of.balance = data.balance;
 
         if (!data.cycle) {
-          PM.html('order-content',
-            '<div style="text-align:center;padding:40px 0;">' +
+          PM.html(of.containerId,
+            '<div class="empty-state"><span class="empty-state-icon">&#128722;</span>' +
             '<h2>Nessun ordine aperto</h2>' +
-            '<p class="text-muted mt-8">Torna quando l\'ordine sarà aperto.</p></div>');
-          document.getElementById('sticky-footer').classList.remove('visible');
+            '<p class="mt-8">Torna quando l\'ordine sarà aperto.</p></div>');
+          var f = document.getElementById('sticky-footer');
+          if (f) f.classList.remove('visible');
           return;
         }
 
-        var of = PM.components.orderForm;
         of.cycleId = data.cycle.cycle_id;
         of.products = data.products;
 
-        // Init draft from existing order
-        of.draft = {};
-        data.my_lines.forEach(function(line) {
-          if (line.quantity > 0) of.draft[line.product_id] = line.quantity;
-        });
+        // Init draft from existing order (only if not already set for this cycle)
+        if (of._draftCycleId !== of.cycleId) {
+          of.draft = {};
+          data.my_lines.forEach(function(line) {
+            if (line.quantity > 0) of.draft[line.product_id] = line.quantity;
+          });
+          of._draftCycleId = of.cycleId;
+        }
 
         of.render();
-        document.getElementById('sticky-footer').classList.add('visible');
+        if (PM.components.orders && PM.components.orders.activeSubtab === 'aperti') {
+          var ff = document.getElementById('sticky-footer');
+          if (ff) ff.classList.add('visible');
+        }
       })
       .catch(function(err) {
-        PM.html('order-content',
+        PM.html(of.containerId,
           '<div style="text-align:center;padding:40px 0;">' +
           '<h2>Errore di caricamento</h2>' +
           '<p class="text-muted mt-8">' + PM._esc(err.message) + '</p>' +
           '<button class="btn btn-primary mt-16" onclick="PM.components.orderForm.load()">Riprova</button></div>');
-        document.getElementById('sticky-footer').classList.remove('visible');
+        var f = document.getElementById('sticky-footer');
+        if (f) f.classList.remove('visible');
       });
   },
 
@@ -55,37 +65,59 @@ PM.components.orderForm = {
     var d = PM.state.dashboard;
 
     var closeInfo = d.cycle ? 'Chiusura: ' + PM.formatDateTime(d.cycle.order_close_at) : '';
+    var supplierInfo = d.cycle && d.cycle.supplier_name ? ' · ' + PM._esc(d.cycle.supplier_name) : '';
 
     var html = '<h1 style="margin-bottom:4px;">' + PM._esc(d.cycle.title) + '</h1>' +
-      '<div class="text-muted mb-16">' + closeInfo + '</div>';
+      '<div class="text-muted mb-12">' + closeInfo + supplierInfo + '</div>' +
+      '<div id="balance-warning" style="display:none;background:var(--danger-light,#fee);color:var(--danger);padding:12px 16px;border-radius:12px;margin-bottom:16px;font-size:14px;font-weight:500;"></div>';
 
+    // Raggruppa per categoria (ordine fisso: Frutta, Verdura, Insalate, poi il resto)
+    var catOrder = ['Frutta', 'Verdura', 'Insalate'];
+    var groups = {};
+    var groupKeys = [];
     of.products.forEach(function(p) {
-      var qty = of.draft[p.product_id] || 0;
-      var sub = Math.round(qty * p.unit_price * 100) / 100;
-      var cardClass = qty > 0 ? 'product-card has-qty' : 'product-card zero-qty';
-      var meta = [];
-      if (p.variant) meta.push(p.variant);
-      if (p.format) meta.push(p.format);
-      meta.push(PM.formatCurrency(p.unit_price));
+      var g = p.category || '';
+      if (!groups[g]) { groups[g] = []; groupKeys.push(g); }
+      groups[g].push(p);
+    });
+    groupKeys.sort(function(a, b) {
+      var ai = catOrder.indexOf(a); if (ai === -1) ai = 99;
+      var bi = catOrder.indexOf(b); if (bi === -1) bi = 99;
+      return ai !== bi ? ai - bi : a.localeCompare(b);
+    });
 
-      html +=
-        '<div class="' + cardClass + '" id="pcard-' + p.product_id + '">' +
-          '<div class="product-name">' + PM._esc(p.name) + '</div>' +
-          '<div class="product-meta">' + PM._esc(meta.join(' · ')) + '</div>' +
-          (p.notes ? '<div class="product-meta">' + PM._esc(p.notes) + '</div>' : '') +
-          '<div class="stepper">' +
-            '<button class="stepper-btn" onclick="PM.components.orderForm.changeQty(\'' + p.product_id + '\',-1)" aria-label="Meno">−</button>' +
-            '<span class="stepper-qty" id="qty-' + p.product_id + '">' + qty + '</span>' +
-            '<button class="stepper-btn" onclick="PM.components.orderForm.changeQty(\'' + p.product_id + '\',1)" aria-label="Più">+</button>' +
-          '</div>' +
-          '<div class="stepper-sub" id="sub-' + p.product_id + '">' + (sub > 0 ? PM.formatCurrency(sub) : '') + '</div>' +
-        '</div>';
+    groupKeys.forEach(function(group) {
+      if (group) html += '<div class="category-header">' + PM._esc(group) + '</div>';
+      groups[group].forEach(function(p) {
+        var qty  = of.draft[p.product_id] || 0;
+        var sub  = Math.round(qty * p.unit_price * 100) / 100;
+        var cls  = qty > 0 ? 'product-card has-qty' : 'product-card zero-qty';
+        var meta = [];
+        if (p.variant) meta.push(p.variant);
+        if (p.format)  meta.push(p.format);
+        meta.push(PM.formatCurrency(p.unit_price));
+
+        html +=
+          '<div class="' + cls + '" id="pcard-' + p.product_id + '">' +
+            '<div class="product-info">' +
+              '<div class="product-name">' + PM._esc(p.name) + '</div>' +
+              '<div class="product-meta">' + PM._esc(meta.join(' · ')) +
+                (p.notes ? ' · ' + PM._esc(p.notes) : '') + '</div>' +
+            '</div>' +
+            '<div class="stepper">' +
+              '<button class="stepper-btn" onclick="PM.components.orderForm.changeQty(\'' + p.product_id + '\',-1)" aria-label="Meno">−</button>' +
+              '<span class="stepper-qty" id="qty-' + p.product_id + '">' + qty + '</span>' +
+              '<button class="stepper-btn" onclick="PM.components.orderForm.changeQty(\'' + p.product_id + '\',1)" aria-label="Più">+</button>' +
+            '</div>' +
+            '<div class="stepper-sub" id="sub-' + p.product_id + '">' + (sub > 0 ? PM.formatCurrency(sub) : '') + '</div>' +
+          '</div>';
+      });
     });
 
     // Spacer for sticky footer
     html += '<div style="height:80px;"></div>';
 
-    PM.html('order-content', html);
+    PM.html(of.containerId, html);
     of.updateFooter();
   },
 
@@ -140,11 +172,37 @@ PM.components.orderForm = {
     var balEl = document.getElementById('footer-balance');
     balEl.textContent = 'Saldo dopo ordine: ' + PM.formatCurrency(afterBalance);
     balEl.style.color = afterBalance < 0 ? 'var(--danger)' : 'var(--text-3)';
+
+    var btn = document.getElementById('btn-save-order');
+    var warn = document.getElementById('balance-warning');
+    var insufficient = afterBalance < 0;
+    if (btn) btn.disabled = insufficient || of.saving;
+    if (warn) {
+      if (insufficient) {
+        warn.style.display = 'block';
+        warn.textContent = 'Saldo insufficiente: aggiungi un bonifico o riduci l\'ordine (mancano ' + PM.formatCurrency(-afterBalance) + ').';
+      } else {
+        warn.style.display = 'none';
+      }
+    }
   },
 
   save: function() {
     var of = PM.components.orderForm;
     if (of.saving || !of.cycleId) return;
+
+    // Client-side guard: server re-asserts as last defense
+    var total = 0;
+    of.products.forEach(function(p) {
+      var qty = of.draft[p.product_id] || 0;
+      total += qty * p.unit_price;
+    });
+    var after = Math.round((of.balance - total) * 100) / 100;
+    if (after < 0) {
+      PM.toast('Saldo insufficiente: aggiungi un bonifico o riduci l\'ordine.', 'error');
+      return;
+    }
+
     of.saving = true;
 
     var btn = document.getElementById('btn-save-order');
@@ -163,6 +221,9 @@ PM.components.orderForm = {
         PM.toast('Ordine salvato');
         btn.textContent = 'Salvato ✓';
         setTimeout(function() { btn.textContent = 'Salva ordine'; }, 2000);
+        if (PM.components.orders && PM.components.orders.invalidateCache) {
+          PM.components.orders.invalidateCache();
+        }
       })
       .catch(function(err) {
         PM.toast(err.message, 'error');

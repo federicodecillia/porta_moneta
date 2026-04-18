@@ -25,28 +25,45 @@ function callApi(action, payload) {
       getMyOrderDetail:     getMyOrderDetail,
       getMyLedger:          getMyLedger,
 
-      // Admin — Cicli
+      // Admin — Ordini (ex-Cicli)
       adminCreateCycle:     adminCreateCycle,
       adminCloseCycle:      adminCloseCycle,
+      adminUpdateCycle:     adminUpdateCycle,
+      adminGetCycles:       adminGetCycles,
       adminGetRecentCycles: adminGetRecentCycles,
+      adminGetCycleSummary: adminGetCycleSummary,
 
-      // Admin — Prodotti
+      // Admin — Prodotti ciclo (snapshot)
       adminUpdateProducts:    adminUpdateProducts,
       adminDuplicateProducts: adminDuplicateProducts,
 
-      // Admin — Contabilità
-      adminRecordTopup:     adminRecordTopup,
-      adminGetBalances:     adminGetBalances,
-
-      // Admin — Ordini
-      adminGetCycleSummary: adminGetCycleSummary,
+      // Admin — Cassa (ex-Bonifici)
+      adminRecordTopup:       adminRecordTopup,
+      adminGetBalances:       adminGetBalances,
+      adminGetMemberLedger:   adminGetMemberLedger,
+      adminUpdateLedgerEntry: adminUpdateLedgerEntry,
+      adminDeleteLedgerEntry: adminDeleteLedgerEntry,
 
       // Admin — Soci
       adminGetMembers:      adminGetMembers,
       adminUpsertMember:    adminUpsertMember,
 
+      // Admin — Fornitori e catalogo
+      adminGetSuppliers:               adminGetSuppliers,
+      adminUpsertSupplier:             adminUpsertSupplier,
+      adminDeleteSupplier:             adminDeleteSupplier,
+      adminGetCatalog:                 adminGetCatalog,
+      adminUpsertCatalogProduct:       adminUpsertCatalogProduct,
+      adminDeleteCatalogProduct:       adminDeleteCatalogProduct,
+      adminLoadCatalogIntoCycle:       adminLoadCatalogIntoCycle,
+      adminGetAllCatalog:              adminGetAllCatalog,
+      adminBulkReplaceSupplierCatalog: adminBulkReplaceSupplierCatalog,
+      adminGetCycleCatalogSelection:   adminGetCycleCatalogSelection,
+      adminSetCycleCatalogSelection:   adminSetCycleCatalogSelection,
+
       // Setup
       setupDataStore:       setupDataStore,
+      setupMissingSheets:   setupMissingSheets,
       setDataSpreadsheetId: function(p) { return setDataSpreadsheetId(p.id); }
     };
 

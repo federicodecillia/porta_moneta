@@ -1,0 +1,333 @@
+<script>
+/* ───────────────────────────────────────────
+   ComponentAdminSuppliers — Gestione fornitori
+   ─────────────────────────────────────────── */
+
+PM.components.adminSuppliers = {
+
+  _expanded: {},  // { supplier_id: bool }
+  _filter: '',
+  _allSuppliers: [],
+
+  render: function(container) {
+    PM.showLoading(container);
+    var self = PM.components.adminSuppliers;
+    self._container = container;
+
+    PM.api('adminGetSuppliers')
+      .then(function(suppliers) {
+        self._allSuppliers = suppliers;
+        self._renderList();
+      })
+      .catch(function(err) {
+        PM.html(container,
+          '<div style="text-align:center;padding:40px 0;">' +
+          '<h2>Errore di caricamento</h2>' +
+          '<p class="text-muted mt-8">' + PM._esc(err.message) + '</p>' +
+          '<button class="btn btn-primary mt-16" onclick="PM.components.adminSuppliers.render(\'admin-suppliers-panel\')">Riprova</button></div>');
+      });
+  },
+
+  _renderList: function() {
+    var self = PM.components.adminSuppliers;
+    var suppliers = self._allSuppliers;
+    var q = (self._filter || '').trim().toLowerCase();
+    var filtered = q
+      ? suppliers.filter(function(s) { return (s.name || '').toLowerCase().indexOf(q) !== -1; })
+      : suppliers;
+
+    var html = '';
+
+        // Form nuovo fornitore
+        html +=
+          '<h2 class="mb-8">Aggiungi fornitore</h2>' +
+          '<div class="card">' +
+            '<div style="display:grid;grid-template-columns:1fr 1fr;gap:var(--sp-3);">' +
+              '<div class="form-group">' +
+                '<label class="form-label">Nome *</label>' +
+                '<input class="form-input" id="sup-name" placeholder="Es. Fabio">' +
+              '</div>' +
+              '<div class="form-group">' +
+                '<label class="form-label">Categoria</label>' +
+                '<select class="form-select" id="sup-category">' +
+                  '<option value="">— Seleziona —</option>' +
+                  '<option value="Frutta e verdura">Frutta e verdura</option>' +
+                  '<option value="Latticini">Latticini</option>' +
+                  '<option value="Carni">Carni</option>' +
+                  '<option value="Dispensa">Dispensa</option>' +
+                  '<option value="Bevande e condimenti">Bevande e condimenti</option>' +
+                  '<option value="Uova">Uova</option>' +
+                  '<option value="Igiene e casa">Igiene e casa</option>' +
+                  '<option value="Vari">Vari</option>' +
+                '</select>' +
+              '</div>' +
+              '<div class="form-group">' +
+                '<label class="form-label">Referente</label>' +
+                '<input class="form-input" id="sup-contact" placeholder="Nome referente">' +
+              '</div>' +
+              '<div class="form-group">' +
+                '<label class="form-label">Telefono</label>' +
+                '<input class="form-input" id="sup-phone" placeholder="">' +
+              '</div>' +
+              '<div class="form-group">' +
+                '<label class="form-label">Email</label>' +
+                '<input class="form-input" id="sup-email" type="email" placeholder="">' +
+              '</div>' +
+              '<div class="form-group">' +
+                '<label class="form-label">Indirizzo</label>' +
+                '<input class="form-input" id="sup-address" placeholder="">' +
+              '</div>' +
+            '</div>' +
+            '<button class="btn btn-primary btn-block" onclick="PM.components.adminSuppliers.addSupplier()">Aggiungi fornitore</button>' +
+          '</div>';
+
+    // Filtro per nome
+    html +=
+      '<h2 class="mt-16 mb-8">Fornitori (' + filtered.length + (q ? '/' + suppliers.length : '') + ')</h2>' +
+      '<div class="card" style="padding:10px 12px;margin-bottom:8px;">' +
+        '<input class="form-input" id="sup-filter" placeholder="Filtra per nome..." value="' + PM._esc(self._filter) + '" oninput="PM.components.adminSuppliers.onFilterInput(this.value)">' +
+      '</div>';
+
+    // Raggruppa per macro_category
+    var byCategory = {};
+    var catOrder = [];
+    filtered.forEach(function(s) {
+      var cat = s.macro_category || 'Altro';
+      if (!byCategory[cat]) { byCategory[cat] = []; catOrder.push(cat); }
+      byCategory[cat].push(s);
+    });
+
+    if (!suppliers.length) {
+      html += '<div class="card"><div class="text-muted">Nessun fornitore ancora. Aggiungine uno sopra.</div></div>';
+    } else if (!filtered.length) {
+      html += '<div class="card"><div class="text-muted">Nessun fornitore corrisponde al filtro.</div></div>';
+    }
+
+    catOrder.forEach(function(cat) {
+      html += '<div class="category-header mt-12">' + PM._esc(cat) + '</div>';
+      byCategory[cat].forEach(function(s) {
+        html += self._renderSupplierRow(s);
+      });
+    });
+
+    PM.html(self._container, html);
+
+    // Mantieni focus/cursor sul filtro dopo re-render
+    var filterEl = document.getElementById('sup-filter');
+    if (filterEl && q) {
+      filterEl.focus();
+      var len = filterEl.value.length;
+      filterEl.setSelectionRange(len, len);
+    }
+  },
+
+  onFilterInput: function(value) {
+    PM.components.adminSuppliers._filter = value;
+    PM.components.adminSuppliers._renderList();
+  },
+
+  _renderSupplierRow: function(s) {
+    var self = PM.components.adminSuppliers;
+    var isExpanded = self._expanded[s.supplier_id];
+    var sid = PM._esc(s.supplier_id);
+    var active = String(s.active) !== 'false';
+
+    var categories = ['Frutta e verdura','Latticini','Carni','Dispensa','Bevande e condimenti','Uova','Igiene e casa','Vari'];
+    var catOptions = '';
+    categories.forEach(function(c) {
+      catOptions += '<option value="' + PM._esc(c) + '"' + (s.macro_category === c ? ' selected' : '') + '>' + PM._esc(c) + '</option>';
+    });
+    if (s.macro_category && categories.indexOf(s.macro_category) === -1) {
+      catOptions += '<option value="' + PM._esc(s.macro_category) + '" selected>' + PM._esc(s.macro_category) + '</option>';
+    }
+
+    var html =
+      '<div class="card" style="margin-bottom:6px;">' +
+        '<div style="display:flex;align-items:center;gap:var(--sp-3);cursor:pointer;" ' +
+          'onclick="PM.components.adminSuppliers.toggleExpand(\'' + sid + '\')">' +
+          '<div style="flex:1;">' +
+            '<div style="font-weight:600;">' + PM._esc(s.name) + (active ? '' : ' <span class="badge badge-closed">Inattivo</span>') + '</div>' +
+            (s.contact_name ? '<div class="text-muted text-sm">Ref: ' + PM._esc(s.contact_name) + '</div>' : '') +
+            (s.phone || s.email
+              ? '<div class="text-muted text-sm">' + (s.phone ? PM._esc(s.phone) + ' ' : '') + (s.email ? PM._esc(s.email) : '') + '</div>'
+              : '') +
+          '</div>' +
+          '<span style="color:var(--text-4);font-size:1.2rem;">' + (isExpanded ? '▲' : '▼') + '</span>' +
+        '</div>' +
+        '<div id="sup-detail-' + sid + '" style="' + (isExpanded ? '' : 'display:none;') + 'margin-top:var(--sp-3);">' +
+          // Form anagrafica editabile
+          '<div style="border:1px solid var(--border);border-radius:8px;padding:var(--sp-3);margin-bottom:var(--sp-3);">' +
+            '<div class="text-muted text-sm mb-8" style="font-weight:600;">Anagrafica</div>' +
+            '<div style="display:grid;grid-template-columns:1fr 1fr;gap:var(--sp-2);">' +
+              '<div class="form-group">' +
+                '<label class="form-label">Nome</label>' +
+                '<input class="form-input" id="sup-edit-name-' + sid + '" value="' + PM._esc(s.name || '') + '">' +
+              '</div>' +
+              '<div class="form-group">' +
+                '<label class="form-label">Macro-categoria</label>' +
+                '<select class="form-select" id="sup-edit-cat-' + sid + '">' +
+                  '<option value="">— Seleziona —</option>' + catOptions +
+                '</select>' +
+              '</div>' +
+              '<div class="form-group">' +
+                '<label class="form-label">Referente</label>' +
+                '<input class="form-input" id="sup-edit-contact-' + sid + '" value="' + PM._esc(s.contact_name || '') + '">' +
+              '</div>' +
+              '<div class="form-group">' +
+                '<label class="form-label">Telefono</label>' +
+                '<input class="form-input" id="sup-edit-phone-' + sid + '" value="' + PM._esc(s.phone || '') + '">' +
+              '</div>' +
+              '<div class="form-group">' +
+                '<label class="form-label">Email</label>' +
+                '<input class="form-input" id="sup-edit-email-' + sid + '" type="email" value="' + PM._esc(s.email || '') + '">' +
+              '</div>' +
+              '<div class="form-group">' +
+                '<label class="form-label">Indirizzo</label>' +
+                '<input class="form-input" id="sup-edit-address-' + sid + '" value="' + PM._esc(s.address || '') + '">' +
+              '</div>' +
+            '</div>' +
+            '<div class="form-group">' +
+              '<label class="form-label">Note</label>' +
+              '<textarea class="form-textarea" id="sup-edit-notes-' + sid + '" rows="2">' + PM._esc(s.notes || '') + '</textarea>' +
+            '</div>' +
+            '<div style="display:flex;align-items:center;gap:var(--sp-2);flex-wrap:wrap;">' +
+              '<label style="display:flex;align-items:center;gap:6px;font-size:.9rem;">' +
+                '<input type="checkbox" id="sup-edit-active-' + sid + '"' + (active ? ' checked' : '') + '> Attivo' +
+              '</label>' +
+              '<div style="flex:1;"></div>' +
+              '<button class="btn btn-outline btn-sm" style="color:var(--danger);border-color:var(--danger);" ' +
+                'title="Elimina definitivamente il fornitore e il suo catalogo" ' +
+                'onclick="PM.components.adminSuppliers.deleteSupplier(\'' + sid + '\',\'' + PM._esc(s.name).replace(/\x27/g,"\\\x27") + '\')">Elimina</button>' +
+              '<button class="btn btn-primary btn-sm" onclick="PM.components.adminSuppliers.saveSupplier(\'' + sid + '\')">Salva modifiche</button>' +
+            '</div>' +
+          '</div>' +
+
+          // Catalogo (read-only qui; CRUD completa in tab Prodotti)
+          '<div class="text-muted text-sm mb-8" style="font-weight:600;">Catalogo prodotti</div>' +
+          '<div id="sup-catalog-' + sid + '"><div class="text-muted text-sm">Caricamento catalogo...</div></div>' +
+          '<div class="text-muted text-sm mt-8" style="font-style:italic;">Aggiungi, modifica o rimuovi prodotti nel tab <strong>Prodotti</strong>.</div>' +
+        '</div>' +
+      '</div>';
+
+    if (isExpanded) {
+      setTimeout(function() { self._loadCatalog(s.supplier_id); }, 0);
+    }
+
+    return html;
+  },
+
+  deleteSupplier: function(supplierId, name) {
+    PM.confirm('Elimina fornitore',
+      'Eliminare definitivamente "' + name + '" e tutto il suo catalogo? Questa operazione non è reversibile. Se il fornitore è associato a ordini esistenti, verrai bloccato.'
+    ).then(function(ok) {
+      if (!ok) return;
+      PM.api('adminDeleteSupplier', { supplier_id: supplierId })
+        .then(function() {
+          PM.toast('Fornitore eliminato');
+          PM.components.adminSuppliers.render('admin-suppliers-panel');
+        })
+        .catch(function(err) { PM.toast(err.message, 'error'); });
+    });
+  },
+
+  saveSupplier: function(supplierId) {
+    var g = function(field) {
+      var el = document.getElementById('sup-edit-' + field + '-' + supplierId);
+      return el ? (el.value || '').trim() : '';
+    };
+    var activeEl = document.getElementById('sup-edit-active-' + supplierId);
+    var payload = {
+      supplier_id:    supplierId,
+      name:           g('name'),
+      macro_category: g('cat'),
+      contact_name:   g('contact'),
+      phone:          g('phone'),
+      email:          g('email'),
+      address:        g('address'),
+      notes:          g('notes'),
+      active:         activeEl ? activeEl.checked : true
+    };
+    if (!payload.name) { PM.toast('Il nome è obbligatorio', 'error'); return; }
+
+    PM.api('adminUpsertSupplier', payload)
+      .then(function() {
+        PM.toast('Fornitore aggiornato');
+        PM.components.adminSuppliers.render('admin-suppliers-panel');
+      })
+      .catch(function(err) { PM.toast(err.message, 'error'); });
+  },
+
+  toggleExpand: function(supplierId) {
+    var self = PM.components.adminSuppliers;
+    self._expanded[supplierId] = !self._expanded[supplierId];
+    var detail = document.getElementById('sup-detail-' + supplierId);
+    if (!detail) return;
+    if (self._expanded[supplierId]) {
+      detail.style.display = '';
+      self._loadCatalog(supplierId);
+    } else {
+      detail.style.display = 'none';
+    }
+  },
+
+  _loadCatalog: function(supplierId) {
+    var container = document.getElementById('sup-catalog-' + supplierId);
+    if (!container) return;
+    PM.api('adminGetCatalog', { supplier_id: supplierId })
+      .then(function(products) {
+        if (!products.length) {
+          container.innerHTML = '<div class="text-muted text-sm">Catalogo vuoto.</div>';
+          return;
+        }
+        var byCategory = {};
+        var catOrder = [];
+        products.forEach(function(p) {
+          var c = p.category || 'Altro';
+          if (!byCategory[c]) { byCategory[c] = []; catOrder.push(c); }
+          byCategory[c].push(p);
+        });
+
+        var html = '';
+        catOrder.forEach(function(cat) {
+          html += '<div class="text-muted text-sm" style="font-weight:600;margin:6px 0 2px;">' + PM._esc(cat) + ' (' + byCategory[cat].length + ')</div>';
+          byCategory[cat].forEach(function(p) {
+            var price = toNumber_(p.unit_price);
+            html += '<div style="display:flex;align-items:center;gap:8px;padding:4px 0;border-bottom:1px solid var(--border);">' +
+              '<span style="flex:1;font-size:.85rem;">' + PM._esc(p.name) + (p.variant ? ' · ' + PM._esc(p.variant) : '') + (p.format ? ' · ' + PM._esc(p.format) : '') + '</span>' +
+              '<span style="font-size:.85rem;font-weight:600;min-width:60px;text-align:right;">' +
+                (price > 0 ? PM.formatCurrency(price) : '<span class="text-muted">—</span>') +
+              '</span>' +
+            '</div>';
+          });
+        });
+        container.innerHTML = html;
+      })
+      .catch(function() {
+        container.innerHTML = '<div class="text-muted text-sm">Errore caricamento catalogo.</div>';
+      });
+  },
+
+  addSupplier: function() {
+    var name     = document.getElementById('sup-name').value.trim();
+    var category = document.getElementById('sup-category').value;
+    var contact  = document.getElementById('sup-contact').value.trim();
+    var phone    = document.getElementById('sup-phone').value.trim();
+    var email    = document.getElementById('sup-email').value.trim();
+    var address  = document.getElementById('sup-address').value.trim();
+    if (!name) { PM.toast('Inserisci il nome del fornitore', 'error'); return; }
+
+    PM.api('adminUpsertSupplier', { name: name, macro_category: category, contact_name: contact, phone: phone, email: email, address: address })
+      .then(function() {
+        PM.toast('Fornitore aggiunto');
+        PM.components.adminSuppliers.render('admin-suppliers-panel');
+      })
+      .catch(function(err) { PM.toast(err.message, 'error'); });
+  },
+
+};
+
+function toNumber_(v) {
+  var n = parseFloat(String(v).replace(',', '.'));
+  return isNaN(n) ? 0 : n;
+}
+</script>

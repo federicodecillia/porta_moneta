@@ -1,0 +1,190 @@
+<script>
+/* ───────────────────────────────────────────
+   ComponentOrders — Tre tab: Aperti, Storico ordini, Storico movimenti
+   ─────────────────────────────────────────── */
+
+PM.components.orders = {
+
+  activeSubtab: 'aperti',
+  _loading: {},        // { aperti: bool, orders: bool, ledger: bool }
+  _cache: {},          // { orders: [...], ledger: [...] }
+
+  load: function() {
+    var self = PM.components.orders;
+    if (!document.getElementById('orders-subnav')) {
+      var shell =
+        '<h1 class="mb-8">Ordini</h1>' +
+        '<div class="admin-tabs mb-16" id="orders-subnav">' +
+          '<div class="admin-tab active" data-stab="aperti" onclick="PM.components.orders.switchSubtab(\'aperti\')">Aperti</div>' +
+          '<div class="admin-tab" data-stab="orders" onclick="PM.components.orders.switchSubtab(\'orders\')">Storico ordini</div>' +
+          '<div class="admin-tab" data-stab="ledger" onclick="PM.components.orders.switchSubtab(\'ledger\')">Storico movimenti</div>' +
+        '</div>' +
+        '<div id="orders-aperti-panel" class="admin-panel active"></div>' +
+        '<div id="orders-orders-panel" class="admin-panel"></div>' +
+        '<div id="orders-ledger-panel" class="admin-panel"></div>';
+      PM.html('orders-content', shell);
+    }
+    self.switchSubtab(self.activeSubtab);
+  },
+
+  switchSubtab: function(tab) {
+    var self = PM.components.orders;
+    self.activeSubtab = tab;
+
+    var tabs = document.querySelectorAll('#orders-subnav .admin-tab');
+    for (var i = 0; i < tabs.length; i++) {
+      tabs[i].className = 'admin-tab' + (tabs[i].dataset.stab === tab ? ' active' : '');
+    }
+    ['aperti','orders','ledger'].forEach(function(t) {
+      var p = document.getElementById('orders-' + t + '-panel');
+      if (p) p.className = 'admin-panel' + (t === tab ? ' active' : '');
+    });
+
+    var footer = document.getElementById('sticky-footer');
+    if (footer) footer.classList.toggle('visible', tab === 'aperti');
+
+    if (tab === 'aperti') {
+      if (self._loading.aperti) return;
+      self._loading.aperti = true;
+      PM.components.orderForm.load('orders-aperti-panel');
+      // orderForm's async resets _loading via callback below (see bottom)
+      setTimeout(function() { self._loading.aperti = false; }, 50);
+    } else if (tab === 'orders') {
+      self._loadOrdersHistory();
+    } else if (tab === 'ledger') {
+      self._loadLedgerHistory();
+    }
+  },
+
+  _loadOrdersHistory: function() {
+    var self = PM.components.orders;
+    if (self._loading.orders) return;
+    if (self._cache.orders) { self._renderOrders(self._cache.orders); return; }
+
+    self._loading.orders = true;
+    PM.showLoading('orders-orders-panel');
+    PM.api('getMyOrderHistory').then(function(orders) {
+      self._cache.orders = orders;
+      self._renderOrders(orders);
+    }).catch(function(err) {
+      PM.html('orders-orders-panel',
+        '<div style="text-align:center;padding:40px 0;">' +
+        '<h2>Errore di caricamento</h2>' +
+        '<p class="text-muted mt-8">' + PM._esc(err.message) + '</p>' +
+        '<button class="btn btn-primary mt-16" onclick="PM.components.orders._retryOrders()">Riprova</button></div>');
+    }).finally(function() { self._loading.orders = false; });
+  },
+
+  _retryOrders: function() {
+    PM.components.orders._cache.orders = null;
+    PM.components.orders._loadOrdersHistory();
+  },
+
+  _renderOrders: function(orders) {
+    if (!orders || !orders.length) {
+      PM.html('orders-orders-panel',
+        '<div class="empty-state"><span class="empty-state-icon">&#128722;</span>' +
+        '<h2>Nessun ordine</h2><p>I tuoi ordini appariranno qui.</p></div>');
+      return;
+    }
+
+    var html = '';
+    orders.forEach(function(o, idx) {
+      html +=
+        '<div class="history-item" id="hord-' + idx + '" onclick="PM.components.orders.toggleOrder(' + idx + ',\'' + PM._esc(o.cycle_id) + '\')">' +
+          '<div class="history-row">' +
+            '<div>' +
+              '<div style="font-weight:600;">' + PM._esc(o.title) + '</div>' +
+              '<div class="text-muted text-sm">' + PM.formatDate(o.pickup_date) + '</div>' +
+            '</div>' +
+            '<div style="display:flex;align-items:center;gap:4px;">' +
+              '<span style="font-weight:700;">' + PM.formatCurrency(o.order_total) + '</span>' +
+              '<span class="history-chevron">&#9656;</span>' +
+            '</div>' +
+          '</div>' +
+          '<div class="history-detail" id="hdet-' + idx + '"></div>' +
+        '</div>';
+    });
+    PM.html('orders-orders-panel', html);
+  },
+
+  toggleOrder: function(idx, cycleId) {
+    var item = document.getElementById('hord-' + idx);
+    var det  = document.getElementById('hdet-' + idx);
+    if (!item || !det) return;
+    if (item.classList.contains('expanded')) {
+      item.classList.remove('expanded');
+      return;
+    }
+    item.classList.add('expanded');
+    if (!det.innerHTML) {
+      det.innerHTML = '<div class="loading"><div class="spinner"></div></div>';
+      PM.api('getMyOrderDetail', { cycle_id: cycleId })
+        .then(function(data) {
+          var h = '<table><thead><tr><th>Prodotto</th><th class="text-right">Qtà</th><th class="text-right">Totale</th></tr></thead><tbody>';
+          data.lines.forEach(function(l) {
+            var name = l.product_name + (l.variant ? ' ' + l.variant : '');
+            h += '<tr><td>' + PM._esc(name) + '</td><td class="text-right">' + l.quantity + '</td><td class="text-right">' + PM.formatCurrency(l.line_total) + '</td></tr>';
+          });
+          h += '</tbody></table>';
+          det.innerHTML = h;
+        })
+        .catch(function(err) { det.innerHTML = '<div class="text-muted">' + err.message + '</div>'; });
+    }
+  },
+
+  _loadLedgerHistory: function() {
+    var self = PM.components.orders;
+    if (self._loading.ledger) return;
+    if (self._cache.ledger) { self._renderLedger(self._cache.ledger); return; }
+
+    self._loading.ledger = true;
+    PM.showLoading('orders-ledger-panel');
+    PM.api('getMyLedger').then(function(ledger) {
+      self._cache.ledger = ledger;
+      self._renderLedger(ledger);
+    }).catch(function(err) {
+      PM.html('orders-ledger-panel',
+        '<div style="text-align:center;padding:40px 0;">' +
+        '<h2>Errore di caricamento</h2>' +
+        '<p class="text-muted mt-8">' + PM._esc(err.message) + '</p>' +
+        '<button class="btn btn-primary mt-16" onclick="PM.components.orders._retryLedger()">Riprova</button></div>');
+    }).finally(function() { self._loading.ledger = false; });
+  },
+
+  _retryLedger: function() {
+    PM.components.orders._cache.ledger = null;
+    PM.components.orders._loadLedgerHistory();
+  },
+
+  _renderLedger: function(ledger) {
+    if (!ledger || !ledger.length) {
+      PM.html('orders-ledger-panel',
+        '<div class="empty-state"><span class="empty-state-icon">&#128176;</span>' +
+        '<h2>Nessun movimento</h2><p>I tuoi movimenti contabili appariranno qui.</p></div>');
+      return;
+    }
+    var html = '';
+    ledger.forEach(function(e) {
+      var typeClass = e.type === 'topup' ? 'ledger-topup' : (e.type === 'order_charge' ? 'ledger-charge' : 'ledger-adjust');
+      var typeLabel = e.type === 'topup' ? 'Bonifico' : (e.type === 'order_charge' ? 'Ordine' : 'Rettifica');
+      var sign = e.amount >= 0 ? '+' : '';
+      html +=
+        '<div class="ledger-item">' +
+          '<div>' +
+            '<div class="ledger-type ' + typeClass + '">' + typeLabel + '</div>' +
+            '<div class="text-muted text-sm">' + PM.formatDate(e.entry_date) + '</div>' +
+            (e.note ? '<div class="text-sm">' + PM._esc(e.note) + '</div>' : '') +
+          '</div>' +
+          '<div style="font-weight:700;" class="' + typeClass + '">' + sign + PM.formatCurrency(e.amount) + '</div>' +
+        '</div>';
+    });
+    PM.html('orders-ledger-panel', html);
+  },
+
+  // Invalidate caches after save (called by orderForm)
+  invalidateCache: function() {
+    PM.components.orders._cache = {};
+  }
+};
+</script>
