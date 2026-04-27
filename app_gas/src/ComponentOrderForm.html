@@ -175,12 +175,11 @@ PM.components.orderForm = {
 
     var btn = document.getElementById('btn-save-order');
     var warn = document.getElementById('balance-warning');
-    var insufficient = afterBalance < 0;
-    if (btn) btn.disabled = insufficient || of.saving;
+    if (btn) btn.disabled = of.saving;
     if (warn) {
-      if (insufficient) {
+      if (afterBalance < 0) {
         warn.style.display = 'block';
-        warn.textContent = 'Saldo insufficiente: aggiungi un bonifico o riduci l\'ordine (mancano ' + PM.formatCurrency(-afterBalance) + ').';
+        warn.textContent = 'Attenzione: il saldo sarà negativo di ' + PM.formatCurrency(-afterBalance) + '. Ricordati di fare un bonifico.';
       } else {
         warn.style.display = 'none';
       }
@@ -190,18 +189,6 @@ PM.components.orderForm = {
   save: function() {
     var of = PM.components.orderForm;
     if (of.saving || !of.cycleId) return;
-
-    // Client-side guard: server re-asserts as last defense
-    var total = 0;
-    of.products.forEach(function(p) {
-      var qty = of.draft[p.product_id] || 0;
-      total += qty * p.unit_price;
-    });
-    var after = Math.round((of.balance - total) * 100) / 100;
-    if (after < 0) {
-      PM.toast('Saldo insufficiente: aggiungi un bonifico o riduci l\'ordine.', 'error');
-      return;
-    }
 
     of.saving = true;
 
@@ -218,7 +205,11 @@ PM.components.orderForm = {
 
     PM.api('saveMyOrder', { cycle_id: of.cycleId, lines: lines })
       .then(function(res) {
-        PM.toast('Ordine salvato');
+        if (res.balance_warning) {
+          PM.toast(res.balance_warning, 'warning');
+        } else {
+          PM.toast('Ordine salvato');
+        }
         btn.textContent = 'Salvato ✓';
         setTimeout(function() { btn.textContent = 'Salva ordine'; }, 2000);
         if (PM.components.orders && PM.components.orders.invalidateCache) {

@@ -28,7 +28,7 @@ function requireSession_(payload) {
     member = autoRegisterDomainUser_(email);
   }
 
-  assert_(member, 'Accesso non autorizzato. L\'email ' + email + ' non è registrata come socio.');
+  assert_(member, 'La tua email (' + email + ') non è ancora registrata. Contatta un amministratore per essere aggiunto come socio.');
   assert_(String(member.active) === 'true' || member.active === true,
     'Il tuo account è disattivato. Contatta un amministratore.');
   return member;

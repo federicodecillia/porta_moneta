@@ -78,7 +78,7 @@ var PM = {
   toast: function(message, type) {
     var t = document.getElementById('toast');
     t.textContent = message;
-    t.className = 'toast' + (type === 'error' ? ' toast-error' : '');
+    t.className = 'toast' + (type === 'error' ? ' toast-error' : type === 'warning' ? ' toast-warning' : '');
     // Force reflow
     void t.offsetWidth;
     t.classList.add('show');

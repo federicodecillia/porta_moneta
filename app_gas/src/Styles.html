@@ -55,11 +55,25 @@
   --shadow-up:     0 -2px 10px rgba(0,0,0,.04);
 
   /* Sizes */
+  --header-h: 44px;
   --nav-h:    60px;
   --sticky-h: 72px;
   --font:     'Inter', system-ui, -apple-system, sans-serif;
   --font-mono:'Geist Mono', ui-monospace, SFMono-Regular, monospace;
 }
+
+/* ── App header ── */
+.app-header {
+  position: fixed; top: 0; left: 0; right: 0;
+  height: var(--header-h);
+  background: rgba(255,255,255,0.94);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; justify-content: center;
+  z-index: 100;
+}
+.app-logo { height: 22px; width: auto; display: block; }
 
 /* ── Base ── */
 html { font-size: 16px; }
@@ -68,6 +82,7 @@ body {
   background: var(--surface);
   color: var(--text);
   -webkit-font-smoothing: antialiased;
+  padding-top: var(--header-h);
   padding-bottom: calc(var(--nav-h) + var(--sticky-h) + var(--sp-4));
   min-height: 100dvh;
   line-height: 1.5;
@@ -377,6 +392,7 @@ h2 {
   max-width: 90%; text-align: center;
 }
 .toast.toast-error { background: var(--danger); }
+.toast.toast-warning { background: #b45309; }
 .toast.show { transform: translateX(-50%) translateY(0); }
 
 /* ── Modal ── */

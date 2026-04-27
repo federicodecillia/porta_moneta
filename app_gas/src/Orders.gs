@@ -122,14 +122,14 @@ function saveMyOrder(payload) {
     });
   });
 
-  // Block se il saldo andrebbe sotto 0
   var balance = getMemberBalance_(member.member_id);
   var roundedTotal = Math.round(orderTotal * 100) / 100;
-  assert_(
-    balance - roundedTotal >= -0.0001,
-    'Saldo insufficiente. Saldo attuale: €' + balance.toFixed(2) +
-      ', totale ordine: €' + roundedTotal.toFixed(2) + '.'
-  );
+  var balanceWarning = null;
+  if (balance - roundedTotal < -0.0001) {
+    balanceWarning = 'Saldo insufficiente: hai €' + balance.toFixed(2) +
+      ' ma l\'ordine vale €' + roundedTotal.toFixed(2) +
+      '. Il tuo saldo sarà negativo — ricordati di fare un bonifico.';
+  }
 
   // Riscrivi tutti gli ordini del ciclo (altri + nuovi miei)
   var allCycleOrders = othersOrders.concat(newLines);
@@ -144,9 +144,10 @@ function saveMyOrder(payload) {
     otherCycleOrders.concat(allCycleOrders));
 
   return {
-    saved:       true,
-    lines_count: newLines.length,
-    order_total: roundedTotal
+    saved:           true,
+    lines_count:     newLines.length,
+    order_total:     roundedTotal,
+    balance_warning: balanceWarning
   };
 }
 

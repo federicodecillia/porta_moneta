@@ -1,5 +1,5 @@
 /* ───────────────────────────────────────────
-   Test.gs — Utilità e diagnostica
+   Test.gs — Diagnostica e test automatici
    Eseguire dall'editor Apps Script
    ─────────────────────────────────────────── */
 
@@ -44,130 +44,214 @@ function runSmokeTest() {
 }
 
 /**
- * Aggiunge/aggiorna i soci fondamentali (admin + soci con email).
- * setupMembers()
+ * Test end-to-end completo con utente dedicato "Test User".
+ * Richiede: nessun ciclo aperto già esistente.
+ * Crea dati di test (ciclo, prodotti, ordine, saldo) per Test User visibile solo agli admin.
+ * runEndToEndTest()
  */
-function setupMembers() {
-  var members = [
-    { full_name: 'Manuel Rizzo',      email: 'manuel.rizzo@portamoneta.org',      role: 'admin',  active: true },
-    { full_name: 'Nadia Di Simine',   email: 'nadia.disimine@portamoneta.org',    role: 'admin',  active: true },
-    { full_name: 'Maria Malacrino',   email: 'maria.malacrino@portamoneta.org',   role: 'admin',  active: true },
-    { full_name: 'Maria Fois',        email: 'maria.fois@portamoneta.org',        role: 'attivo', active: true }
-  ];
+function runEndToEndTest() {
+  Logger.log('═══ END-TO-END TEST ═══');
+  var pass = 0, fail = 0;
 
-  Logger.log('═══ SETUP SOCI ═══');
-  members.forEach(function(m) {
-    var result = callApi('adminUpsertMember', m);
-    Logger.log((result.ok ? '✓' : '✗') + ' ' + m.full_name + ' (' + m.role + ')' +
-      (result.ok ? '' : ' — ' + result.error.message));
-  });
-
-  var all = callApi('adminGetMembers', {});
-  if (all.ok) {
-    Logger.log('──────────────────────────');
-    all.result.forEach(function(m) {
-      Logger.log('  ' + m.full_name + ' | ' + m.email + ' | ' + m.role);
-    });
+  function check(label, condition, detail) {
+    if (condition) {
+      Logger.log('✓ ' + label);
+      pass++;
+    } else {
+      Logger.log('✗ ' + label + (detail ? ' — ' + detail : ''));
+      fail++;
+    }
   }
-}
 
-/**
- * Crea tutti i fornitori e il catalogo prodotti di Fabio.
- * Eseguire una volta: setupSuppliersData()
- */
-function setupSuppliersData() {
-  Logger.log('═══ SETUP FORNITORI ═══');
+  function abort(reason) {
+    Logger.log('⚠ ABORT: ' + reason);
+    Logger.log('PASS: ' + pass + ' | FAIL: ' + fail + ' (interrotto)');
+  }
 
-  // ── Fabio (frutta e verdura settimanale) ──
-  var fabioResult = callApi('adminUpsertSupplier', {
-    name: 'Fabio', macro_category: 'Frutta e verdura',
-    contact_name: 'Fabio', notes: 'Fornitore principale settimanale di frutta e verdura'
+  // ── 1. Ensure Test User ──────────────────────────────────────────────
+  var TEST_EMAIL = 'test@portamoneta.org';
+  var r1 = callApi('adminUpsertMember', {
+    full_name: 'Test User', email: TEST_EMAIL, role: APP.ROLE.ATTIVO, active: true
   });
-  Logger.log((fabioResult.ok ? '✓' : '✗') + ' Fabio');
-  if (!fabioResult.ok) { Logger.log('Errore: ' + fabioResult.error.message); return; }
-
-  // Trova il supplier_id di Fabio
-  var allSuppliers = readSheetObjects_(APP.SHEETS.SUPPLIERS);
-  var fabio = allSuppliers[allSuppliers.length - 1]; // appena creato = ultimo
-
-  var frutta   = ['Kiwi','Mela'];
-  var verdura  = ['Aglio','Aglio serpentino','Barbabietola','Batata','Carota','Cavolfiore','Cavolo',
-                  'Cipolla','Cipollotto','Finocchio','Ortica','Patata','Peperone','Porro',
-                  'Ramolaccio','Rapa','Scalogno','Topinambur','Zucca'];
-  var insalate = ['Bieta','Cicoria','Cima di rapa','Radicchio','Scarola','Spinacio',
-                  'Valeriana','Vasetto di basilico viola'];
-
-  var products = [];
-  frutta.forEach(function(n)   { products.push({ name: n, category: 'Frutta' }); });
-  verdura.forEach(function(n)  { products.push({ name: n, category: 'Verdura' }); });
-  insalate.forEach(function(n) { products.push({ name: n, category: 'Insalate' }); });
-
-  var ok = 0;
-  products.forEach(function(p) {
-    var r = callApi('adminUpsertCatalogProduct', { supplier_id: fabio.supplier_id, name: p.name, category: p.category });
-    if (r.ok) ok++;
-    else Logger.log('✗ ' + p.name + ': ' + r.error.message);
-  });
-  Logger.log('✓ Fabio: ' + ok + '/' + products.length + ' prodotti nel catalogo');
-
-  // ── Altri fornitori (senza prodotti) ──
-  var others = [
-    { name: 'Latteria sociale del Fornacione', macro_category: 'Latticini',             contact_name: 'Chiara Riva' },
-    { name: 'Girolomoni - Cooperativa Agricola', macro_category: 'Dispensa',            contact_name: 'Giuliana Miglierina' },
-    { name: 'Molino Agostini',                 macro_category: 'Dispensa',              contact_name: 'Susanna Villa',    phone: '0734 938166', email: 'info@molinoagostini.it', address: 'Contrada San Pietro, 60 - Massignano (AP)' },
-    { name: "Terra d'Arcoiris",                macro_category: 'Bevande e condimenti',  contact_name: 'Thomas Loesch',    email: 'info@terradarcoiris.com', address: 'Strada della Maglianella, 5 - Chianciano Terme (SI)' },
-    { name: 'Hosteria di Villalba',            macro_category: 'Bevande e condimenti',  contact_name: 'Silvia' },
-    { name: 'Le Galline Felici',               macro_category: 'Frutta e verdura',      contact_name: 'Eva Veroli',       notes: 'Consorzio Siciliano — Agrumi' },
-    { name: 'Roncaglia Serabial',              macro_category: 'Frutta e verdura',      email: 'info@roncagliabio.com',   address: 'Str. Roncaglia 25, Bricherasio (TO)', notes: 'Mele' },
-    { name: 'Azienda Agricola Rampelli',       macro_category: 'Frutta e verdura',      address: 'Spormaggiore, Val di Non (TN)', notes: 'Mele' },
-    { name: 'Agrimi Bio',                      macro_category: 'Frutta e verdura',      address: 'Via per Castellazzo 16, Basiano (MI)', notes: 'Soc. Coop. Sociale' },
-    { name: 'Cascina Biblioteca',              macro_category: 'Vari',                  contact_name: 'Maria Malacrinò' },
-    { name: 'Agripiccola',                     macro_category: 'Carni',                 contact_name: 'Marilù di Mauro',  email: 'info@agripiccola.com', address: 'Strada Provinciale 94/16, Casletto (BG)', notes: 'Società agricola' },
-    { name: 'Azienda Agricola Pian du Lares',  macro_category: 'Latticini',             contact_name: 'Matteo Spertini',  phone: '0332 558178', email: 'piandulares@gmail.com', address: 'Via Petrolo, 18 - Veddasca (VA)', notes: 'Formaggi vaccino e capra' },
-    { name: 'Azienda Agricola Zaffaroni',      macro_category: 'Latticini',             contact_name: 'Silvia Ballabio',  address: 'Via A. Grandi 100, Mozzate (CO)', notes: 'Formaggi e carne' },
-    { name: 'Cascina Nibai/Biblioteca',        macro_category: 'Uova' },
-    { name: 'La Saponaria',                    macro_category: 'Igiene e casa' },
-    { name: 'Officina Naturae',                macro_category: 'Igiene e casa' },
-    { name: 'Teanatura',                       macro_category: 'Igiene e casa' }
-  ];
-
-  others.forEach(function(s) {
-    var r = callApi('adminUpsertSupplier', s);
-    Logger.log((r.ok ? '✓' : '✗') + ' ' + s.name);
-  });
-
-  Logger.log('✓ Setup fornitori completato. Totale: ' + (1 + others.length) + ' fornitori.');
-}
-
-/**
- * Riepilogo completo di tutti i dati nel foglio.
- * listAllData()
- */
-function listAllData() {
-  Logger.log('═══ RIEPILOGO DATI ═══');
-
-  var cycles = readSheetObjects_(APP.SHEETS.ORDER_CYCLES);
-  Logger.log('\n── Cicli (' + cycles.length + ') ──');
-  cycles.forEach(function(c) {
-    Logger.log('  ' + c.title + ' | ' + c.status + ' | ' + c.pickup_date + ' | ' + c.cycle_id);
-  });
+  check('Upsert Test User', r1.ok, r1.ok ? null : (r1.error && r1.error.message));
+  if (!r1.ok) { abort('adminUpsertMember fallito'); return; }
 
   var members = readSheetObjects_(APP.SHEETS.MEMBERS);
-  Logger.log('\n── Soci (' + members.length + ') ──');
-  members.forEach(function(m) {
-    var bal = getMemberBalance_(m.member_id);
-    Logger.log('  ' + m.full_name + ' | ' + (m.email || '—') + ' | ' + m.role + ' | attivo:' + m.active + ' | saldo:€' + bal);
+  var testUser = null;
+  for (var i = 0; i < members.length; i++) {
+    if (normalizeEmail_(members[i].email) === TEST_EMAIL) { testUser = members[i]; break; }
+  }
+  check('Test User trovato nel foglio', !!testUser);
+  if (!testUser) { abort('Test User non trovato'); return; }
+
+  // ── 2. Topup ─────────────────────────────────────────────────────────
+  var balBefore = getMemberBalance_(testUser.member_id);
+  var TOPUP_AMOUNT = 50;
+  var r2 = callApi('adminRecordTopup', {
+    member_id: testUser.member_id,
+    amount: TOPUP_AMOUNT,
+    notes: '[TEST] Ricarica automatica test'
   });
+  check('Topup €' + TOPUP_AMOUNT + ' Test User', r2.ok, r2.ok ? null : (r2.error && r2.error.message));
 
-  var products = readSheetObjects_(APP.SHEETS.PRODUCTS);
-  Logger.log('\n── Prodotti: ' + products.length + ' righe ──');
+  var balAfterTopup = getMemberBalance_(testUser.member_id);
+  check('Saldo aumentato di €' + TOPUP_AMOUNT,
+    Math.abs(balAfterTopup - (balBefore + TOPUP_AMOUNT)) < 0.01,
+    'prima:€' + balBefore + ' dopo:€' + balAfterTopup + ' atteso:€' + (balBefore + TOPUP_AMOUNT));
 
-  var orders = readSheetObjects_(APP.SHEETS.ORDERS);
-  Logger.log('── Ordini: ' + orders.length + ' righe ──');
+  // ── 3. Verifica nessun ciclo aperto ──────────────────────────────────
+  var existing = getOpenCycle_();
+  if (existing) {
+    abort('Esiste già un ciclo aperto: "' + existing.title + '". Chiudilo prima di eseguire il test completo.');
+    Logger.log('PASS: ' + pass + ' | FAIL: ' + fail);
+    return;
+  }
+  check('Nessun ciclo aperto (prerequisito)', true);
 
-  var ledger = readSheetObjects_(APP.SHEETS.LEDGER_ENTRIES);
-  var types = {};
-  ledger.forEach(function(e) { types[e.type] = (types[e.type] || 0) + 1; });
-  Logger.log('── Movimenti: ' + ledger.length + ' | ' +
-    Object.keys(types).map(function(t) { return t + ':' + types[t]; }).join(', '));
+  // ── 4. Crea fornitore test ────────────────────────────────────────────
+  var r4 = callApi('adminUpsertSupplier', {
+    name: '[TEST] Fornitore Test',
+    macro_category: 'Test',
+    notes: 'Fornitore fittizio per test automatici'
+  });
+  check('Crea fornitore test', r4.ok, r4.ok ? null : (r4.error && r4.error.message));
+  if (!r4.ok) { abort('adminUpsertSupplier fallito'); return; }
+
+  var suppliers = readSheetObjects_(APP.SHEETS.SUPPLIERS);
+  var testSupplier = null;
+  for (var s = suppliers.length - 1; s >= 0; s--) {
+    if (suppliers[s].name === '[TEST] Fornitore Test') { testSupplier = suppliers[s]; break; }
+  }
+  check('Fornitore test trovato', !!testSupplier);
+  if (!testSupplier) { abort('Fornitore test non trovato'); return; }
+
+  // ── 5. Crea ciclo test ────────────────────────────────────────────────
+  var closeDate = new Date();
+  closeDate.setDate(closeDate.getDate() + 1);
+  var r5 = callApi('adminCreateCycle', {
+    title: '[TEST] Ciclo automatico',
+    order_close_at: closeDate.toISOString(),
+    pickup_date: closeDate.toISOString().slice(0, 10),
+    supplier_id: testSupplier.supplier_id,
+    access_level: APP.ACCESS_LEVEL.ATTIVI
+  });
+  check('Crea ciclo test', r5.ok, r5.ok ? null : (r5.error && r5.error.message));
+  if (!r5.ok) { abort('adminCreateCycle fallito'); return; }
+
+  var testCycle = getOpenCycle_();
+  check('Ciclo test è aperto', !!testCycle && testCycle.title === '[TEST] Ciclo automatico');
+  if (!testCycle) { abort('Ciclo test non trovato come aperto'); return; }
+
+  // ── 6. Aggiungi prodotti test al ciclo ───────────────────────────────
+  var r6 = callApi('adminUpdateProducts', {
+    cycle_id: testCycle.cycle_id,
+    products: [
+      { name: 'Mela Test', variant: 'Biologica', format: '1kg', unit_price: 3.00, category: 'Frutta' },
+      { name: 'Patata Test', variant: '', format: '500g', unit_price: 2.00, category: 'Verdura' }
+    ]
+  });
+  check('Carica prodotti test', r6.ok, r6.ok ? null : (r6.error && r6.error.message));
+
+  var testProducts = getCycleProducts_(testCycle.cycle_id);
+  check('Prodotti nel ciclo', testProducts.length === 2, 'trovati: ' + testProducts.length);
+  if (testProducts.length === 0) { abort('Nessun prodotto nel ciclo test'); return; }
+
+  // ── 7. Inserisci ordine per Test User (server-side, bypass session) ──
+  var now = nowIso_();
+  var orderLines = [];
+  var orderTotal = 0;
+  testProducts.forEach(function(p) {
+    var qty = 2;
+    var price = toNumber_(p.unit_price);
+    var lineTotal = Math.round(qty * price * 100) / 100;
+    orderTotal += lineTotal;
+    orderLines.push({
+      order_line_id:       generateId_('ord'),
+      cycle_id:            testCycle.cycle_id,
+      member_id:           testUser.member_id,
+      product_id:          p.product_id,
+      quantity:            qty,
+      unit_price_snapshot: price,
+      line_total:          lineTotal,
+      updated_at:          now
+    });
+  });
+  orderTotal = Math.round(orderTotal * 100) / 100;
+
+  var allOrders = readSheetObjects_(APP.SHEETS.ORDERS);
+  var filteredOrders = allOrders.filter(function(o) {
+    return !(o.cycle_id === testCycle.cycle_id && o.member_id === testUser.member_id);
+  });
+  overwriteSheetObjects_(APP.SHEETS.ORDERS, APP.HEADERS.orders, filteredOrders.concat(orderLines));
+
+  var savedLines = readSheetObjectsWhere_(APP.SHEETS.ORDERS, 'cycle_id', testCycle.cycle_id)
+    .filter(function(o) { return o.member_id === testUser.member_id; });
+  check('Ordine inserito (' + orderLines.length + ' righe, €' + orderTotal + ')',
+    savedLines.length === orderLines.length, 'trovate: ' + savedLines.length);
+
+  // ── 8. Chiudi ciclo e verifica addebiti ──────────────────────────────
+  var r8 = callApi('adminCloseCycle', { cycle_id: testCycle.cycle_id });
+  check('Chiusura ciclo', r8.ok, r8.ok ? null : (r8.error && r8.error.message));
+
+  var balAfterClose = getMemberBalance_(testUser.member_id);
+  var expectedBal = Math.round((balAfterTopup - orderTotal) * 100) / 100;
+  check('Saldo Test User dopo chiusura (€' + expectedBal + ')',
+    Math.abs(balAfterClose - expectedBal) < 0.01,
+    'atteso:€' + expectedBal + ' trovato:€' + balAfterClose);
+
+  // ── 9. Verifica warning saldo negativo (comportamento nuovo) ─────────
+  // Crea un altro ciclo per testare il warning saldo
+  var r9open = getOpenCycle_();
+  if (!r9open) {
+    var closeDate2 = new Date();
+    closeDate2.setDate(closeDate2.getDate() + 2);
+    var r9c = callApi('adminCreateCycle', {
+      title: '[TEST] Ciclo warning saldo',
+      order_close_at: closeDate2.toISOString(),
+      pickup_date: closeDate2.toISOString().slice(0, 10),
+      supplier_id: testSupplier.supplier_id,
+      access_level: APP.ACCESS_LEVEL.ATTIVI
+    });
+    var warnCycle = getOpenCycle_();
+    if (r9c.ok && warnCycle) {
+      callApi('adminUpdateProducts', {
+        cycle_id: warnCycle.cycle_id,
+        products: [{ name: 'Prodotto Costoso Test', variant: '', format: '', unit_price: 999.00, category: 'Test' }]
+      });
+      var warnProducts = getCycleProducts_(warnCycle.cycle_id);
+      if (warnProducts.length > 0) {
+        // Inserisci ordine che porta saldo sotto zero (server-side)
+        var bigLine = {
+          order_line_id:       generateId_('ord'),
+          cycle_id:            warnCycle.cycle_id,
+          member_id:           testUser.member_id,
+          product_id:          warnProducts[0].product_id,
+          quantity:            1,
+          unit_price_snapshot: 999.00,
+          line_total:          999.00,
+          updated_at:          nowIso_()
+        };
+        var allOrders2 = readSheetObjects_(APP.SHEETS.ORDERS);
+        overwriteSheetObjects_(APP.SHEETS.ORDERS, APP.HEADERS.orders, allOrders2.concat([bigLine]));
+        // Chiudi per verificare che l'addebito venga creato (saldo negativo permesso)
+        var rClose2 = callApi('adminCloseCycle', { cycle_id: warnCycle.cycle_id });
+        var finalBal = getMemberBalance_(testUser.member_id);
+        check('Ordine con saldo negativo permesso (saldo finale: €' + finalBal + ')',
+          rClose2.ok && finalBal < 0,
+          'chiusura ok:' + rClose2.ok + ' saldo:€' + finalBal);
+      } else {
+        check('Setup ciclo warning (prodotto mancante)', false);
+      }
+    } else {
+      check('Setup ciclo warning', false, r9c.ok ? 'ciclo non trovato' : (r9c.error && r9c.error.message));
+    }
+  } else {
+    Logger.log('○ Skip test warning saldo: ciclo già aperto dopo chiusura (inatteso)');
+  }
+
+  // ── Report ───────────────────────────────────────────────────────────
+  Logger.log('══════════════════════════════════════');
+  Logger.log((fail === 0 ? '✅ TUTTI I TEST PASSATI' : '❌ TEST FALLITI: ' + fail) +
+    ' — PASS: ' + pass + ' | FAIL: ' + fail);
+  return { pass: pass, fail: fail };
 }

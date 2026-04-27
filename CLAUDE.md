@@ -74,9 +74,7 @@ https://script.google.com/home/projects/1Z_0LkvuRHTIb4FfpjWOtZiOL24Rr124COmEeiC2
 **Test & utility functions** (run in Apps Script editor, select function then click Run):
 ```javascript
 runSmokeTest()       // Verifica infrastruttura: spreadsheet, sheets, soci, saldo
-runEndToEndTest()    // Full cycle: create → products → order → close → verify
-setupMembers()       // Adds/updates all members (3 admin + 1 member)
-createDemoCycle()    // Creates open cycle with 18 realistic products
+runEndToEndTest()    // Full cycle con Test User (test@portamoneta.org): topup → ciclo → ordine → chiusura → verifica saldo. Richiede nessun ciclo aperto.
 ```
 
 ### Current Members (via setupMembers)
