@@ -1,3 +1,4 @@
+import Image from "next/image";
 import type { ReactNode } from "react";
 import { signOut } from "@/auth";
 import { BottomNav } from "@/components/bottom-nav";
@@ -16,10 +17,14 @@ export function AppShell({ children, email, isAdmin }: AppShellProps) {
         <header className="border-b border-pm-border px-5 py-4">
           <div className="flex items-start justify-between gap-3">
             <div>
-              <p className="text-pm-gray text-[11px] font-medium uppercase tracking-[0.08em]">
-                Porta Moneta
-              </p>
-              <h1 className="text-pm-near-black text-xl font-semibold">v3</h1>
+              <Image
+                src="/logo.png"
+                alt="Porta Moneta"
+                height={26}
+                width={120}
+                priority
+                className="h-[26px] w-auto"
+              />
             </div>
             <LogoutButton
               action={async () => {
