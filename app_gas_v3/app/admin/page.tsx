@@ -15,9 +15,9 @@ export default async function AdminPage() {
       email={session.user.email}
       isAdmin
     >
-      <section className="rounded-xl border border-[var(--border)] bg-white p-5 shadow-sm">
+      <section className="rounded-xl border border-pm-border bg-white p-5 shadow-sm">
         <h2 className="text-xl font-semibold">Admin</h2>
-        <p className="mt-2 text-sm text-[var(--gray)]">
+        <p className="text-pm-gray mt-2 text-sm">
           Area amministrazione v3 pronta per i moduli di fase successiva.
         </p>
       </section>

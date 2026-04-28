@@ -10,13 +10,12 @@ export default async function OrdinePage() {
       email={session.user.email}
       isAdmin={role === "admin"}
     >
-      <section className="rounded-xl border border-[var(--border)] bg-white p-5 shadow-sm">
+      <section className="rounded-xl border border-pm-border bg-white p-5 shadow-sm">
         <h2 className="text-xl font-semibold">Ordine</h2>
-        <p className="mt-2 text-sm text-[var(--gray)]">
+        <p className="text-pm-gray mt-2 text-sm">
           Placeholder fase 2.3. Il form ordini arrivera con la fase 3.2.
         </p>
       </section>
     </AppShell>
   );
 }
-

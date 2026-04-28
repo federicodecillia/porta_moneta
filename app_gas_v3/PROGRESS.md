@@ -188,3 +188,25 @@
 
 **Blockers / decisioni aperte:**
 - In questa workspace non disponibili `gh`/GitHub connector con permessi repo: PR/merge da completare via GitHub UI
+
+---
+
+## 2026-04-28 — Fase 2.4 completata (palette Tailwind v2)
+
+**Autore**: Federico + Codex  
+**Tempo**: ~25 min  
+**Fase corrente**: Fase 2
+
+**Cosa fatto:**
+- Palette v2 (`orange/teal/gray/red/frame/border`) mappata in token Tailwind via `@theme` in `app/globals.css`
+- Esposti token semantici (`pm-*`) per colori e spacing nav (`h-nav-h`)
+- Refactor classi UI principali (shell, bottom nav, login, placeholder pages) da `var(--...)` inline a classi Tailwind semantiche (`bg-pm-*`, `text-pm-*`, `border-pm-*`)
+- Allineato `layout.tsx` al token testo principale
+
+**Validazione locale:**
+- `npm run lint` ✅
+- `npm run build` ✅
+
+**Cosa resta (next):**
+- [ ] Fase 2.5 — componenti base riusabili (`Button`, `Card`, `Toast`, `ConfirmDialog`)
+- [ ] Fase 2.6 — import logo PM come asset reale in `public/`
