@@ -31,6 +31,43 @@ export const { auth, handlers, signIn, signOut } = NextAuth({
         return false;
       }
     },
+    async jwt({ token }) {
+      try {
+        const email = token.email?.trim().toLowerCase();
+        if (!email) return token;
+
+        const db = getDb();
+        const [member] = await db
+          .select({
+            role: members.role,
+            active: members.active,
+          })
+          .from(members)
+          .where(eq(members.email, email))
+          .limit(1);
+
+        token.role = member?.role ?? null;
+        token.active = Boolean(member?.active);
+        return token;
+      } catch {
+        token.role = null;
+        token.active = false;
+        return token;
+      }
+    },
+    async session({ session, token }) {
+      if (session.user) {
+        const userWithRole = session.user as typeof session.user & {
+          role?: string | null;
+          active?: boolean;
+        };
+
+        userWithRole.role =
+          typeof token.role === "string" ? token.role : null;
+        userWithRole.active = Boolean(token.active);
+      }
+      return session;
+    },
   },
   pages: {
     signIn: "/login",

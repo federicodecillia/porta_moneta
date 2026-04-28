@@ -127,3 +127,64 @@
 **Note tecniche:**
 - Script migrazione supporta input da file (`V2_EXPORT_FILE`) o URL (`V2_EXPORT_URL`)
 - `catalog_products` esportata da v2 ma non ancora modellata/importata in v3
+
+---
+
+## 2026-04-28 — Fase 2.2 quick completata (routing auth/admin)
+
+**Autore**: Federico + Codex  
+**Tempo**: ~35 min  
+**Fase corrente**: Fase 2
+
+**Cosa fatto:**
+- Middleware v3 attivata su tutte le route app (escluse route tecniche):
+  - redirect a `/login` se non autenticato
+  - redirect a `/` se autenticato e visita `/login`
+  - accesso `/admin` consentito solo a `role=admin`
+- Auth.js callbacks estesi:
+  - `jwt` aggiunge `role` e `active` da tabella `members`
+  - `session` espone `role` e `active` su `session.user`
+- Creata pagina placeholder `/admin` protetta server-side
+
+**Validazione locale:**
+- `npm run lint` ✅
+- `npm run build` ✅
+
+**Cosa resta (next):**
+- [ ] Deploy su Vercel di queste modifiche
+- [ ] Smoke test cloud:
+  - utente non autenticato -> redirect `/login`
+  - utente member attivo -> `/` ok
+  - utente non admin su `/admin` -> redirect `/`
+  - utente admin su `/admin` -> accesso consentito
+- [ ] Fase 2.3 shell layout (header + bottom nav)
+
+---
+
+## 2026-04-28 — Fase 2.3 quick completata (shell + bottom nav)
+
+**Autore**: Federico + Codex  
+**Tempo**: ~40 min  
+**Fase corrente**: Fase 2
+
+**Cosa fatto:**
+- Creata shell app condivisa con:
+  - header (branding PM, email utente, logout)
+  - area contenuto scrollabile
+  - bottom nav a 5 tab: `Home`, `Ordine`, `Storico`, `Guida`, `Admin`
+- Aggiunte route placeholder per completare il routing base fase 2.3:
+  - `/ordine`
+  - `/storico`
+  - `/guida`
+- Rifattorizzata gestione sessione con helper:
+  - `lib/auth/session.ts` (`requireUserSession`, `getUserRole`)
+- Adeguato stile globale al frame v2 (sfondo esterno grigio + nav height)
+
+**Cosa resta (next):**
+- [ ] Merge branch `migration/nextjs-v3` -> `main` (se non ancora fatto)
+- [ ] Deploy Vercel su `main` e smoke test cloud della shell
+- [ ] Fase 2.4 palette/theming raffinata + 2.5 componenti base (`Button`, `Card`, `Toast`, `ConfirmDialog`)
+- [ ] Fase 2.6 import logo asset PM
+
+**Blockers / decisioni aperte:**
+- In questa workspace non disponibili `gh`/GitHub connector con permessi repo: PR/merge da completare via GitHub UI
