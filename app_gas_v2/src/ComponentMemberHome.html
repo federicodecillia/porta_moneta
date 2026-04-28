@@ -1,0 +1,202 @@
+<script>
+/* ComponentMemberHome — Dashboard socio */
+
+PM.components.memberHome = {
+
+  load: function() {
+    var self = PM.components.memberHome;
+    PM.html('home-content',
+      '<div class="skeleton-card"><div class="skeleton skeleton-title"></div><div class="skeleton skeleton-hero"></div>' +
+      '<div class="skeleton skeleton-text" style="width:70%;"></div></div>' +
+      '<div class="skeleton-card"><div class="skeleton skeleton-text" style="width:60%;"></div>' +
+      '<div class="skeleton skeleton-text" style="width:90%;"></div></div>');
+
+    PM.api('getMemberDashboard')
+      .then(function(data) {
+        PM.state.dashboard = data;
+        self._render(data);
+        PM.api('getMyLedger')
+          .then(function(ledger) { self._renderMovements(ledger); })
+          .catch(function() {});
+      })
+      .catch(function(err) {
+        PM.html('home-content',
+          '<div class="empty-state">' +
+          '<span class="empty-state-icon">&#9888;&#65039;</span>' +
+          '<h2>Errore di caricamento</h2>' +
+          '<p>' + PM._esc(err.message) + '</p>' +
+          '<button class="btn btn-orange mt-16" onclick="PM.components.memberHome.load()">Riprova</button>' +
+          '</div>');
+      });
+  },
+
+  _render: function(d) {
+    var saldoClass   = d.balance >= 0 ? 'positive' : 'negative';
+    var absSaldo     = Math.abs(d.balance).toFixed(2).replace('.', ',');
+    var orderTotal   = d.order_total || 0;
+    var afterBalance = Math.round((d.balance - orderTotal) * 100) / 100;
+
+    var html = '';
+
+    // ── Header row ──
+    html +=
+      '<div class="flex-between" style="margin-bottom:26px;">' +
+        '<img src="' + PM.LOGO_SRC + '" alt="Porta Moneta" style="height:26px;">' +
+        '<div style="display:flex;align-items:center;gap:8px;">' +
+          '<span style="font-family:var(--mono);font-size:12px;color:var(--gray);">' + PM._esc(d.full_name) + '</span>' +
+          '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#ADADAD" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' +
+            '<path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/>' +
+            '<path d="M13.73 21a2 2 0 01-3.46 0"/>' +
+          '</svg>' +
+        '</div>' +
+      '</div>';
+
+    // ── Saldo hero card ──
+    html +=
+      '<div class="saldo-card ' + saldoClass + '">' +
+        '<div class="saldo-card-label">Il tuo saldo</div>' +
+        '<div class="saldo-amount-row">' +
+          '<div class="saldo-euro">€</div>' +
+          '<div class="saldo-amount">' + absSaldo + '</div>' +
+        '</div>' +
+        '<div class="saldo-stats">' +
+          '<div class="saldo-stat">' +
+            '<div class="saldo-stat-label">Questo ordine</div>' +
+            '<div class="saldo-stat-value">' + PM.formatEur(orderTotal) + '</div>' +
+          '</div>' +
+          '<div class="saldo-stat">' +
+            '<div class="saldo-stat-label">Dopo ordine</div>' +
+            '<div class="saldo-stat-value" style="color:' + (afterBalance < 0 ? 'var(--red)' : 'inherit') + '">' +
+              PM.formatEur(Math.abs(afterBalance)) + (afterBalance < 0 ? ' −' : '') +
+            '</div>' +
+          '</div>' +
+        '</div>';
+
+    if (d.balance < 0) {
+      html += '<div style="margin-top:12px;"><button class="btn btn-red btn-block" onclick="PM.navigate(\'storico\')" style="font-size:13px;padding:10px 16px;">Ricarica il saldo →</button></div>';
+    }
+    html += '</div>';
+
+    // ── Cycle card ──
+    if (!d.cycle || d.cycle_restricted) {
+      html +=
+        '<div class="card card-body flex-between mb-12">' +
+          '<div>' +
+            '<div style="font-weight:700;font-size:15px;margin-bottom:3px;">Nessun ordine aperto</div>' +
+            '<div style="font-family:var(--mono);font-size:10px;color:var(--gray-l);">Torna quando ci sarà un nuovo ciclo</div>' +
+          '</div>' +
+          '<span class="badge badge-gray">Chiuso</span>' +
+        '</div>';
+    } else {
+      var closeDate = new Date(d.cycle.order_close_at);
+      var now       = new Date();
+      var remaining = Math.max(0, closeDate - now);
+      var days      = Math.floor(remaining / 86400000);
+      var hrs       = Math.floor((remaining % 86400000) / 3600000);
+      var mins      = Math.floor((remaining % 3600000) / 60000);
+      var hoursLeft = Math.floor(remaining / 3600000);
+      var progressDanger = hoursLeft <= 12 ? ' danger' : '';
+
+      var openDate = new Date(d.cycle.order_open_at || d.cycle.created_at || d.cycle.order_close_at);
+      var totalMs  = closeDate - openDate;
+      var pct      = totalMs > 0 ? Math.min(100, Math.max(0, Math.round(((now - openDate) / totalMs) * 100))) : 100;
+
+      var closeStr = PM.formatDateTime(d.cycle.order_close_at);
+      if (d.cycle.pickup_date) closeStr += ' · Ritiro ' + PM.formatDate(d.cycle.pickup_date);
+
+      html +=
+        '<div class="card cycle-card">' +
+          '<div class="cycle-header">' +
+            '<div>' +
+              '<div class="cycle-name">' + PM._esc(d.cycle.title) + '</div>' +
+              '<div class="cycle-date">' + PM._esc(closeStr) + '</div>' +
+            '</div>' +
+            '<span class="badge badge-teal badge-dot">Aperto</span>' +
+          '</div>' +
+          '<div class="countdown-row">' +
+            '<div class="countdown-chip"><div class="countdown-num">' + days + '</div><div class="countdown-unit">Giorni</div></div>' +
+            '<div class="countdown-chip"><div class="countdown-num">' + hrs + '</div><div class="countdown-unit">Ore</div></div>' +
+            '<div class="countdown-chip"><div class="countdown-num">' + mins + '</div><div class="countdown-unit">Min</div></div>' +
+          '</div>' +
+          '<div class="progress-bar"><div class="progress-fill' + progressDanger + '" style="width:' + pct + '%;"></div></div>' +
+          '<div class="progress-text">' + (hoursLeft > 0 ? hoursLeft + ' ore rimanenti' : 'Chiusura imminente') + '</div>' +
+        '</div>';
+    }
+
+    // ── Order summary card ──
+    if (d.cycle && !d.cycle_restricted && d.my_lines && d.my_lines.length > 0) {
+      var productMap = {};
+      (d.products || []).forEach(function(p) { productMap[p.product_id] = p; });
+
+      html += '<div class="card" style="overflow:hidden;">';
+      html +=
+        '<div class="order-card-header">' +
+          '<div class="sec-label" style="margin:0;">Il tuo ordine</div>' +
+          '<button class="btn btn-ghost" onclick="PM.navigate(\'ordine\')" aria-label="Modifica ordine">Modifica</button>' +
+        '</div>';
+
+      d.my_lines.forEach(function(line) {
+        var prod = productMap[line.product_id] || {};
+        var meta = [prod.variant, prod.format].filter(Boolean).join(' · ');
+        html +=
+          '<div class="order-item-row">' +
+            '<div>' +
+              '<div class="order-item-name">' + PM._esc(prod.name || '?') + '</div>' +
+              (meta ? '<div class="order-item-unit">' + PM._esc(meta) + '</div>' : '') +
+            '</div>' +
+            '<div class="order-item-price">×' + line.quantity + ' · ' + PM.formatEur(line.line_total) + '</div>' +
+          '</div>';
+      });
+
+      html +=
+        '<div class="order-footer">' +
+          '<div class="order-footer-label">Totale</div>' +
+          '<div class="order-footer-total">' + PM.formatEur(orderTotal) + '</div>' +
+        '</div>';
+      html += '</div>';
+
+    } else if (d.cycle && !d.cycle_restricted) {
+      html +=
+        '<div class="card card-body flex-between">' +
+          '<div style="color:var(--gray);font-size:14px;">Non hai ancora ordinato</div>' +
+          '<button class="btn btn-orange" onclick="PM.navigate(\'ordine\')" style="padding:10px 16px;font-size:13px;">Ordina →</button>' +
+        '</div>';
+    }
+
+    // ── Movements placeholder ──
+    html += '<div id="home-movements"></div>';
+
+    PM.html('home-content', html);
+  },
+
+  _renderMovements: function(ledger) {
+    var el = document.getElementById('home-movements');
+    if (!el || !ledger || !ledger.length) return;
+
+    var recent = ledger.slice(0, 4);
+    var html =
+      '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;margin-top:4px;">' +
+        '<div class="sec-label" style="margin:0;">Ultimi movimenti</div>' +
+        '<button style="background:none;border:none;cursor:pointer;font-family:var(--mono);font-size:10px;color:var(--orange);font-weight:700;" onclick="PM.navigate(\'storico\')">Vedi tutto →</button>' +
+      '</div>';
+
+    recent.forEach(function(e) {
+      var isPos     = e.amount >= 0;
+      var typeLabel = e.type === 'topup' ? 'Bonifico' : (e.type === 'order_charge' ? 'Ordine' : 'Rettifica');
+      var label     = typeLabel + (e.note ? ' · ' + e.note : '');
+      html +=
+        '<div class="movement-row">' +
+          '<div>' +
+            '<div class="movement-label">' + PM._esc(label) + '</div>' +
+            '<div class="movement-date">' + PM.formatDateShort(e.entry_date) + '</div>' +
+          '</div>' +
+          '<div class="movement-amount ' + (isPos ? 'positive' : 'negative') + '">' +
+            PM.formatEurSigned(e.amount) +
+          '</div>' +
+        '</div>';
+    });
+
+    el.innerHTML = html;
+  }
+};
+</script>

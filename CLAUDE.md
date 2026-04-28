@@ -10,10 +10,12 @@ The entire stack runs on Google's free tooling: Google Apps Script (backend + ho
 
 ## Project Structure
 
-The actual deployable code lives in `app_gas/src/`. The root `src/` directory is an older version — do NOT edit it.
+**Active codebase: `app_gas_v2/src/`** — this is what is deployed and live.
+
+`app_gas/` is the previous version (kept for reference). Do NOT edit it.
 
 ```
-app_gas/
+app_gas_v2/
 ├── .clasp.json          # Clasp config (scriptId, rootDir: src)
 └── src/                 # ← THIS is the active codebase
     ├── Main.gs          # API router — callApi() dispatcher
@@ -25,35 +27,35 @@ app_gas/
     ├── Products.gs      # Product loading and duplication
     ├── Ledger.gs        # Balance tracking, topups, order charges
     ├── Members.gs       # Member CRUD (adminUpsertMember, adminGetMembers)
+    ├── Suppliers.gs     # Supplier CRUD (adminGetSuppliers, adminUpsertSupplier)
     ├── Audit.gs         # Append-only audit trail
     ├── Setup.gs         # First-run sheet creation and seed data
-    ├── Migration.gs     # Data migration utilities
     ├── Utils.gs         # Helpers: assert_, generateId_, nowIso_, toNumber_
-    ├── Test.gs          # Test & utility functions (runAllTests, runEndToEndTest, etc.)
-    ├── Index.html       # HTML shell with includes
-    ├── Styles.html      # All CSS (mobile-first, bottom nav)
-    ├── AppCore.html      # PM namespace, API wrapper, router, toast, confirm dialog
-    ├── AppMember.html    # Member-specific logic (Promise.finally polyfill)
-    ├── AppAdmin.html     # Admin panel orchestrator (tab switching)
-    ├── ComponentMemberHome.html    # Member dashboard (balance, cycle status)
-    ├── ComponentOrderForm.html     # Order form with stepper UI
-    ├── ComponentHistory.html       # Order history + ledger tabs
-    ├── ComponentGuide.html         # User guide
-    ├── ComponentAdminCycle.html    # Cycle management
-    ├── ComponentAdminProducts.html # Product loading (text/duplicate)
-    ├── ComponentAdminOrders.html   # Order summary (by product/member)
-    ├── ComponentAdminLedger.html   # Topup recording + balance table
-    ├── ComponentAdminMembers.html  # Member management
+    ├── Test.gs          # Test & utility functions (runSmokeTest, runEndToEndTest)
+    ├── Index.html       # HTML shell with all <?!= include(...) ?> directives
+    ├── Styles.html      # All CSS — orange/teal design system, mobile-first
+    ├── AppCore.html     # PM namespace, API wrapper, router, toast, confirm dialog, logo base64
+    ├── AppMember.html   # Promise.finally polyfill (browser compat)
+    ├── AppAdmin.html    # Admin orchestrator — 5-tab shell (Ciclo/Prodotti/Ordini/Cassa/Soci)
+    ├── ComponentMemberHome.html    # Member dashboard: saldo hero, cycle countdown, order summary
+    ├── ComponentOrderForm.html     # Order form: product list with pill steppers, sticky footer
+    ├── ComponentStorico.html       # Storico: order history tab + ledger movements tab
+    ├── ComponentGuide.html         # User guide: how-to steps + FAQ accordion
+    ├── ComponentAdminCycle.html    # Cycle management: open/close, stats
+    ├── ComponentAdminProducts.html # Product loading via text (semicolon-delimited) or duplication
+    ├── ComponentAdminOrders.html   # Order summary: per-product table + per-member expandable
+    ├── ComponentAdminLedger.html   # Topup recording + member balance table + inline entry edit
+    ├── ComponentAdminMembers.html  # Member management: add, role change, activate/deactivate
     └── appsscript.json             # Apps Script manifest
 ```
 
 ## Development Commands
 
-All clasp commands must be run from `app_gas/` directory:
+All clasp commands must be run from `app_gas_v2/` directory:
 
 ```bash
-cd app_gas
-clasp login                # Authenticate with Google
+cd app_gas_v2
+clasp login                # Authenticate (token expires often — run this first if push fails)
 clasp push --force         # Push src/ to Apps Script
 clasp deploy -i <ID> -d "description"  # Update deployment
 clasp deployments          # List deployments
@@ -63,7 +65,7 @@ Current deployment ID: `AKfycbzaYomy3jUuu3GXVlRHR88TZKh1LK2BZkNzVKyCUm1KqV71I_vE
 
 Quick push + deploy:
 ```bash
-cd app_gas && clasp push --force && clasp deploy -i AKfycbzaYomy3jUuu3GXVlRHR88TZKh1LK2BZkNzVKyCUm1KqV71I_vEIVNAgyozJbD2b4onhA -d "description"
+cd /Users/decilliaf/ai_projects/porta_moneta/app_gas_v2 && clasp push --force && clasp deploy -i AKfycbzaYomy3jUuu3GXVlRHR88TZKh1LK2BZkNzVKyCUm1KqV71I_vEIVNAgyozJbD2b4onhA -d "description"
 ```
 
 **Note**: `clasp open` is NOT supported in this clasp version. Use direct URL:
@@ -71,20 +73,22 @@ cd app_gas && clasp push --force && clasp deploy -i AKfycbzaYomy3jUuu3GXVlRHR88T
 https://script.google.com/home/projects/1Z_0LkvuRHTIb4FfpjWOtZiOL24Rr124COmEeiC2DG9KfqO2xxFd3rYBs/edit
 ```
 
-**Test & utility functions** (run in Apps Script editor, select function then click Run):
+Live app URL: **gas.portamoneta.org** (Squarespace forwarding → Apps Script exec URL)
+
+**Test & utility functions** (run in Apps Script editor — select function, click Run):
 ```javascript
 runSmokeTest()       // Verifica infrastruttura: spreadsheet, sheets, soci, saldo
 runEndToEndTest()    // Full cycle con Test User (test@portamoneta.org): topup → ciclo → ordine → chiusura → verifica saldo. Richiede nessun ciclo aperto.
 ```
 
-### Current Members (via setupMembers)
+### Current Members
 
 | Name | Email | Role |
 |------|-------|------|
 | Manuel Rizzo | manuel.rizzo@portamoneta.org | admin |
 | Nadia Di Simine | nadia.disimine@portamoneta.org | admin |
 | Maria Malacrino | maria.malacrino@portamoneta.org | admin |
-| Maria Fois | maria.fois@portamoneta.org | member |
+| Maria Fois | maria.fois@portamoneta.org | member (attivo) |
 
 ## Architecture
 
@@ -110,42 +114,80 @@ Storage.gs implements a **CacheService layer over Google Sheets**:
 
 ### Frontend Architecture
 
-The frontend is a **single-page app with hash-based routing** using a Mintlify-inspired design system:
-- `PM` namespace in AppCore.html — API wrapper, router, toast, confirm
-- Navigation: `#home`, `#ordine`, `#storico`, `#guida`, `#admin`
+The frontend is a **single-page app with hash-based routing**:
+- `PM` namespace in `AppCore.html` — API wrapper, router, toast, confirm dialog, logo base64
+- **5 views**: `#home`, `#ordine`, `#storico`, `#guida`, `#admin`
 - Components load data on view change via `PM._onViewChange()`
-- All components show error state with retry button on failure
+- All components show an error state with retry button on failure (never just a toast)
+- Max-width **480px centered** on desktop; `html` background `#ddd8d0` frames the app
 
-### Design System — Mintlify-inspired (current)
+### Admin Panel
 
-Full design spec in `DESIGN.md`. Key features:
-- **Palette**: Pure white canvas, near-black text (#0d0d0d), brand green (#18E299) accent
-- **Typography**: Inter font with tight display tracking, Geist Mono for code/labels
-- **Borders**: Ultra-subtle 5% opacity borders — depth through borders, not shadows
-- **Buttons**: Pill-shaped (9999px radius), dark primary, ghost secondary
-- **Nav bar**: SVG icons (outline/filled states), white glass with backdrop-blur
-- **Loading**: Skeleton shimmer animation
-- **Saldo hero card**: Brand-green-light (positive) or danger-light (negative) with pill label
-- **Badges**: Geist Mono uppercase with 0.6px tracking, pill-shaped
-- **Cycle progress bar**: Visual countdown with urgency badge when < 12h remaining
-- **Product stepper**: Clean hover with brand-light tint, tinted card when qty > 0
-- **History**: Animated chevron expand, smooth max-height transitions
-- **Animations**: Subtle fade between views, spring toast, scale modal, qty bump
-- **Accessibility**: `prefers-reduced-motion` disables all animations
-- **Empty states**: Emoji icon + message + CTA for every empty view
+5 tabs, each rendered by a dedicated component:
+
+| Tab | Component | Container ID |
+|-----|-----------|--------------|
+| Ciclo | ComponentAdminCycle | admin-ciclo-panel |
+| Prodotti | ComponentAdminProducts | admin-prodotti-panel |
+| Ordini | ComponentAdminOrders | admin-ordini-panel |
+| Cassa | ComponentAdminLedger | admin-cassa-panel |
+| Soci | ComponentAdminMembers | admin-soci-panel |
+
+### Design System — Orange/Teal v2
+
+CSS variables in `Styles.html`:
+
+```css
+--orange:    #F5A623   /* primary brand, buttons, active nav */
+--orange-l:  #FEF3DC   /* saldo positive background */
+--teal:      #00A896   /* cycle open badge, topup, teal buttons */
+--teal-l:    #E0F5F3   /* teal light backgrounds */
+--gray:      #58595B
+--gray-l:    #ADADAD
+--near-blk:  #2d2b29   /* primary text */
+--warm-wh:   #faf8f5   /* app background */
+--red:       #E05252   /* negative balance, errors */
+--red-l:     #FEECEC
+--border:    rgba(88,89,91,0.10)
+--sans:      'Inter', system-ui, sans-serif
+--mono:      'Geist Mono', ui-monospace, monospace
+--nav-h:     82px
+```
+
+Key design patterns:
+- **Logo**: orange/teal PNG embedded as base64 in `PM.LOGO_SRC` (AppCore.html)
+- **Saldo hero card**: orange-light (positive) or red-light (negative), 70px amount, stats row
+- **Cycle card**: countdown chips (days/hours/min), teal progress bar, `badge-teal badge-dot`
+- **Pill steppers**: zero-state (single + btn) vs has-qty state (minus + qty + orange + btn)
+- **Sticky footer** in order form: shows total + projected balance, only visible when qty > 0
+- **Segmented tabs**: rounded pill container with active/inactive states (Storico, admin Orders)
+- **Bottom nav**: SVG outline/filled pair per tab, orange accent for active
+- **Skeleton shimmer**: `skeleton-card` + `skeleton` classes while loading
+- **Admin panels**: `view-flex` container → fixed header → scrollable `admin-panel.active` (flex:1)
+- **Animations**: `prefers-reduced-motion` disables all transitions/animations
+
+### Role System
+
+Members have one of three roles:
+- `admin` — full access including admin panel
+- `attivo` (alias: `member`) — can order; shown in "Attivi" group in admin
+- `socio` — can only view; shown in "Soci" group in admin
+
+Cycle `access_level` controls who can order: `'attivi'` (default) or `'all'`.
 
 ### Data Model (Google Sheets as tables)
 
 Six sheets in one Spreadsheet — no formulas, all values computed server-side:
 
-- **members** — User registry; `role` is `member` or `admin`
-- **order_cycles** — Weekly order windows; only one `open` cycle at a time
-- **products** — Per-cycle product list; loaded from text format or duplicated
+- **members** — User registry; `role`: `admin`, `attivo`/`member`, `socio`
+- **order_cycles** — Weekly order windows; `supplier_id` FK; only one `open` at a time
+- **products** — Per-cycle product list; loaded from semicolon-delimited text or duplicated
 - **orders** — Line items per member per cycle
-- **ledger_entries** — Double-entry balance: `topup` (positive) and `order_charge` (negative)
+- **ledger_entries** — Double-entry balance: `topup` (+), `order_charge` (−), `adjustment`
 - **audit_log** — Append-only admin action log
+- **suppliers** — Supplier registry; referenced by `order_cycles.supplier_id`
 
-ID prefix convention: `cyc_*`, `mem_*`, `prd_*`, `ord_*`, `led_*`, `aud_*`.
+ID prefix convention: `cyc_*`, `mem_*`, `prd_*`, `ord_*`, `led_*`, `aud_*`, `sup_*`.
 
 ### Security Model
 
@@ -158,18 +200,21 @@ ID prefix convention: `cyc_*`, `mem_*`, `prd_*`, `ord_*`, `led_*`, `aud_*`.
 
 - Closing a cycle auto-generates `order_charge` ledger entries for every member with orders.
 - Member balance = `SUM(ledger_entries.amount)` for that member.
-- Products are loaded via plain text: one line per product, fields separated by `;` (`Name;Variant;Format;Price;Supplier;Notes`).
-- Email is the unique identifier for members (used as login key via Google Session).
+- **Negative balance is allowed** — `saveMyOrder` warns (orange toast) but does not block.
+- Products loaded via plain text: one line per product, `Name;Variant;Format;Price;Supplier;Notes`.
+- Email is the unique identifier for members (login key via Google Session).
+- External emails (non `@portamoneta.org`) are supported — admin adds them manually.
 
 ### Known Issues / Lessons Learned
 
-- **Date serialization**: Google Sheets returns Date objects from cells. These must be converted to ISO strings in `readSheetObjects_()` before returning via `google.script.run`, otherwise the client receives null/undefined causing "Errore sconosciuto".
-- **Spreadsheet open caching**: `SpreadsheetApp.openById()` is expensive. The `_cachedSpreadsheet` variable avoids reopening on every read within the same execution.
+- **Date serialization**: Google Sheets returns Date objects from cells. Must be converted to ISO strings in `readSheetObjects_()` before returning via `google.script.run`, otherwise client gets `null`/`undefined` → "Errore sconosciuto".
+- **Spreadsheet open caching**: `SpreadsheetApp.openById()` is expensive. `_cachedSpreadsheet` avoids reopening on every read within the same execution.
 - **`clasp push` vs deploy**: `clasp push` only updates source code. Must also run `clasp deploy -i <ID>` to update the live web app.
 - **Error handling**: All components must show error state with retry button, not just toast (which disappears after 3s leaving spinner forever).
+- **clasp token**: The RAPT token expires often. If `clasp push` gives `invalid_grant`, run `clasp login` first.
+- **Logo base64**: The Porta Moneta logo (orange/teal paperclips + "Porta Moneta" text) is embedded in `AppCore.html` as `PM.LOGO_SRC`. If replacing, use `base64 -i logo.png | tr -d '\n'` and update via Python regex (the string is too long for a manual Edit).
 
 ## Docs
 
-- `docs/blueprint-esecutivo.md` — Comprehensive functional spec: UX wireframes, data model rationale, validation rules, acceptance criteria.
-- `docs/deploy-checklist.md` — Deployment procedure and post-deploy validation steps.
-- `DESIGN.md` — Mintlify-inspired design system: palette, typography, spacing, component specs, agent prompt guide.
+- `DESIGN.md` — Design system spec for v2 (orange/teal palette, component patterns).
+- `app_gas/` — Previous version, kept for reference. Do not deploy from here.
