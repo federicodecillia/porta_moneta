@@ -127,3 +127,34 @@
 **Note tecniche:**
 - Script migrazione supporta input da file (`V2_EXPORT_FILE`) o URL (`V2_EXPORT_URL`)
 - `catalog_products` esportata da v2 ma non ancora modellata/importata in v3
+
+---
+
+## 2026-04-28 — Fase 2.2 quick completata (routing auth/admin)
+
+**Autore**: Federico + Codex  
+**Tempo**: ~35 min  
+**Fase corrente**: Fase 2
+
+**Cosa fatto:**
+- Middleware v3 attivata su tutte le route app (escluse route tecniche):
+  - redirect a `/login` se non autenticato
+  - redirect a `/` se autenticato e visita `/login`
+  - accesso `/admin` consentito solo a `role=admin`
+- Auth.js callbacks estesi:
+  - `jwt` aggiunge `role` e `active` da tabella `members`
+  - `session` espone `role` e `active` su `session.user`
+- Creata pagina placeholder `/admin` protetta server-side
+
+**Validazione locale:**
+- `npm run lint` ✅
+- `npm run build` ✅
+
+**Cosa resta (next):**
+- [ ] Deploy su Vercel di queste modifiche
+- [ ] Smoke test cloud:
+  - utente non autenticato -> redirect `/login`
+  - utente member attivo -> `/` ok
+  - utente non admin su `/admin` -> redirect `/`
+  - utente admin su `/admin` -> accesso consentito
+- [ ] Fase 2.3 shell layout (header + bottom nav)
