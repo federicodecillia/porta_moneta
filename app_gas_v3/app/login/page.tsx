@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 import { auth, signIn } from "@/auth";
+import { Button } from "@/components/ui/button";
 
 type LoginPageProps = {
   searchParams: Promise<Record<string, string | string[] | undefined>>;
@@ -33,12 +34,9 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
             await signIn("google", { redirectTo: "/" });
           }}
         >
-          <button
-            type="submit"
-            className="w-full rounded-md bg-pm-teal px-4 py-2 font-semibold text-white"
-          >
+          <Button type="submit" variant="teal" block>
             Login con Google
-          </button>
+          </Button>
         </form>
       </div>
     </main>

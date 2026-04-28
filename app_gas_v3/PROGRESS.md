@@ -210,3 +210,43 @@
 **Cosa resta (next):**
 - [ ] Fase 2.5 — componenti base riusabili (`Button`, `Card`, `Toast`, `ConfirmDialog`)
 - [ ] Fase 2.6 — import logo PM come asset reale in `public/`
+
+---
+
+## 2026-04-28 — Fase 2.5 completata (UI primitives base)
+
+**Autore**: Federico + Claude
+**Tempo**: ~40 min
+**Fase corrente**: Fase 2
+
+**Cosa fatto:**
+- Installate dipendenze UI: `clsx`, `tailwind-merge`, `sonner`, `@radix-ui/react-dialog`, `lucide-react`
+- Aggiunto helper `cn()` in `lib/utils.ts`
+- Creati componenti UI in `components/ui/`:
+  - `button.tsx` — 6 varianti (`primary`/`orange`/`teal`/`red`/`ghost`/`outline`), 2 size (`sm`/`md`), prop `block`. Stile pill match v2 (`Styles.html:380-411`).
+  - `card.tsx` — `<Card>`, `<CardHeader>`, `<CardBody>`, `<CardFooter>` con stile v2 (radius 18px, border, shadow soft).
+  - `toast.tsx` — re-export `toast` da sonner.
+  - `confirm-dialog.tsx` — API imperativa `confirm({title, message, danger?, ...}) → Promise<boolean>` su Radix Dialog (focus trap, Escape, ARIA gratis).
+- Provider `components/providers/toaster.tsx` — `<Toaster>` di sonner top-center, 3s, classi pm-* per success/warning/error.
+- `app/layout.tsx` monta `<Toaster />` e `<ConfirmDialogProvider />`.
+- Refactor minimo per validare i componenti:
+  - `app/login/page.tsx` → `<Button variant="teal" block>` al posto del `<button>` raw.
+  - `components/app-shell.tsx` + nuovo `components/logout-button.tsx` (Client Component) → bottone ghost piccolo + `confirm()` prima di `signOut`.
+
+**Decisioni:**
+- Niente CVA (con 5 varianti un record `{variant: classes}` è più leggibile e ~3 KB più leggero).
+- Niente `loading` prop sul Button: si aggiungerà in Fase 3.2 quando una pagina reale lo richiede.
+- Niente `SaldoCard`/`CycleCard` dedicati: la `<Card>` base supporta override via `className`, le hero card verranno create in Fase 3.1.
+
+**Validazione locale:**
+- `npm run lint` ✅
+- `npm run build` ✅ (10/10 routes generate, no warnings)
+
+**Cosa resta (next):**
+- [ ] Smoke test in `npm run dev`: login pill teal, logout con conferma modale (Esc/click fuori), `toast.warning("...")` da console.
+- [ ] Commit `[v3] feat: phase 2.5 base UI components` + push su `migration/nextjs-v3`.
+- [ ] Fase 2.6 — import logo PM come asset reale in `public/`.
+
+**Note tecniche:**
+- Le animazioni del Dialog usano classi `data-[state=open]:animate-in ...` che richiederebbero `tailwindcss-animate`; non installato, quindi il dialog appare/scompare senza fade/zoom — sufficiente per ora, polish in Fase 5.
+- Server action `signOut` passata come prop dal Server Component (`AppShell`) al Client Component (`LogoutButton`): pattern Next.js 15 standard, build OK.

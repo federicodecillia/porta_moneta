@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import { signOut } from "@/auth";
 import { BottomNav } from "@/components/bottom-nav";
+import { LogoutButton } from "@/components/logout-button";
 
 type AppShellProps = {
   children: ReactNode;
@@ -20,19 +21,12 @@ export function AppShell({ children, email, isAdmin }: AppShellProps) {
               </p>
               <h1 className="text-pm-near-black text-xl font-semibold">v3</h1>
             </div>
-            <form
+            <LogoutButton
               action={async () => {
                 "use server";
                 await signOut({ redirectTo: "/login" });
               }}
-            >
-              <button
-                type="submit"
-                className="rounded-md border border-pm-border bg-white px-3 py-1.5 text-sm font-semibold text-pm-near-black"
-              >
-                Logout
-              </button>
-            </form>
+            />
           </div>
           <p className="text-pm-gray mt-3 truncate text-xs">{email}</p>
         </header>
