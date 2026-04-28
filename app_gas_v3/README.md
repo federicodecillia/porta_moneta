@@ -53,12 +53,11 @@ app_gas_v3/
 
 ```bash
 cd app_gas_v3
-pnpm install
-pnpm dev               # http://localhost:3000
-pnpm db:push           # apply schema su Neon
-pnpm db:studio         # Drizzle Studio
-pnpm migrate:v2        # one-shot import dati da v2
-pnpm build && pnpm start
+npm install
+npm run dev            # http://localhost:3000
+npm run db:push        # apply schema su Neon
+npm run db:studio      # Drizzle Studio
+npm run build && npm run start
 ```
 
 ## Convenzioni
