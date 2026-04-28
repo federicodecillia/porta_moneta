@@ -1,0 +1,226 @@
+<script>
+/* ComponentStorico — Storico ordini e movimenti */
+
+PM.components.storico = {
+
+  activeTab: 'ordini',
+  _cache: {},
+  _loading: {},
+
+  load: function() {
+    var self = PM.components.storico;
+    var wrap = document.getElementById('storico-content-wrap');
+    if (!wrap) return;
+
+    if (!document.getElementById('storico-tabs')) {
+      wrap.innerHTML =
+        '<div class="view-header">' +
+          '<img src="' + PM.LOGO_SRC + '" alt="Porta Moneta" style="height:22px;margin-bottom:14px;">' +
+          '<div class="seg-tabs" id="storico-tabs">' +
+            '<button class="seg-tab active" id="stab-ordini" onclick="PM.components.storico.switchTab(\'ordini\')" aria-label="Ordini">Ordini</button>' +
+            '<button class="seg-tab inactive" id="stab-movimenti" onclick="PM.components.storico.switchTab(\'movimenti\')" aria-label="Movimenti">Movimenti</button>' +
+          '</div>' +
+        '</div>' +
+        '<div style="flex:1;overflow-y:auto;padding:0 20px 20px;" id="storico-panel"></div>';
+    }
+
+    self.switchTab(self.activeTab);
+  },
+
+  switchTab: function(tab) {
+    var self = PM.components.storico;
+    self.activeTab = tab;
+
+    var tabs = ['ordini', 'movimenti'];
+    tabs.forEach(function(t) {
+      var el = document.getElementById('stab-' + t);
+      if (el) { el.className = 'seg-tab ' + (t === tab ? 'active' : 'inactive'); }
+    });
+
+    if (tab === 'ordini') self._loadOrdini();
+    else self._loadMovimenti();
+  },
+
+  _loadOrdini: function() {
+    var self = PM.components.storico;
+    if (self._loading.ordini) return;
+    if (self._cache.ordini) { self._renderOrdini(self._cache.ordini); return; }
+
+    self._loading.ordini = true;
+    PM.html('storico-panel',
+      '<div class="skeleton-card"><div class="skeleton skeleton-title"></div><div class="skeleton skeleton-text" style="width:60%;"></div></div>' +
+      '<div class="skeleton-card"><div class="skeleton skeleton-text" style="width:80%;"></div><div class="skeleton skeleton-text" style="width:50%;"></div></div>');
+
+    PM.api('getMyOrderHistory')
+      .then(function(orders) {
+        self._cache.ordini = orders;
+        self._renderOrdini(orders);
+      })
+      .catch(function(err) {
+        PM.html('storico-panel',
+          '<div class="empty-state"><span class="empty-state-icon">&#9888;&#65039;</span>' +
+          '<h2>Errore</h2><p>' + PM._esc(err.message) + '</p>' +
+          '<button class="btn btn-orange mt-16" onclick="PM.components.storico._retryOrdini()">Riprova</button></div>');
+      })
+      .finally(function() { self._loading.ordini = false; });
+  },
+
+  _retryOrdini: function() {
+    PM.components.storico._cache.ordini = null;
+    PM.components.storico._loadOrdini();
+  },
+
+  _renderOrdini: function(orders) {
+    if (!orders || !orders.length) {
+      PM.html('storico-panel',
+        '<div class="empty-state"><span class="empty-state-icon">&#128722;</span>' +
+        '<h2>Nessun ordine</h2><p>I tuoi ordini passati appariranno qui.</p></div>');
+      return;
+    }
+
+    var html = '';
+    orders.forEach(function(o, idx) {
+      var statusBadge = o.status === 'open'
+        ? '<span class="badge badge-teal-l">Aperto</span>'
+        : '<span class="badge badge-teal-l">Ritirato</span>';
+
+      html +=
+        '<div class="card order-hist-card" id="ohist-' + idx + '">' +
+          '<div class="order-hist-header flex-between" onclick="PM.components.storico._toggleOrder(' + idx + ',\'' + PM._esc(o.cycle_id) + '\')" style="cursor:pointer;">' +
+            '<div>' +
+              '<div class="order-hist-cycle">' + PM._esc(o.title) + '</div>' +
+              '<div class="order-hist-date">' + PM.formatDate(o.pickup_date) + '</div>' +
+            '</div>' +
+            '<div style="display:flex;align-items:center;gap:8px;">' +
+              '<div class="order-hist-total">' + PM.formatEur(o.order_total) + '</div>' +
+              statusBadge +
+            '</div>' +
+          '</div>' +
+          '<div id="ohist-detail-' + idx + '" style="display:none;"></div>' +
+        '</div>';
+    });
+
+    PM.html('storico-panel', html);
+  },
+
+  _toggleOrder: function(idx, cycleId) {
+    var detEl = document.getElementById('ohist-detail-' + idx);
+    if (!detEl) return;
+
+    if (detEl.style.display !== 'none') {
+      detEl.style.display = 'none';
+      return;
+    }
+
+    detEl.style.display = 'block';
+    if (detEl.innerHTML) return;
+
+    detEl.innerHTML =
+      '<div class="order-hist-body">' +
+        '<div class="order-hist-items-label">Prodotti</div>' +
+        '<div style="color:var(--gray-l);font-size:13px;">Caricamento...</div>' +
+      '</div>';
+
+    PM.api('getMyOrderDetail', { cycle_id: cycleId })
+      .then(function(data) {
+        var items = data.lines.map(function(l) {
+          return PM._esc(l.product_name + (l.variant ? ' ' + l.variant : '') + ' ×' + l.quantity);
+        }).join(' · ');
+        detEl.innerHTML =
+          '<div class="order-hist-body">' +
+            '<div class="order-hist-items-label">Prodotti</div>' +
+            '<div class="order-hist-items">' + items + '</div>' +
+          '</div>';
+      })
+      .catch(function(err) {
+        detEl.innerHTML =
+          '<div class="order-hist-body"><div style="color:var(--gray-l);font-size:13px;">' + PM._esc(err.message) + '</div></div>';
+      });
+  },
+
+  _loadMovimenti: function() {
+    var self = PM.components.storico;
+    if (self._loading.movimenti) return;
+    if (self._cache.movimenti && self._cache.session) { self._renderMovimenti(self._cache.movimenti, self._cache.session); return; }
+
+    self._loading.movimenti = true;
+    PM.html('storico-panel',
+      '<div class="skeleton-card"><div class="skeleton skeleton-hero"></div></div>' +
+      '<div class="skeleton-card"><div class="skeleton skeleton-text"></div><div class="skeleton skeleton-text" style="width:70%;"></div></div>');
+
+    Promise.all([
+      PM.api('getMyLedger'),
+      PM.state.dashboard ? Promise.resolve(PM.state.dashboard) : PM.api('getMemberDashboard')
+    ])
+      .then(function(results) {
+        self._cache.movimenti = results[0];
+        self._cache.session   = results[1];
+        if (results[1]) PM.state.dashboard = results[1];
+        self._renderMovimenti(results[0], results[1]);
+      })
+      .catch(function(err) {
+        PM.html('storico-panel',
+          '<div class="empty-state"><span class="empty-state-icon">&#9888;&#65039;</span>' +
+          '<h2>Errore</h2><p>' + PM._esc(err.message) + '</p>' +
+          '<button class="btn btn-orange mt-16" onclick="PM.components.storico._retryMovimenti()">Riprova</button></div>');
+      })
+      .finally(function() { self._loading.movimenti = false; });
+  },
+
+  _retryMovimenti: function() {
+    var self = PM.components.storico;
+    self._cache.movimenti = null;
+    self._cache.session   = null;
+    self._loadMovimenti();
+  },
+
+  _renderMovimenti: function(ledger, dashboard) {
+    var balance = dashboard ? dashboard.balance : 0;
+    var absBalance = Math.abs(balance).toFixed(2).replace('.', ',');
+
+    var html =
+      '<div class="balance-summary">' +
+        '<div class="balance-summary-label">Saldo attuale</div>' +
+        '<div style="display:flex;align-items:baseline;gap:4px;">' +
+          '<span class="balance-summary-euro">€</span>' +
+          '<span class="balance-summary-amount" style="' + (balance < 0 ? 'color:var(--red);' : '') + '">' + absBalance + '</span>' +
+        '</div>' +
+      '</div>';
+
+    if (!ledger || !ledger.length) {
+      html += '<div class="empty-state"><span class="empty-state-icon">&#128176;</span>' +
+        '<h2>Nessun movimento</h2><p>I tuoi movimenti appariranno qui.</p></div>';
+      PM.html('storico-panel', html);
+      return;
+    }
+
+    html += '<div class="card" style="padding:0 16px;">';
+    ledger.forEach(function(e) {
+      var isTopup  = e.type === 'topup';
+      var isPos    = e.amount >= 0;
+      var label    = e.type === 'topup' ? 'Bonifico' : (e.type === 'order_charge' ? 'Ordine' : 'Rettifica');
+      var iconBg   = isTopup ? 'topup' : 'charge';
+      var iconSvg  = isTopup
+        ? '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--teal)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></svg>'
+        : '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--orange)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 002 1.61h9.72a2 2 0 002-1.61L23 6H6"/></svg>';
+
+      html +=
+        '<div class="ledger-row">' +
+          '<div style="display:flex;align-items:center;gap:12px;flex:1;min-width:0;">' +
+            '<div class="ledger-icon ' + iconBg + '">' + iconSvg + '</div>' +
+            '<div style="min-width:0;">' +
+              '<div class="ledger-entry-label">' + PM._esc(label) + (e.note ? ' · ' + PM._esc(e.note) : '') + '</div>' +
+              '<div class="ledger-entry-date">' + PM.formatDate(e.entry_date) + '</div>' +
+            '</div>' +
+          '</div>' +
+          '<div class="ledger-entry-amount ' + (isPos ? 'positive' : 'negative') + '">' +
+            PM.formatEurSigned(e.amount) +
+          '</div>' +
+        '</div>';
+    });
+    html += '</div>';
+
+    PM.html('storico-panel', html);
+  }
+};
+</script>

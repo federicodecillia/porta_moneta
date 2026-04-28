@@ -1,0 +1,123 @@
+<script>
+/* ComponentGuide — Guida per soci */
+
+PM.components.guide = {
+
+  _openFaq: null,
+
+  load: function() {
+    var self = PM.components.guide;
+    var isAdmin = PM.state.session && PM.state.session.role === 'admin';
+
+    var html = '';
+
+    // ── Header ──
+    html +=
+      '<div class="flex-between" style="margin-bottom:26px;">' +
+        '<img src="' + PM.LOGO_SRC + '" alt="Porta Moneta" style="height:26px;">' +
+        (isAdmin ? '<span class="badge badge-orange">Admin</span>' : '') +
+      '</div>' +
+      '<div style="font-size:20px;font-weight:900;letter-spacing:-0.03em;margin-bottom:20px;">Come funziona</div>';
+
+    // ── How it works card ──
+    html +=
+      '<div class="guide-steps-card">' +
+        '<div class="guide-step-row">' +
+          '<div class="guide-step-num">1</div>' +
+          '<div class="guide-step-text"><strong>Controlla il saldo</strong><br>Nella Home vedi il tuo saldo e lo stato dell\'ordine aperto.</div>' +
+        '</div>' +
+        '<div class="guide-step-row">' +
+          '<div class="guide-step-num">2</div>' +
+          '<div class="guide-step-text"><strong>Vai all\'ordine</strong><br>Tocca il tab Ordine in basso e scegli i prodotti con i pulsanti + e −.</div>' +
+        '</div>' +
+        '<div class="guide-step-row">' +
+          '<div class="guide-step-num">3</div>' +
+          '<div class="guide-step-text"><strong>Conferma l\'ordine</strong><br>Premi "Conferma ordine" in basso. Puoi modificarlo finché l\'ordine è aperto.</div>' +
+        '</div>' +
+        '<div class="guide-step-row">' +
+          '<div class="guide-step-num">4</div>' +
+          '<div class="guide-step-text"><strong>Ritira e ricarica</strong><br>Vieni a ritirare nel giorno indicato. Per ricaricare il saldo fai un bonifico — la tesoriera lo registra nell\'app.</div>' +
+        '</div>' +
+      '</div>';
+
+    // ── FAQ ──
+    html += '<div style="font-size:18px;font-weight:800;margin-bottom:14px;letter-spacing:-0.02em;">Domande frequenti</div>';
+
+    var faqs = [
+      {
+        q: 'Quando posso ordinare?',
+        a: 'Quando c\'è un ordine aperto puoi ordinare. La Home mostra i giorni e le ore rimanenti alla chiusura. Oltre quel termine non puoi più modificare l\'ordine.'
+      },
+      {
+        q: 'Come funziona il saldo?',
+        a: 'Il saldo è il tuo credito presso l\'associazione. Alla chiusura dell\'ordine il costo viene addebitato automaticamente. Per ricaricare fai un bonifico sul conto dell\'associazione: la tesoriera lo registra e il saldo si aggiorna.'
+      },
+      {
+        q: 'Posso modificare l\'ordine dopo averlo confermato?',
+        a: 'Sì, finché l\'ordine è aperto. Vai al tab Ordine, modifica le quantità e ri-premi "Conferma ordine". L\'ultimo salvataggio sostituisce il precedente.'
+      },
+      {
+        q: 'Cosa succede se il saldo è negativo?',
+        a: 'Puoi comunque ordinare, ma riceverai un avviso. Ricordati di effettuare un bonifico al più presto per coprire il debito.'
+      },
+      {
+        q: 'Come aggiungo l\'app alla schermata Home?',
+        a: 'Su iPhone (Safari): tocca l\'icona di condivisione → "Aggiungi a schermata Home". Su Android (Chrome): tocca i tre puntini → "Aggiungi a schermata Home".'
+      }
+    ];
+
+    html += '<div id="faq-container">';
+    faqs.forEach(function(faq, i) {
+      html +=
+        '<div class="faq-item" onclick="PM.components.guide.toggleFaq(' + i + ')">' +
+          '<div class="faq-question-row">' +
+            '<div class="faq-question">' + PM._esc(faq.q) + '</div>' +
+            '<svg class="faq-chevron" id="fchev-' + i + '" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--gray-l)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' +
+              '<polyline points="6 9 12 15 18 9"/>' +
+            '</svg>' +
+          '</div>' +
+          '<div class="faq-answer" id="fans-' + i + '">' + PM._esc(faq.a) + '</div>' +
+        '</div>';
+    });
+    html += '</div>';
+
+    // ── Contact card ──
+    html +=
+      '<div class="card guide-contact-card">' +
+        '<div style="font-size:2rem;margin-bottom:10px;">&#128140;</div>' +
+        '<div style="font-size:15px;font-weight:700;margin-bottom:6px;">Hai altre domande?</div>' +
+        '<div style="font-size:13px;color:var(--gray);margin-bottom:16px;">Scrivici o parla direttamente con la tesoriera al prossimo ritiro.</div>' +
+        '<a href="mailto:info@portamoneta.org" class="btn btn-orange" style="text-decoration:none;">Contattaci</a>' +
+      '</div>';
+
+    PM.html('guide-content', html);
+  },
+
+  toggleFaq: function(idx) {
+    var self = PM.components.guide;
+
+    // Close previously open
+    if (self._openFaq !== null && self._openFaq !== idx) {
+      var prevAns  = document.getElementById('fans-' + self._openFaq);
+      var prevChev = document.getElementById('fchev-' + self._openFaq);
+      if (prevAns)  prevAns.classList.remove('open');
+      if (prevChev) prevChev.classList.remove('open');
+    }
+
+    var ansEl  = document.getElementById('fans-' + idx);
+    var chevEl = document.getElementById('fchev-' + idx);
+    if (!ansEl) return;
+
+    var isOpen = ansEl.classList.contains('open');
+    if (isOpen) {
+      ansEl.classList.remove('open');
+      if (chevEl) chevEl.classList.remove('open');
+      self._openFaq = null;
+    } else {
+      ansEl.classList.add('open');
+      if (chevEl) chevEl.classList.add('open');
+      self._openFaq = idx;
+    }
+  }
+};
+</script>
