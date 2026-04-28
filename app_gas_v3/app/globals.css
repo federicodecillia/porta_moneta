@@ -33,6 +33,7 @@
   --color-pm-red: var(--red);
   --color-pm-red-light: var(--red-l);
   --color-pm-border: var(--border);
+  --color-pm-orange-mid: rgba(245, 166, 35, 0.3);
   --spacing-nav-h: var(--nav-h);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);

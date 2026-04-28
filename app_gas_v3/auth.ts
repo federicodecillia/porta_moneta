@@ -41,6 +41,8 @@ export const { auth, handlers, signIn, signOut } = NextAuth({
           .select({
             role: members.role,
             active: members.active,
+            memberId: members.memberId,
+            fullName: members.fullName,
           })
           .from(members)
           .where(eq(members.email, email))
@@ -48,6 +50,8 @@ export const { auth, handlers, signIn, signOut } = NextAuth({
 
         token.role = member?.role ?? null;
         token.active = Boolean(member?.active);
+        token.memberId = member?.memberId ?? null;
+        token.fullName = member?.fullName ?? null;
         return token;
       } catch {
         token.role = null;
@@ -65,6 +69,10 @@ export const { auth, handlers, signIn, signOut } = NextAuth({
         userWithRole.role =
           typeof token.role === "string" ? token.role : null;
         userWithRole.active = Boolean(token.active);
+        (userWithRole as typeof userWithRole & { memberId?: string | null; fullName?: string | null }).memberId =
+          typeof token.memberId === "string" ? token.memberId : null;
+        (userWithRole as typeof userWithRole & { memberId?: string | null; fullName?: string | null }).fullName =
+          typeof token.fullName === "string" ? token.fullName : null;
       }
       return session;
     },
