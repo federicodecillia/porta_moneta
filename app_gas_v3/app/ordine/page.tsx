@@ -5,26 +5,40 @@ import {
   getCycleProducts,
   getMemberBalance,
   getMemberOrderLines,
-  getOpenCycle,
+  getOpenCycles,
 } from "@/lib/db/queries";
 import { saveOrder } from "@/lib/actions/order";
 
-export default async function OrdinePage() {
+export default async function OrdinePage({
+  searchParams,
+}: {
+  searchParams: Promise<{ cycleId?: string }>;
+}) {
+  const { cycleId: searchCycleId } = await searchParams;
+
   const session = await requireUserSession();
   const role = getUserRole(session);
   const memberId = session.user.memberId!;
 
-  const [balance, openCycle] = await Promise.all([
+  const [balance, openCycles] = await Promise.all([
     getMemberBalance(memberId),
-    getOpenCycle(),
+    getOpenCycles(),
   ]);
 
-  const canOrder =
-    openCycle !== null &&
-    (openCycle.accessLevel === "all" ||
-      ["admin", "attivo", "member"].includes(role ?? ""));
+  const activeCycles = openCycles.filter(
+    (c) => c.accessLevel === "all" || ["admin", "attivo", "member"].includes(role ?? "")
+  );
 
-  if (!canOrder) {
+  let openCycle = null;
+  if (activeCycles.length > 0) {
+    if (searchCycleId) {
+      openCycle = activeCycles.find((c) => c.cycleId === searchCycleId) ?? activeCycles[0];
+    } else {
+      openCycle = activeCycles[0];
+    }
+  }
+
+  if (!openCycle) {
     return (
       <AppShell email={session.user.email} isAdmin={role === "admin"}>
         <div className="flex flex-col items-center justify-center py-16 text-center">

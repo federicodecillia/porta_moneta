@@ -27,11 +27,9 @@ type SerializedCycle = {
 export function OpenCycleCard({
   cycle,
   stats,
-  suppliers,
 }: {
   cycle: SerializedCycle;
   stats: { orderCount: number; grandTotal: number };
-  suppliers: Supplier[];
 }) {
   const [editing, setEditing] = useState(false);
 
@@ -165,18 +163,18 @@ function EditCycleForm({ cycle, onClose }: { cycle: SerializedCycle; onClose: ()
           <label className="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-pm-gray">
             Data ritiro
           </label>
-          <div className="flex gap-2">
+          <div className="flex flex-wrap gap-2">
             <input
               name="pickupDate"
               type="datetime-local"
               defaultValue={cycle.pickupDate?.slice(0, 16) ?? ""}
-              className="w-full rounded-lg border border-pm-border px-3 py-2 text-[13px] text-pm-near-black focus:outline-none focus:ring-2 focus:ring-pm-orange/30"
+              className="flex-1 min-w-[150px] rounded-lg border border-pm-border px-3 py-2 text-[13px] text-pm-near-black focus:outline-none focus:ring-2 focus:ring-pm-orange/30"
             />
             <input
               name="pickupEndTime"
               type="time"
               defaultValue={cycle.pickupEndTime ?? ""}
-              className="w-24 rounded-lg border border-pm-border px-3 py-2 text-[13px] text-pm-near-black focus:outline-none focus:ring-2 focus:ring-pm-orange/30"
+              className="w-24 shrink-0 rounded-lg border border-pm-border px-3 py-2 text-[13px] text-pm-near-black focus:outline-none focus:ring-2 focus:ring-pm-orange/30"
             />
           </div>
         </div>
@@ -274,16 +272,16 @@ export function CreateCycleForm({ suppliers }: { suppliers: Supplier[] }) {
             <label className="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-pm-gray">
               Data ritiro
             </label>
-            <div className="flex gap-2">
+            <div className="flex flex-wrap gap-2">
               <input
                 name="pickupDate"
                 type="datetime-local"
-                className="w-full rounded-lg border border-pm-border px-3 py-2 text-[13px] text-pm-near-black focus:outline-none focus:ring-2 focus:ring-pm-orange/30"
+                className="flex-1 min-w-[150px] rounded-lg border border-pm-border px-3 py-2 text-[13px] text-pm-near-black focus:outline-none focus:ring-2 focus:ring-pm-orange/30"
               />
               <input
                 name="pickupEndTime"
                 type="time"
-                className="w-24 rounded-lg border border-pm-border px-3 py-2 text-[13px] text-pm-near-black focus:outline-none focus:ring-2 focus:ring-pm-orange/30"
+                className="w-24 shrink-0 rounded-lg border border-pm-border px-3 py-2 text-[13px] text-pm-near-black focus:outline-none focus:ring-2 focus:ring-pm-orange/30"
               />
             </div>
           </div>

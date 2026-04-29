@@ -9,7 +9,7 @@ import {
   getCycleProducts,
   getMemberBalance,
   getMemberByEmail,
-  getOpenCycle,
+  getOpenCycles,
 } from "@/lib/db/queries";
 
 export type SaveOrderLine = { productId: string; quantity: number };
@@ -25,8 +25,9 @@ export async function saveOrder(
   const member = await getMemberByEmail(email);
   if (!member) throw new Error("Socio non trovato");
 
-  const cycle = await getOpenCycle();
-  if (!cycle || cycle.cycleId !== cycleId) {
+  const cycles = await getOpenCycles();
+  const cycle = cycles.find((c) => c.cycleId === cycleId);
+  if (!cycle) {
     throw new Error("Il ciclo non è più aperto");
   }
 

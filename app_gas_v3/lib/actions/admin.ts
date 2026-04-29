@@ -57,12 +57,6 @@ export async function adminCreateCycle(data: CreateCycleInput): Promise<{error?:
     if (!data.orderCloseAt) return { error: "Data chiusura ordine obbligatoria" };
 
     const db = getDb();
-    const [existing] = await db
-      .select({ cycleId: orderCycles.cycleId })
-      .from(orderCycles)
-      .where(eq(orderCycles.status, "open"))
-      .limit(1);
-    if (existing) return { error: "Esiste già un ciclo aperto. Chiudilo prima di crearne uno nuovo." };
 
     const cycleId = genId("cyc");
     const now = new Date();
@@ -205,29 +199,84 @@ function parseProductsText(text: string) {
     });
 }
 
+async function upsertCycleProducts(
+  db: ReturnType<typeof getDb>,
+  cycleId: string,
+  newProducts: Array<{
+    name: string;
+    variant: string | null;
+    format: string | null;
+    unitPrice: string | number;
+    unit: string | null;
+    supplier: string | null;
+    notes: string | null;
+    category: string | null;
+  }>
+) {
+  const existingProducts = await db
+    .select()
+    .from(products)
+    .where(eq(products.cycleId, cycleId));
+
+  const [maxSortRow] = await db
+    .select({ max: sql<number>`max(${products.sortOrder})` })
+    .from(products)
+    .where(eq(products.cycleId, cycleId));
+  let currentSort = maxSortRow?.max || 0;
+
+  const existingMap = new Map();
+  for (const p of existingProducts) {
+    const key = `${p.name.toLowerCase().trim()}|${p.variant?.toLowerCase().trim() || ""}|${p.format?.toLowerCase().trim() || ""}|${p.unit?.toLowerCase().trim() || ""}`;
+    existingMap.set(key, p);
+  }
+
+  const inserts = [];
+  for (const np of newProducts) {
+    const key = `${np.name.toLowerCase().trim()}|${np.variant?.toLowerCase().trim() || ""}|${np.format?.toLowerCase().trim() || ""}|${np.unit?.toLowerCase().trim() || ""}`;
+    const existing = existingMap.get(key);
+    const unitPriceStr = typeof np.unitPrice === "number" ? np.unitPrice.toFixed(2) : np.unitPrice;
+
+    if (existing) {
+      await db.update(products).set({
+        unitPrice: unitPriceStr,
+        notes: np.notes || existing.notes,
+        category: np.category || existing.category,
+        supplier: np.supplier || existing.supplier,
+        active: true,
+      }).where(eq(products.productId, existing.productId));
+    } else {
+      currentSort++;
+      inserts.push({
+        productId: genId("prd"),
+        cycleId,
+        name: np.name.trim(),
+        variant: np.variant?.trim() || null,
+        format: np.format?.trim() || null,
+        unit: np.unit?.trim() || null,
+        unitPrice: unitPriceStr,
+        supplier: np.supplier?.trim() || null,
+        notes: np.notes?.trim() || null,
+        sortOrder: currentSort,
+        active: true,
+        category: np.category?.trim() || null,
+      });
+      // also add to map to prevent duplicates within the same batch
+      existingMap.set(key, true);
+    }
+  }
+
+  if (inserts.length > 0) {
+    await db.insert(products).values(inserts);
+  }
+}
+
 export async function adminLoadProducts(cycleId: string, text: string) {
   const admin = await requireAdmin();
   const parsed = parseProductsText(text);
   if (parsed.length === 0) throw new Error("Nessun prodotto trovato nel testo");
 
   const db = getDb();
-  await db.delete(products).where(eq(products.cycleId, cycleId));
-  await db.insert(products).values(
-    parsed.map((p, idx) => ({
-      productId: genId("prd"),
-      cycleId,
-      name: p.name,
-      variant: p.variant || null,
-      format: p.format || null,
-      unitPrice: p.unitPrice,
-      unit: p.unit || null,
-      supplier: p.supplier || null,
-      notes: p.notes || null,
-      sortOrder: idx + 1,
-      active: true,
-      category: p.category || null,
-    })),
-  );
+  await upsertCycleProducts(db, cycleId, parsed);
 
   await writeAudit(db, admin.email, "load_products", "cycle", cycleId, { count: parsed.length });
   revalidatePath("/admin");
@@ -246,22 +295,7 @@ export async function adminDuplicateProducts(fromCycleId: string, toCycleId: str
     .orderBy(products.sortOrder);
   if (source.length === 0) throw new Error("Nessun prodotto nel ciclo sorgente");
 
-  await db.delete(products).where(eq(products.cycleId, toCycleId));
-  await db.insert(products).values(
-    source.map((p, idx) => ({
-      productId: genId("prd"),
-      cycleId: toCycleId,
-      name: p.name,
-      variant: p.variant,
-      format: p.format,
-      unitPrice: p.unitPrice,
-      supplier: p.supplier,
-      notes: p.notes,
-      sortOrder: idx + 1,
-      active: true,
-      category: p.category,
-    })),
-  );
+  await upsertCycleProducts(db, toCycleId, source);
 
   await writeAudit(db, admin.email, "duplicate_products", "cycle", toCycleId, {
     source: fromCycleId,
@@ -270,6 +304,43 @@ export async function adminDuplicateProducts(fromCycleId: string, toCycleId: str
   revalidatePath("/admin");
   revalidatePath("/ordine");
   return { count: source.length };
+}
+
+export async function adminUpdateCycleProduct(
+  productId: string,
+  data: {
+    name: string;
+    variant?: string;
+    format?: string;
+    unit?: string;
+    category?: string;
+    unitPrice: number;
+    notes?: string;
+  }
+): Promise<{ error?: string }> {
+  try {
+    const admin = await requireAdmin();
+    const db = getDb();
+    await db
+      .update(products)
+      .set({
+        name: data.name,
+        variant: data.variant || null,
+        format: data.format || null,
+        unit: data.unit || null,
+        category: data.category || null,
+        unitPrice: data.unitPrice.toFixed(2),
+        notes: data.notes || null,
+      })
+      .where(eq(products.productId, productId));
+      
+    await writeAudit(db, admin.email, "update_cycle_product", "product", productId, data);
+    revalidatePath("/admin");
+    revalidatePath("/ordine");
+    return {};
+  } catch (e: unknown) {
+    return { error: e instanceof Error ? e.message : "Errore" };
+  }
 }
 
 // ── Cassa ─────────────────────────────────────────────────────────────────────
@@ -608,32 +679,16 @@ export async function adminLoadFromCatalog(cycleId: string, catalogProductIds: s
 
     if (!selectedProducts.length) return { error: "Prodotti non trovati o non attivi" };
 
-    const [maxSortRow] = await db
-      .select({ max: sql<number>`max(${products.sortOrder})` })
-      .from(products)
-      .where(eq(products.cycleId, cycleId));
-    let currentSort = maxSortRow?.max || 0;
-
-    await db.insert(products).values(
-      selectedProducts.map((p) => {
-        currentSort++;
-        return {
-          productId: genId("prd"),
-          cycleId,
-          name: p.name,
-          variant: p.variant,
-          format: p.format,
-          unitPrice: p.unitPrice,
-          unit: p.unit,
-          supplier: null, // the cycle supplier is implicit
-          notes: p.notes,
-          sortOrder: currentSort,
-          active: true,
-          supplierId: p.supplierId,
-          category: p.category,
-        };
-      })
-    );
+    await upsertCycleProducts(db, cycleId, selectedProducts.map(p => ({
+      name: p.name,
+      variant: p.variant,
+      format: p.format,
+      unitPrice: p.unitPrice,
+      unit: p.unit,
+      supplier: null, // the cycle supplier is implicit
+      notes: p.notes,
+      category: p.category,
+    })));
 
     await writeAudit(db, admin.email, "load_catalog_products", "cycle", cycleId, { count: selectedProducts.length });
     revalidatePath("/admin");
