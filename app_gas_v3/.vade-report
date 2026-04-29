@@ -1,0 +1,52 @@
+# Vercel Speed Insights Installation Report
+
+## Summary
+Successfully installed and configured Vercel Speed Insights for the porta-moneta Next.js application.
+
+## Changes Made
+
+### 1. Package Installation
+- Installed `@vercel/speed-insights` package version ^1.1.0
+- Updated package.json to include the new dependency
+- Updated package-lock.json with the complete dependency tree
+
+### 2. Code Integration (app/layout.tsx)
+- Added import statement: `import { SpeedInsights } from "@vercel/speed-insights/next";`
+- Added `<SpeedInsights />` component to the root layout, placed after the existing `<Analytics />` component
+- Follows the official Vercel documentation for Next.js 13.5+ projects
+
+## Implementation Details
+
+The implementation follows the official Vercel Speed Insights quickstart guide for Next.js applications:
+- Used the Next.js-specific import path (`@vercel/speed-insights/next`)
+- Placed the component in the root layout for global tracking
+- Positioned alongside the existing Vercel Analytics component for consistent monitoring setup
+
+## Framework Compatibility
+- Project uses Next.js 15.5.6 (fully compatible with Speed Insights)
+- Integrated seamlessly with existing Vercel Analytics setup
+- No conflicts with existing components or providers
+
+## Verification Completed
+✅ Build completed successfully with no errors
+✅ Linter passed with no new warnings or errors
+✅ TypeScript compilation successful
+✅ All static pages generated correctly
+✅ Lock files properly updated
+
+## Files Modified
+1. **app/layout.tsx** - Added SpeedInsights component and import
+2. **package.json** - Added @vercel/speed-insights dependency
+3. **package-lock.json** - Updated with new package and its dependencies
+
+## Next Steps
+To enable Speed Insights in production:
+1. Deploy this change to Vercel
+2. Navigate to the Speed Insights section in the Vercel dashboard
+3. Click the "Enable" button to activate tracking
+4. Verify the tracking script appears in the deployed page's head tag
+
+## Notes
+- The SpeedInsights component is lightweight and will not impact page performance
+- Data collection is automatic once enabled in the Vercel dashboard
+- Works alongside the existing Vercel Analytics setup without any conflicts
