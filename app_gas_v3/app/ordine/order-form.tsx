@@ -10,6 +10,7 @@ type Product = {
   name: string;
   variant: string | null;
   format: string | null;
+  unit: string | null;
   unitPrice: string;
   category: string | null;
   sortOrder: number;
@@ -151,7 +152,7 @@ export function OrderForm({
                     <div className="mt-[2px] flex items-center gap-2">
                       {meta && <span className="font-mono text-[11px] text-pm-gray">{meta}</span>}
                       <span className="font-mono text-[11px] font-semibold text-pm-orange">
-                        {formatEur(parseFloat(p.unitPrice))}
+                        {formatEur(parseFloat(p.unitPrice))}{p.unit ? `/${p.unit}` : ""}
                       </span>
                     </div>
                   </div>

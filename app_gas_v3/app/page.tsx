@@ -117,6 +117,7 @@ export default async function HomePage() {
           orderCloseAt={(openCycle.orderCloseAt ?? new Date()).toISOString()}
           orderOpenAt={(openCycle.orderOpenAt ?? openCycle.createdAt).toISOString()}
           pickupDate={openCycle.pickupDate?.toISOString() ?? null}
+          pickupEndTime={openCycle.pickupEndTime ?? null}
         />
       ) : (
         <div className="mb-[14px] flex items-center justify-between rounded-[18px] border border-pm-border bg-white p-[18px] shadow-[0_1px_2px_rgba(0,0,0,0.04)]">
@@ -168,7 +169,7 @@ export default async function HomePage() {
                   </div>
                 </div>
                 <div className="font-mono text-[13px] font-semibold text-pm-near-black">
-                  ×{line.quantity} · {formatEur(parseFloat(line.lineTotal))}
+                  ×{line.quantity} · {formatEur(parseFloat(line.lineTotal))}{p?.unit ? `/${p.unit}` : ""}
                 </div>
               </div>
             );

@@ -55,6 +55,7 @@ export default async function OrdinePage() {
           variant: p.variant,
           format: p.format,
           unitPrice: p.unitPrice,
+          unit: p.unit,
           category: p.category,
           sortOrder: p.sortOrder,
         }))}

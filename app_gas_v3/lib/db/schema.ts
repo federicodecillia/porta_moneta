@@ -36,6 +36,7 @@ export const orderCycles = pgTable("order_cycles", {
   cycleId: text("cycle_id").primaryKey(),
   title: text("title").notNull(),
   pickupDate: timestamp("pickup_date", { withTimezone: true }),
+  pickupEndTime: text("pickup_end_time"),
   orderOpenAt: timestamp("order_open_at", { withTimezone: true }),
   orderCloseAt: timestamp("order_close_at", { withTimezone: true }),
   status: text("status").notNull(),
@@ -47,6 +48,23 @@ export const orderCycles = pgTable("order_cycles", {
   supplierId: text("supplier_id").references(() => suppliers.supplierId),
 });
 
+export const supplierProducts = pgTable("supplier_products", {
+  catalogProductId: text("catalog_product_id").primaryKey(),
+  supplierId: text("supplier_id")
+    .notNull()
+    .references(() => suppliers.supplierId),
+  name: text("name").notNull(),
+  variant: text("variant"),
+  format: text("format"),
+  unit: text("unit"),
+  unitPrice: numeric("unit_price", { precision: 10, scale: 2 }).notNull(),
+  notes: text("notes"),
+  category: text("category"),
+  active: boolean("active").notNull().default(true),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull(),
+  archivedAt: timestamp("archived_at", { withTimezone: true }),
+});
+
 export const products = pgTable("products", {
   productId: text("product_id").primaryKey(),
   cycleId: text("cycle_id")
@@ -56,6 +74,7 @@ export const products = pgTable("products", {
   variant: text("variant"),
   format: text("format"),
   unitPrice: numeric("unit_price", { precision: 10, scale: 2 }).notNull(),
+  unit: text("unit"),
   supplier: text("supplier"),
   notes: text("notes"),
   sortOrder: integer("sort_order").notNull().default(0),

@@ -20,12 +20,25 @@ const STEPS = [
   },
   {
     n: 4,
+    title: "Storico",
+    body: "Nel tab Storico vedi i tuoi ordini passati e tutti i movimenti del saldo.",
+  },
+  {
+    n: 5,
     title: "Ritira e ricarica",
     body: "Vieni a ritirare nel giorno indicato. Per ricaricare il saldo fai un bonifico — la tesoriera lo registra nell'app.",
   },
 ];
 
 const FAQS = [
+  {
+    q: "Come è organizzata l'app?",
+    a: "L'app è divisa in 4 tab: Home, Ordine, Storico, Guida. Il tab Admin è visibile solo agli amministratori.",
+  },
+  {
+    q: "Chi gestisce prodotti e cicli?",
+    a: "Gli amministratori creano i cicli d'ordine, caricano i prodotti dal catalogo dei fornitori, e chiudono i cicli.",
+  },
   {
     q: "Quando posso ordinare?",
     a: "Quando c'è un ordine aperto puoi ordinare. La Home mostra i giorni e le ore rimanenti alla chiusura. Oltre quel termine non puoi più modificare l'ordine.",

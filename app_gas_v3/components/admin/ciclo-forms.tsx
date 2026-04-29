@@ -18,6 +18,7 @@ type SerializedCycle = {
   title: string;
   orderCloseAt: string | null;
   pickupDate: string | null;
+  pickupEndTime: string | null;
   notes: string | null;
 };
 
@@ -95,6 +96,10 @@ export function OpenCycleCard({
                     month: "short",
                     year: "numeric",
                   })}
+                  {/* show time if set */}
+                  {cycle.pickupDate.includes("T") && !cycle.pickupDate.endsWith("T00:00:00.000Z") &&
+                    ` dalle ${new Date(cycle.pickupDate).toLocaleTimeString("it-IT", { hour: "2-digit", minute: "2-digit" })}`}
+                  {cycle.pickupEndTime && ` alle ${cycle.pickupEndTime}`}
                 </span>
               </div>
             )}
@@ -114,18 +119,19 @@ function EditCycleForm({ cycle, onClose }: { cycle: SerializedCycle; onClose: ()
     e.preventDefault();
     const fd = new FormData(e.currentTarget);
     startTransition(async () => {
-      try {
-        await adminUpdateCycle(cycle.cycleId, {
-          title: fd.get("title") as string,
-          pickupDate: fd.get("pickupDate") as string,
-          orderCloseAt: fd.get("orderCloseAt") as string,
-          notes: fd.get("notes") as string,
-        });
-        toast.success("Ciclo aggiornato");
-        onClose();
-      } catch (err) {
-        toast.error(err instanceof Error ? err.message : "Errore");
+      const result = await adminUpdateCycle(cycle.cycleId, {
+        title: fd.get("title") as string,
+        pickupDate: fd.get("pickupDate") as string,
+        pickupEndTime: fd.get("pickupEndTime") as string,
+        orderCloseAt: fd.get("orderCloseAt") as string,
+        notes: fd.get("notes") as string,
+      });
+      if (result.error) {
+        toast.error(result.error);
+        return;
       }
+      toast.success("Ciclo aggiornato");
+      onClose();
     });
   }
 
@@ -159,12 +165,20 @@ function EditCycleForm({ cycle, onClose }: { cycle: SerializedCycle; onClose: ()
           <label className="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-pm-gray">
             Data ritiro
           </label>
-          <input
-            name="pickupDate"
-            type="datetime-local"
-            defaultValue={cycle.pickupDate?.slice(0, 16) ?? ""}
-            className="w-full rounded-lg border border-pm-border px-3 py-2 text-[13px] text-pm-near-black focus:outline-none focus:ring-2 focus:ring-pm-orange/30"
-          />
+          <div className="flex gap-2">
+            <input
+              name="pickupDate"
+              type="datetime-local"
+              defaultValue={cycle.pickupDate?.slice(0, 16) ?? ""}
+              className="w-full rounded-lg border border-pm-border px-3 py-2 text-[13px] text-pm-near-black focus:outline-none focus:ring-2 focus:ring-pm-orange/30"
+            />
+            <input
+              name="pickupEndTime"
+              type="time"
+              defaultValue={cycle.pickupEndTime ?? ""}
+              className="w-24 rounded-lg border border-pm-border px-3 py-2 text-[13px] text-pm-near-black focus:outline-none focus:ring-2 focus:ring-pm-orange/30"
+            />
+          </div>
         </div>
       </div>
       <div>
@@ -201,19 +215,20 @@ export function CreateCycleForm({ suppliers }: { suppliers: Supplier[] }) {
     const data: CreateCycleInput = {
       title: fd.get("title") as string,
       pickupDate: fd.get("pickupDate") as string,
+      pickupEndTime: fd.get("pickupEndTime") as string,
       orderCloseAt: fd.get("orderCloseAt") as string,
       supplierId: fd.get("supplierId") as string,
       accessLevel: (fd.get("accessLevel") as "attivi" | "all") ?? "attivi",
       notes: fd.get("notes") as string,
     };
     startTransition(async () => {
-      try {
-        await adminCreateCycle(data);
-        toast.success("Ciclo creato");
-        setOpen(false);
-      } catch (err) {
-        toast.error(err instanceof Error ? err.message : "Errore");
+      const result = await adminCreateCycle(data);
+      if (result.error) {
+        toast.error(result.error);
+        return;
       }
+      toast.success("Ciclo creato");
+      setOpen(false);
     });
   }
 
@@ -259,11 +274,18 @@ export function CreateCycleForm({ suppliers }: { suppliers: Supplier[] }) {
             <label className="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-pm-gray">
               Data ritiro
             </label>
-            <input
-              name="pickupDate"
-              type="datetime-local"
-              className="w-full rounded-lg border border-pm-border px-3 py-2 text-[13px] text-pm-near-black focus:outline-none focus:ring-2 focus:ring-pm-orange/30"
-            />
+            <div className="flex gap-2">
+              <input
+                name="pickupDate"
+                type="datetime-local"
+                className="w-full rounded-lg border border-pm-border px-3 py-2 text-[13px] text-pm-near-black focus:outline-none focus:ring-2 focus:ring-pm-orange/30"
+              />
+              <input
+                name="pickupEndTime"
+                type="time"
+                className="w-24 rounded-lg border border-pm-border px-3 py-2 text-[13px] text-pm-near-black focus:outline-none focus:ring-2 focus:ring-pm-orange/30"
+              />
+            </div>
           </div>
         </div>
         <div className="grid grid-cols-2 gap-3">

@@ -2,7 +2,9 @@
 
 import { useState, useTransition } from "react";
 import { toast } from "@/components/ui/toast";
-import { adminLoadProducts, adminDuplicateProducts } from "@/lib/actions/admin";
+import { adminLoadProducts, adminDuplicateProducts, adminLoadFromCatalog } from "@/lib/actions/admin";
+import { formatEur } from "@/lib/utils";
+import type { CatalogProductItem } from "@/lib/db/queries";
 
 type CycleOption = { cycleId: string; title: string };
 
@@ -29,7 +31,7 @@ export function LoadProductsForm({ cycleId }: { cycleId: string }) {
     <form onSubmit={handleSubmit} className="rounded-xl border border-pm-border bg-white p-4 shadow-sm">
       <p className="mb-1 text-[13px] font-bold text-pm-near-black">Carica prodotti da testo</p>
       <p className="mb-3 font-mono text-[10px] text-pm-teal">
-        Formato: Nome;Varietà;Formato;Prezzo;Fornitore;Note
+        Formato: Nome;Varietà;Formato;Prezzo;Fornitore;Note;Categoria;Unità
       </p>
       <textarea
         value={text}
@@ -96,6 +98,92 @@ export function DuplicateProductsForm({
         className="w-full rounded-xl bg-pm-teal py-2 text-[13px] font-bold text-white disabled:opacity-60"
       >
         {isPending ? "Duplicazione…" : "Duplica prodotti"}
+      </button>
+    </div>
+  );
+}
+
+// ── Load from catalog ─────────────────────────────────────────────────────────
+
+export function CatalogLoadForm({
+  cycleId,
+  catalogProducts,
+}: {
+  cycleId: string;
+  catalogProducts: CatalogProductItem[];
+}) {
+  const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [isPending, startTransition] = useTransition();
+
+  function toggle(id: string) {
+    const next = new Set(selected);
+    if (next.has(id)) next.delete(id);
+    else next.add(id);
+    setSelected(next);
+  }
+
+  function handleLoad() {
+    if (selected.size === 0) return;
+    startTransition(async () => {
+      try {
+        const result = await adminLoadFromCatalog(cycleId, Array.from(selected));
+        if (result.error) {
+          toast.error(result.error);
+          return;
+        }
+        toast.success(`${result.count} prodotti caricati dal catalogo`);
+        setSelected(new Set());
+      } catch (err) {
+        toast.error(err instanceof Error ? err.message : "Errore");
+      }
+    });
+  }
+
+  return (
+    <div className="rounded-xl border border-pm-border bg-white p-4 shadow-sm">
+      <div className="mb-3 flex items-center justify-between">
+        <p className="text-[13px] font-bold text-pm-near-black">Carica da catalogo fornitore</p>
+        <button
+          onClick={() => setSelected(new Set(catalogProducts.map((p) => p.catalogProductId)))}
+          className="text-[11px] font-semibold text-pm-teal"
+        >
+          Seleziona tutti
+        </button>
+      </div>
+
+      <div className="mb-3 max-h-60 overflow-y-auto rounded-lg border border-pm-border p-2">
+        {catalogProducts.map((p) => (
+          <label
+            key={p.catalogProductId}
+            className="flex cursor-pointer items-center gap-3 rounded-md px-2 py-1.5 hover:bg-pm-warm-white/50"
+          >
+            <input
+              type="checkbox"
+              checked={selected.has(p.catalogProductId)}
+              onChange={() => toggle(p.catalogProductId)}
+              className="rounded border-pm-border text-pm-teal focus:ring-pm-teal"
+            />
+            <div className="flex-1 text-[13px] text-pm-near-black">
+              {p.name}
+              {p.variant && <span className="ml-1 text-[12px] text-pm-gray">{p.variant}</span>}
+              {p.format && (
+                <span className="ml-1 font-mono text-[10px] text-pm-gray-light">({p.format})</span>
+              )}
+            </div>
+            <div className="font-mono text-[12px] font-semibold text-pm-near-black">
+              {formatEur(parseFloat(p.unitPrice))}
+              {p.unit ? `/${p.unit}` : ""}
+            </div>
+          </label>
+        ))}
+      </div>
+
+      <button
+        onClick={handleLoad}
+        disabled={isPending || selected.size === 0}
+        className="w-full rounded-xl bg-pm-teal py-2 text-[13px] font-bold text-white disabled:opacity-60"
+      >
+        {isPending ? "Caricamento…" : `Carica ${selected.size} prodotti`}
       </button>
     </div>
   );

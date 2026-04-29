@@ -21,6 +21,7 @@ export async function TabCiclo() {
             title: openCycle.title,
             orderCloseAt: openCycle.orderCloseAt?.toISOString() ?? null,
             pickupDate: openCycle.pickupDate?.toISOString() ?? null,
+            pickupEndTime: openCycle.pickupEndTime ?? null,
             notes: openCycle.notes ?? null,
           }}
           stats={{ orderCount: stats?.orderCount ?? 0, grandTotal: stats?.grandTotal ?? 0 }}

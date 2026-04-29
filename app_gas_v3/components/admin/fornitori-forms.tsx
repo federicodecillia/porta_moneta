@@ -6,8 +6,12 @@ import {
   adminArchiveSupplier,
   adminDeleteSupplier,
   adminUpsertSupplier,
+  adminUpsertCatalogProduct,
+  adminArchiveCatalogProduct,
   type UpsertSupplierInput,
+  type UpsertCatalogProductInput,
 } from "@/lib/actions/admin";
+import type { CatalogProductItem } from "@/lib/db/queries";
 import { formatDate, formatEur, getProductEmoji } from "@/lib/utils";
 
 type Supplier = {
@@ -162,17 +166,125 @@ export function FornitoriForm({
   );
 }
 
+// ── Catalog Product Form ──────────────────────────────────────────────────────
+
+export function CatalogProductForm({
+  supplierId,
+  product,
+  onClose,
+}: {
+  supplierId: string;
+  product?: CatalogProductItem;
+  onClose: () => void;
+}) {
+  const [isPending, startTransition] = useTransition();
+
+  function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    const fd = new FormData(e.currentTarget);
+    const data: UpsertCatalogProductInput = {
+      catalogProductId: product?.catalogProductId,
+      supplierId,
+      name: fd.get("name") as string,
+      variant: (fd.get("variant") as string) || undefined,
+      format: (fd.get("format") as string) || undefined,
+      unit: (fd.get("unit") as string) || undefined,
+      unitPrice: parseFloat((fd.get("unitPrice") as string).replace(",", ".")),
+      notes: (fd.get("notes") as string) || undefined,
+      category: (fd.get("category") as string) || undefined,
+    };
+    startTransition(async () => {
+      try {
+        const result = await adminUpsertCatalogProduct(data);
+        if (result.error) {
+          toast.error(result.error);
+          return;
+        }
+        if (result.archived) {
+          toast.success("Prezzo aggiornato — versione precedente archiviata");
+        } else {
+          toast.success(product ? "Prodotto aggiornato" : "Prodotto aggiunto al catalogo");
+        }
+        onClose();
+      } catch (err) {
+        toast.error(err instanceof Error ? err.message : "Errore");
+      }
+    });
+  }
+
+  const inputCls =
+    "w-full rounded-lg border border-pm-border px-3 py-2 text-[13px] text-pm-near-black focus:outline-none focus:ring-2 focus:ring-pm-teal/30";
+  const labelCls = "mb-1 block text-[11px] font-semibold uppercase tracking-wide text-pm-gray";
+
+  return (
+    <form onSubmit={handleSubmit} className="mb-3 rounded-lg border border-pm-border bg-white p-3 shadow-sm">
+      <div className="mb-2 flex items-center justify-between">
+        <p className="text-[12px] font-bold text-pm-near-black">
+          {product ? "Modifica prodotto" : "Nuovo prodotto a catalogo"}
+        </p>
+        <button type="button" onClick={onClose} className="text-[11px] text-pm-gray">
+          ✕ Annulla
+        </button>
+      </div>
+
+      <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+        <div className="col-span-2 sm:col-span-4">
+          <label className={labelCls}>Nome *</label>
+          <input name="name" required defaultValue={product?.name} className={inputCls} />
+        </div>
+        <div className="col-span-2 sm:col-span-2">
+          <label className={labelCls}>Varietà</label>
+          <input name="variant" defaultValue={product?.variant ?? ""} className={inputCls} />
+        </div>
+        <div className="col-span-1">
+          <label className={labelCls}>Formato</label>
+          <input name="format" placeholder="es. 1 kg" defaultValue={product?.format ?? ""} className={inputCls} />
+        </div>
+        <div className="col-span-1">
+          <label className={labelCls}>Unità</label>
+          <input name="unit" placeholder="es. kg" defaultValue={product?.unit ?? ""} className={inputCls} />
+        </div>
+        <div className="col-span-2">
+          <label className={labelCls}>Categoria</label>
+          <input name="category" placeholder="es. Frutta" defaultValue={product?.category ?? ""} className={inputCls} />
+        </div>
+        <div className="col-span-2">
+          <label className={labelCls}>Prezzo *</label>
+          <input name="unitPrice" type="number" step="0.01" required defaultValue={product?.unitPrice} className={inputCls} />
+        </div>
+        <div className="col-span-2 sm:col-span-4">
+          <label className={labelCls}>Note</label>
+          <input name="notes" defaultValue={product?.notes ?? ""} className={inputCls} />
+        </div>
+      </div>
+
+      <button
+        type="submit"
+        disabled={isPending}
+        className="mt-3 w-full rounded-lg bg-pm-teal py-1.5 text-[12px] font-bold text-white disabled:opacity-60"
+      >
+        {isPending ? "Salvataggio…" : "Salva"}
+      </button>
+    </form>
+  );
+}
+
 // ── Supplier List ─────────────────────────────────────────────────────────────
 
 export function FornitoriList({
   suppliers,
   productsBySupplier,
+  catalogBySupplier,
 }: {
   suppliers: Supplier[];
   productsBySupplier: Record<string, SupplierProductItem[]>;
+  catalogBySupplier: Record<string, CatalogProductItem[]>;
 }) {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [filter, setFilter] = useState("");
+  const [addingCatalogFor, setAddingCatalogFor] = useState<string | null>(null);
+  const [editingCatalogId, setEditingCatalogId] = useState<string | null>(null);
   const [, startTransition] = useTransition();
 
   function handleArchive(s: Supplier) {
@@ -195,8 +307,27 @@ export function FornitoriList({
     });
   }
 
-  const active = suppliers.filter((s) => s.active);
-  const archived = suppliers.filter((s) => !s.active);
+  const query = filter.toLowerCase().trim();
+  const filtered = query
+    ? suppliers.filter(
+        (s) =>
+          s.name.toLowerCase().includes(query) ||
+          s.macroCategory?.toLowerCase().includes(query) ||
+          s.email?.toLowerCase().includes(query),
+      )
+    : suppliers;
+
+  const active = filtered.filter((s) => s.active);
+  const archived = filtered.filter((s) => !s.active);
+
+  function handleArchiveCatalogProduct(catalogProductId: string) {
+    if (!window.confirm("Archiviare questo prodotto dal catalogo?")) return;
+    startTransition(async () => {
+      const result = await adminArchiveCatalogProduct(catalogProductId, false);
+      if (result.error) toast.error(result.error);
+      else toast.success("Prodotto archiviato");
+    });
+  }
 
   function renderGroup(label: string, list: Supplier[]) {
     if (list.length === 0) return null;
@@ -275,6 +406,76 @@ export function FornitoriList({
                           {s.notes && <div className="mt-1 italic text-pm-gray-light">{s.notes}</div>}
                         </div>
                       )}
+
+                      {/* Catalog Section */}
+                      <div className="mb-4">
+                        <div className="mb-2 flex items-center justify-between">
+                          <p className="font-mono text-[9px] uppercase tracking-wider text-pm-gray-light">
+                            Catalogo
+                          </p>
+                          <button
+                            onClick={() => {
+                              setAddingCatalogFor(addingCatalogFor === s.supplierId ? null : s.supplierId);
+                              setEditingCatalogId(null);
+                            }}
+                            className="text-[11px] font-semibold text-pm-teal"
+                          >
+                            + Aggiungi
+                          </button>
+                        </div>
+                        {addingCatalogFor === s.supplierId && (
+                          <CatalogProductForm supplierId={s.supplierId} onClose={() => setAddingCatalogFor(null)} />
+                        )}
+                        <div className="space-y-1">
+                          {(catalogBySupplier[s.supplierId] ?? []).filter((p) => p.active).map((cp) => (
+                            <div key={cp.catalogProductId} className="rounded border border-pm-border/50 bg-white px-3 py-2">
+                              {editingCatalogId === cp.catalogProductId ? (
+                                <CatalogProductForm
+                                  supplierId={s.supplierId}
+                                  product={cp}
+                                  onClose={() => setEditingCatalogId(null)}
+                                />
+                              ) : (
+                                <div className="flex items-center justify-between">
+                                  <div className="text-[12px]">
+                                    <span className="font-semibold text-pm-near-black">{cp.name}</span>
+                                    {cp.variant && <span className="ml-1 text-pm-gray">· {cp.variant}</span>}
+                                    {cp.format && <span className="ml-1 font-mono text-[10px] text-pm-gray-light">({cp.format})</span>}
+                                    {cp.unit && <span className="ml-1 font-mono text-[10px] text-pm-gray-light">/{cp.unit}</span>}
+                                  </div>
+                                  <div className="flex items-center gap-3">
+                                    <span className="font-mono text-[12px] font-semibold text-pm-near-black">
+                                      {formatEur(parseFloat(cp.unitPrice))}
+                                    </span>
+                                    <div className="flex items-center gap-1.5">
+                                      <button
+                                        onClick={() => {
+                                          setEditingCatalogId(cp.catalogProductId);
+                                          setAddingCatalogFor(null);
+                                        }}
+                                        className="text-[10px] font-semibold text-pm-gray"
+                                      >
+                                        Modifica
+                                      </button>
+                                      <button
+                                        onClick={() => handleArchiveCatalogProduct(cp.catalogProductId)}
+                                        className="text-[10px] font-semibold text-pm-gray"
+                                      >
+                                        Archivia
+                                      </button>
+                                    </div>
+                                  </div>
+                                </div>
+                              )}
+                            </div>
+                          ))}
+                          {(catalogBySupplier[s.supplierId] ?? []).filter((p) => p.active).length === 0 && !addingCatalogFor && (
+                            <p className="text-[12px] text-pm-gray">Nessun prodotto a catalogo</p>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Historic Products Section */}
                       {(productsBySupplier[s.supplierId] ?? []).length === 0 ? (
                         <p className="text-center text-[12px] text-pm-gray">
                           Nessun prodotto associato nei cicli passati
@@ -329,6 +530,15 @@ export function FornitoriList({
 
   return (
     <div>
+      <div className="mb-4">
+        <input
+          type="text"
+          placeholder="Cerca fornitore (nome, categoria, email)..."
+          value={filter}
+          onChange={(e) => setFilter(e.target.value)}
+          className="w-full rounded-xl border border-pm-border px-4 py-2.5 text-[13px] text-pm-near-black focus:outline-none focus:ring-2 focus:ring-pm-orange/30"
+        />
+      </div>
       {renderGroup("Attivi", active)}
       {renderGroup("Archiviati", archived)}
       {suppliers.length === 0 && (

@@ -152,7 +152,10 @@ export async function TabOrdini({ cycleId, memberId }: Props) {
                 <div key={p.productId} className="flex items-center justify-between px-4 py-2.5">
                   <div className="flex items-center gap-2">
                     <span className="text-[16px] leading-none">{getProductEmoji(p.name)}</span>
-                    <span className="text-[13px] font-medium text-pm-near-black">{p.name}</span>
+                    <span className="text-[13px] font-medium text-pm-near-black">
+                      {p.name}
+                      {p.unit && <span className="ml-1 font-mono text-[10px] text-pm-gray-light">/{p.unit}</span>}
+                    </span>
                     {p.variant && (
                       <span className="text-[12px] text-pm-gray">{p.variant}</span>
                     )}

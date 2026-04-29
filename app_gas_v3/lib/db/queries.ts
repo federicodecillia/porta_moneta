@@ -1,4 +1,4 @@
-import { desc, eq, and, sql, asc, or, isNotNull } from "drizzle-orm";
+import { desc, eq, and, sql, asc, or, isNotNull, inArray } from "drizzle-orm";
 import { getDb } from "./client";
 import {
   ledgerEntries,
@@ -7,6 +7,7 @@ import {
   orders,
   products,
   suppliers,
+  supplierProducts,
 } from "./schema";
 
 export async function getMemberByEmail(email: string) {
@@ -210,6 +211,7 @@ export type CycleSummary = {
     productId: string;
     name: string;
     variant: string | null;
+    unit: string | null;
     totalQty: number;
     totalAmount: number;
   }[];
@@ -232,6 +234,7 @@ export async function getAdminCycleSummary(cycleId: string): Promise<CycleSummar
       productId: products.productId,
       productName: products.name,
       variant: products.variant,
+      unit: products.unit,
       quantity: orders.quantity,
       lineTotal: orders.lineTotal,
     })
@@ -250,6 +253,7 @@ export async function getAdminCycleSummary(cycleId: string): Promise<CycleSummar
         productId: row.productId,
         name: row.productName,
         variant: row.variant,
+        unit: row.unit,
         totalQty: 0,
         totalAmount: 0,
       });
@@ -382,10 +386,50 @@ export async function getAllSuppliersAdmin() {
   return rows.map((r) => ({ ...r, cycleCount: parseInt(r.cycleCount) }));
 }
 
+export type CatalogProductItem = {
+  catalogProductId: string;
+  supplierId: string;
+  name: string;
+  variant: string | null;
+  format: string | null;
+  unit: string | null;
+  unitPrice: string;
+  notes: string | null;
+  category: string | null;
+  active: boolean;
+  createdAt: Date;
+  archivedAt: Date | null;
+};
+
+export async function getCatalogBySupplier(supplierId: string, includeArchived = false) {
+  const db = getDb();
+  if (includeArchived) {
+    return db.select().from(supplierProducts).where(eq(supplierProducts.supplierId, supplierId)).orderBy(asc(supplierProducts.name));
+  } else {
+    return db.select().from(supplierProducts).where(and(eq(supplierProducts.supplierId, supplierId), eq(supplierProducts.active, true))).orderBy(asc(supplierProducts.name));
+  }
+}
+
+export async function getAllCatalogProducts(): Promise<Record<string, CatalogProductItem[]>> {
+  const db = getDb();
+  const rows = await db
+    .select()
+    .from(supplierProducts)
+    .orderBy(asc(supplierProducts.name));
+
+  const result: Record<string, CatalogProductItem[]> = {};
+  for (const row of rows) {
+    if (!result[row.supplierId]) result[row.supplierId] = [];
+    result[row.supplierId].push(row);
+  }
+  return result;
+}
+
 export type SupplierProductItem = {
   name: string;
   variant: string | null;
   format: string | null;
+  unit: string | null;
   unitPrice: string;
   cycleTitle: string;
   pickupDate: string | null;
@@ -399,6 +443,7 @@ export async function getAllProductsWithSupplier(): Promise<Record<string, Suppl
       name: products.name,
       variant: products.variant,
       format: products.format,
+      unit: products.unit,
       unitPrice: products.unitPrice,
       cycleTitle: orderCycles.title,
       pickupDate: orderCycles.pickupDate,
@@ -416,6 +461,7 @@ export async function getAllProductsWithSupplier(): Promise<Record<string, Suppl
       name: row.name,
       variant: row.variant,
       format: row.format,
+      unit: row.unit,
       unitPrice: row.unitPrice,
       cycleTitle: row.cycleTitle,
       pickupDate: row.pickupDate?.toISOString() ?? null,

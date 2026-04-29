@@ -1,7 +1,7 @@
-import { getAdminCycleProducts, getAllCycles, getOpenCycle } from "@/lib/db/queries";
+import { getAdminCycleProducts, getAllCycles, getOpenCycle, getCatalogBySupplier } from "@/lib/db/queries";
 import { formatEur, getProductEmoji } from "@/lib/utils";
 import { Card, CardHeader } from "@/components/ui/card";
-import { DuplicateProductsForm, LoadProductsForm } from "./prodotti-forms";
+import { DuplicateProductsForm, LoadProductsForm, CatalogLoadForm } from "./prodotti-forms";
 
 export async function TabProdotti() {
   const openCycle = await getOpenCycle();
@@ -23,6 +23,8 @@ export async function TabProdotti() {
     .filter((c) => c.cycleId !== openCycle.cycleId && c.status === "closed")
     .map((c) => ({ cycleId: c.cycleId, title: c.title }));
 
+  const catalogProducts = openCycle.supplierId ? await getCatalogBySupplier(openCycle.supplierId) : [];
+
   return (
     <div className="space-y-4">
       <div className="rounded-xl bg-pm-teal-light px-4 py-3">
@@ -32,6 +34,9 @@ export async function TabProdotti() {
         </p>
       </div>
 
+      {catalogProducts.length > 0 && (
+        <CatalogLoadForm cycleId={openCycle.cycleId} catalogProducts={catalogProducts} />
+      )}
       <LoadProductsForm cycleId={openCycle.cycleId} />
       <DuplicateProductsForm cycleId={openCycle.cycleId} pastCycles={pastCycles} />
 
@@ -61,7 +66,7 @@ export async function TabProdotti() {
                   )}
                 </div>
                 <span className="shrink-0 font-mono text-[13px] font-bold text-pm-near-black">
-                  {formatEur(parseFloat(p.unitPrice))}
+                  {formatEur(parseFloat(p.unitPrice))}{p.unit ? `/${p.unit}` : ""}
                 </span>
               </div>
             ))}

@@ -4,7 +4,8 @@ import { revalidatePath } from "next/cache";
 import { eq, and, sql } from "drizzle-orm";
 import { auth } from "@/auth";
 import { getDb } from "@/lib/db/client";
-import { auditLog, ledgerEntries, members, orderCycles, orders, products, suppliers } from "@/lib/db/schema";
+import { auditLog, ledgerEntries, members, orderCycles, orders, products, suppliers, supplierProducts } from "@/lib/db/schema";
+import { inArray } from "drizzle-orm";
 
 async function requireAdmin(): Promise<{ email: string }> {
   const session = await auth();
@@ -42,44 +43,51 @@ async function writeAudit(
 export type CreateCycleInput = {
   title: string;
   pickupDate: string;
+  pickupEndTime?: string;
   orderCloseAt: string;
   supplierId: string;
   accessLevel: "attivi" | "all";
   notes: string;
 };
 
-export async function adminCreateCycle(data: CreateCycleInput) {
-  const admin = await requireAdmin();
-  if (!data.title?.trim()) throw new Error("Titolo obbligatorio");
-  if (!data.orderCloseAt) throw new Error("Data chiusura ordine obbligatoria");
+export async function adminCreateCycle(data: CreateCycleInput): Promise<{error?: string}> {
+  try {
+    const admin = await requireAdmin();
+    if (!data.title?.trim()) return { error: "Titolo obbligatorio" };
+    if (!data.orderCloseAt) return { error: "Data chiusura ordine obbligatoria" };
 
-  const db = getDb();
-  const [existing] = await db
-    .select({ cycleId: orderCycles.cycleId })
-    .from(orderCycles)
-    .where(eq(orderCycles.status, "open"))
-    .limit(1);
-  if (existing) throw new Error("Esiste già un ciclo aperto. Chiudilo prima di crearne uno nuovo.");
+    const db = getDb();
+    const [existing] = await db
+      .select({ cycleId: orderCycles.cycleId })
+      .from(orderCycles)
+      .where(eq(orderCycles.status, "open"))
+      .limit(1);
+    if (existing) return { error: "Esiste già un ciclo aperto. Chiudilo prima di crearne uno nuovo." };
 
-  const cycleId = genId("cyc");
-  const now = new Date();
-  await db.insert(orderCycles).values({
-    cycleId,
-    title: data.title.trim(),
-    pickupDate: data.pickupDate ? new Date(data.pickupDate) : null,
-    orderOpenAt: now,
-    orderCloseAt: new Date(data.orderCloseAt),
-    status: "open",
-    accessLevel: data.accessLevel || "attivi",
-    notes: data.notes?.trim() || null,
-    createdBy: admin.email,
-    createdAt: now,
-    supplierId: data.supplierId || null,
-  });
+    const cycleId = genId("cyc");
+    const now = new Date();
+    await db.insert(orderCycles).values({
+      cycleId,
+      title: data.title.trim(),
+      pickupDate: data.pickupDate ? new Date(data.pickupDate) : null,
+      pickupEndTime: data.pickupEndTime || null,
+      orderOpenAt: now,
+      orderCloseAt: new Date(data.orderCloseAt),
+      status: "open",
+      accessLevel: data.accessLevel || "attivi",
+      notes: data.notes?.trim() || null,
+      createdBy: admin.email,
+      createdAt: now,
+      supplierId: data.supplierId || null,
+    });
 
-  await writeAudit(db, admin.email, "create_cycle", "cycle", cycleId, data);
-  revalidatePath("/admin");
-  revalidatePath("/");
+    await writeAudit(db, admin.email, "create_cycle", "cycle", cycleId, data);
+    revalidatePath("/admin");
+    revalidatePath("/");
+    return {};
+  } catch (e) {
+    return { error: e instanceof Error ? e.message : "Errore nella creazione del ciclo" };
+  }
 }
 
 export async function adminCloseCycle(cycleId: string) {
@@ -144,24 +152,30 @@ export async function adminCloseCycle(cycleId: string) {
 
 export async function adminUpdateCycle(
   cycleId: string,
-  data: { title?: string; pickupDate?: string; orderCloseAt?: string; notes?: string },
-) {
-  const admin = await requireAdmin();
-  const db = getDb();
-  await db
-    .update(orderCycles)
-    .set({
-      ...(data.title !== undefined && { title: data.title }),
-      ...(data.pickupDate !== undefined && {
-        pickupDate: data.pickupDate ? new Date(data.pickupDate) : null,
-      }),
-      ...(data.orderCloseAt !== undefined && { orderCloseAt: new Date(data.orderCloseAt) }),
-      ...(data.notes !== undefined && { notes: data.notes || null }),
-    })
-    .where(eq(orderCycles.cycleId, cycleId));
-  await writeAudit(db, admin.email, "update_cycle", "cycle", cycleId, data);
-  revalidatePath("/admin");
-  revalidatePath("/");
+  data: { title?: string; pickupDate?: string; pickupEndTime?: string; orderCloseAt?: string; notes?: string },
+): Promise<{error?: string}> {
+  try {
+    const admin = await requireAdmin();
+    const db = getDb();
+    await db
+      .update(orderCycles)
+      .set({
+        ...(data.title !== undefined && { title: data.title }),
+        ...(data.pickupDate !== undefined && {
+          pickupDate: data.pickupDate ? new Date(data.pickupDate) : null,
+        }),
+        ...(data.pickupEndTime !== undefined && { pickupEndTime: data.pickupEndTime || null }),
+        ...(data.orderCloseAt !== undefined && { orderCloseAt: new Date(data.orderCloseAt) }),
+        ...(data.notes !== undefined && { notes: data.notes || null }),
+      })
+      .where(eq(orderCycles.cycleId, cycleId));
+    await writeAudit(db, admin.email, "update_cycle", "cycle", cycleId, data);
+    revalidatePath("/admin");
+    revalidatePath("/");
+    return {};
+  } catch (e) {
+    return { error: e instanceof Error ? e.message : "Errore nell'aggiornamento del ciclo" };
+  }
 }
 
 // ── Prodotti ──────────────────────────────────────────────────────────────────
@@ -186,6 +200,7 @@ function parseProductsText(text: string) {
         supplier: parts[4] ?? "",
         notes: parts[5] ?? "",
         category: parts[6] ?? "",
+        unit: parts[7] ?? "",
       };
     });
 }
@@ -205,6 +220,7 @@ export async function adminLoadProducts(cycleId: string, text: string) {
       variant: p.variant || null,
       format: p.format || null,
       unitPrice: p.unitPrice,
+      unit: p.unit || null,
       supplier: p.supplier || null,
       notes: p.notes || null,
       sortOrder: idx + 1,
@@ -474,6 +490,156 @@ export async function adminDeleteSupplier(supplierId: string): Promise<{ error?:
     await writeAudit(db, admin.email, "delete_supplier", "supplier", supplierId);
     revalidatePath("/admin");
     return {};
+  } catch (e) {
+    return { error: e instanceof Error ? e.message : "Errore" };
+  }
+}
+
+// ── Catalogo Fornitori ────────────────────────────────────────────────────────
+
+export type UpsertCatalogProductInput = {
+  catalogProductId?: string;
+  supplierId: string;
+  name: string;
+  variant?: string;
+  format?: string;
+  unit?: string;
+  unitPrice: number;
+  notes?: string;
+  category?: string;
+};
+
+export async function adminUpsertCatalogProduct(data: UpsertCatalogProductInput): Promise<{error?: string; archived?: boolean}> {
+  try {
+    const admin = await requireAdmin();
+    const db = getDb();
+    const now = new Date();
+
+    if (data.catalogProductId) {
+      const [existing] = await db
+        .select()
+        .from(supplierProducts)
+        .where(eq(supplierProducts.catalogProductId, data.catalogProductId))
+        .limit(1);
+
+      if (!existing) return { error: "Prodotto non trovato a catalogo" };
+
+      if (parseFloat(existing.unitPrice) !== data.unitPrice) {
+        // Price changed -> archive old and insert new
+        await db.update(supplierProducts).set({ active: false, archivedAt: now }).where(eq(supplierProducts.catalogProductId, data.catalogProductId));
+        const newId = genId("cat");
+        await db.insert(supplierProducts).values({
+          catalogProductId: newId,
+          supplierId: data.supplierId,
+          name: data.name,
+          variant: data.variant || null,
+          format: data.format || null,
+          unit: data.unit || null,
+          unitPrice: data.unitPrice.toFixed(2),
+          notes: data.notes || null,
+          category: data.category || null,
+          active: true,
+          createdAt: now,
+        });
+        await writeAudit(db, admin.email, "upsert_catalog_product", "catalog", newId, data);
+        revalidatePath("/admin");
+        return { archived: true };
+      } else {
+        // Simple update
+        await db.update(supplierProducts).set({
+          name: data.name,
+          variant: data.variant || null,
+          format: data.format || null,
+          unit: data.unit || null,
+          notes: data.notes || null,
+          category: data.category || null,
+        }).where(eq(supplierProducts.catalogProductId, data.catalogProductId));
+        await writeAudit(db, admin.email, "update_catalog_product", "catalog", data.catalogProductId, data);
+        revalidatePath("/admin");
+        return {};
+      }
+    } else {
+      const newId = genId("cat");
+      await db.insert(supplierProducts).values({
+        catalogProductId: newId,
+        supplierId: data.supplierId,
+        name: data.name,
+        variant: data.variant || null,
+        format: data.format || null,
+        unit: data.unit || null,
+        unitPrice: data.unitPrice.toFixed(2),
+        notes: data.notes || null,
+        category: data.category || null,
+        active: true,
+        createdAt: now,
+      });
+      await writeAudit(db, admin.email, "create_catalog_product", "catalog", newId, data);
+      revalidatePath("/admin");
+      return {};
+    }
+  } catch (e) {
+    return { error: e instanceof Error ? e.message : "Errore" };
+  }
+}
+
+export async function adminArchiveCatalogProduct(catalogProductId: string, active: boolean): Promise<{error?: string}> {
+  try {
+    const admin = await requireAdmin();
+    const db = getDb();
+    await db.update(supplierProducts).set({ active, archivedAt: active ? null : new Date() }).where(eq(supplierProducts.catalogProductId, catalogProductId));
+    await writeAudit(db, admin.email, active ? "unarchive_catalog_product" : "archive_catalog_product", "catalog", catalogProductId);
+    revalidatePath("/admin");
+    return {};
+  } catch (e) {
+    return { error: e instanceof Error ? e.message : "Errore" };
+  }
+}
+
+export async function adminLoadFromCatalog(cycleId: string, catalogProductIds: string[]): Promise<{error?: string; count?: number}> {
+  try {
+    if (!catalogProductIds.length) return { error: "Nessun prodotto selezionato" };
+    const admin = await requireAdmin();
+    const db = getDb();
+
+    const selectedProducts = await db
+      .select()
+      .from(supplierProducts)
+      .where(and(inArray(supplierProducts.catalogProductId, catalogProductIds), eq(supplierProducts.active, true)));
+
+    if (!selectedProducts.length) return { error: "Prodotti non trovati o non attivi" };
+
+    const [maxSortRow] = await db
+      .select({ max: sql<number>`max(${products.sortOrder})` })
+      .from(products)
+      .where(eq(products.cycleId, cycleId));
+    let currentSort = maxSortRow?.max || 0;
+
+    await db.insert(products).values(
+      selectedProducts.map((p) => {
+        currentSort++;
+        return {
+          productId: genId("prd"),
+          cycleId,
+          name: p.name,
+          variant: p.variant,
+          format: p.format,
+          unitPrice: p.unitPrice,
+          unit: p.unit,
+          supplier: null, // the cycle supplier is implicit
+          notes: p.notes,
+          sortOrder: currentSort,
+          active: true,
+          supplierId: p.supplierId,
+          category: p.category,
+        };
+      })
+    );
+
+    await writeAudit(db, admin.email, "load_catalog_products", "cycle", cycleId, { count: selectedProducts.length });
+    revalidatePath("/admin");
+    revalidatePath("/ordine");
+
+    return { count: selectedProducts.length };
   } catch (e) {
     return { error: e instanceof Error ? e.message : "Errore" };
   }

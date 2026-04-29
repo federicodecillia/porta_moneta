@@ -9,6 +9,7 @@ type Props = {
   orderCloseAt: string;
   orderOpenAt: string;
   pickupDate: string | null;
+  pickupEndTime: string | null;
 };
 
 function computeCountdown(closeAt: string, openAt: string, now: Date) {
@@ -24,7 +25,7 @@ function computeCountdown(closeAt: string, openAt: string, now: Date) {
   return { days, hrs, mins, hoursLeft, pct };
 }
 
-export function CycleCountdown({ title, orderCloseAt, orderOpenAt, pickupDate }: Props) {
+export function CycleCountdown({ title, orderCloseAt, orderOpenAt, pickupDate, pickupEndTime }: Props) {
   const [now, setNow] = useState<Date | null>(null);
 
   useEffect(() => {
@@ -40,7 +41,16 @@ export function CycleCountdown({ title, orderCloseAt, orderOpenAt, pickupDate }:
   );
 
   const danger = hoursLeft <= 12;
-  const closeStr = formatDateTime(orderCloseAt) + (pickupDate ? " · Ritiro " + formatDate(pickupDate) : "");
+  
+  // Build pickup string with optional time range
+  const pickupStr = pickupDate
+    ? ` · Ritiro ${formatDate(pickupDate)}` +
+      (new Date(pickupDate).getHours() !== 0
+        ? ` dalle ${new Date(pickupDate).toLocaleTimeString("it-IT", { hour: "2-digit", minute: "2-digit" })}`
+        : "") +
+      (pickupEndTime ? ` alle ${pickupEndTime}` : "")
+    : "";
+  const closeStr = formatDateTime(orderCloseAt) + pickupStr;
 
   return (
     <div className="mb-[14px] rounded-[18px] border border-pm-border bg-white shadow-[0_1px_2px_rgba(0,0,0,0.04)] p-[18px]">
