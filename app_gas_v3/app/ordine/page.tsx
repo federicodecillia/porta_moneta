@@ -9,7 +9,13 @@ import {
 } from "@/lib/db/queries";
 import { saveOrder } from "@/lib/actions/order";
 
-export default async function OrdinePage({ searchParams }: { searchParams: { cycleId?: string } }) {
+export default async function OrdinePage({
+  searchParams,
+}: {
+  searchParams: Promise<{ cycleId?: string }>;
+}) {
+  const { cycleId: searchCycleId } = await searchParams;
+
   const session = await requireUserSession();
   const role = getUserRole(session);
   const memberId = session.user.memberId!;
@@ -25,8 +31,8 @@ export default async function OrdinePage({ searchParams }: { searchParams: { cyc
 
   let openCycle = null;
   if (activeCycles.length > 0) {
-    if (searchParams.cycleId) {
-      openCycle = activeCycles.find((c) => c.cycleId === searchParams.cycleId) ?? activeCycles[0];
+    if (searchCycleId) {
+      openCycle = activeCycles.find((c) => c.cycleId === searchCycleId) ?? activeCycles[0];
     } else {
       openCycle = activeCycles[0];
     }

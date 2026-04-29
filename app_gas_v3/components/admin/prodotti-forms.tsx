@@ -3,7 +3,7 @@
 import { useState, useTransition } from "react";
 import { toast } from "@/components/ui/toast";
 import { adminLoadProducts, adminDuplicateProducts, adminLoadFromCatalog } from "@/lib/actions/admin";
-import { formatEur } from "@/lib/utils";
+import { formatEur, getProductEmoji } from "@/lib/utils";
 import type { CatalogProductItem } from "@/lib/db/queries";
 
 type CycleOption = { cycleId: string; title: string };
@@ -316,7 +316,7 @@ export function ProductListItem({
     return <EditCycleProductForm product={product} onClose={() => setIsEditing(false)} />;
   }
 
-  const emoji = product.name ? require("@/lib/utils").getProductEmoji(product.name) : "📦";
+  const emoji = product.name ? getProductEmoji(product.name) : "📦";
 
   return (
     <div className="flex items-center gap-3 px-4 py-2.5 hover:bg-pm-warm-white/50 group">

@@ -36,7 +36,6 @@ export async function TabCiclo() {
                   notes: openCycle.notes ?? null,
                 }}
                 stats={{ orderCount: stats?.orderCount ?? 0, grandTotal: stats?.grandTotal ?? 0 }}
-                suppliers={suppliers}
               />
             );
           })}

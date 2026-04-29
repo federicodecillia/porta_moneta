@@ -1,5 +1,4 @@
 import { getAdminCycleProducts, getAllCycles, getOpenCycles, getCatalogBySupplier } from "@/lib/db/queries";
-import { formatEur, getProductEmoji } from "@/lib/utils";
 import { Card, CardHeader } from "@/components/ui/card";
 import { DuplicateProductsForm, LoadProductsForm, CatalogLoadForm, ProductListItem } from "./prodotti-forms";
 
@@ -59,7 +58,7 @@ export async function TabProdotti() {
               </CardHeader>
               <div className="divide-y divide-pm-border">
                 {currentProducts.map((p, idx) => (
-                  <ProductListItem key={p.productId} product={p as any} index={idx} />
+                  <ProductListItem key={p.productId} product={p} index={idx} />
                 ))}
               </div>
             </Card>

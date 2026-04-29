@@ -12,7 +12,7 @@ import {
   type UpsertCatalogProductInput,
 } from "@/lib/actions/admin";
 import type { CatalogProductItem } from "@/lib/db/queries";
-import { formatDate, formatEur, getProductEmoji } from "@/lib/utils";
+import { formatEur } from "@/lib/utils";
 
 type Supplier = {
   supplierId: string;
@@ -25,8 +25,6 @@ type Supplier = {
   notes: string | null;
   active: boolean;
   cycleCount: number;
-};
-
 };
 
 // ── Supplier Form ─────────────────────────────────────────────────────────────

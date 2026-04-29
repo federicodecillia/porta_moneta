@@ -1,4 +1,4 @@
-import { desc, eq, and, sql, asc, or, isNotNull, inArray } from "drizzle-orm";
+import { and, asc, desc, eq, isNotNull, or, sql } from "drizzle-orm";
 import { getDb } from "./client";
 import {
   ledgerEntries,

@@ -200,7 +200,7 @@ function parseProductsText(text: string) {
 }
 
 async function upsertCycleProducts(
-  db: any,
+  db: ReturnType<typeof getDb>,
   cycleId: string,
   newProducts: Array<{
     name: string;
@@ -338,7 +338,7 @@ export async function adminUpdateCycleProduct(
     revalidatePath("/admin");
     revalidatePath("/ordine");
     return {};
-  } catch (e) {
+  } catch (e: unknown) {
     return { error: e instanceof Error ? e.message : "Errore" };
   }
 }

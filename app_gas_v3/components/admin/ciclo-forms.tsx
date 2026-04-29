@@ -27,11 +27,9 @@ type SerializedCycle = {
 export function OpenCycleCard({
   cycle,
   stats,
-  suppliers,
 }: {
   cycle: SerializedCycle;
   stats: { orderCount: number; grandTotal: number };
-  suppliers: Supplier[];
 }) {
   const [editing, setEditing] = useState(false);
 
