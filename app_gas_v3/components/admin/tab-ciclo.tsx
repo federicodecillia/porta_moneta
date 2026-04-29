@@ -1,32 +1,46 @@
-import { getAllCycles, getAllSuppliers, getOpenCycle, getOpenCycleStats } from "@/lib/db/queries";
+import { getAllCycles, getAllSuppliers, getOpenCycles, getOpenCycleStats } from "@/lib/db/queries";
 import { formatDate } from "@/lib/utils";
 import { Card, CardHeader } from "@/components/ui/card";
 import { CreateCycleForm, OpenCycleCard } from "./ciclo-forms";
 
 export async function TabCiclo() {
-  const [openCycle, cycles, suppliers] = await Promise.all([
-    getOpenCycle(),
+  const [openCycles, cycles, suppliers] = await Promise.all([
+    getOpenCycles(),
     getAllCycles(15),
     getAllSuppliers(),
   ]);
 
-  const stats = openCycle ? await getOpenCycleStats(openCycle.cycleId) : null;
+  const statsMap = new Map();
+  await Promise.all(
+    openCycles.map(async (c) => {
+      const stats = await getOpenCycleStats(c.cycleId);
+      statsMap.set(c.cycleId, stats);
+    })
+  );
 
   return (
     <div>
-      {openCycle ? (
-        <OpenCycleCard
-          cycle={{
-            cycleId: openCycle.cycleId,
-            title: openCycle.title,
-            orderCloseAt: openCycle.orderCloseAt?.toISOString() ?? null,
-            pickupDate: openCycle.pickupDate?.toISOString() ?? null,
-            pickupEndTime: openCycle.pickupEndTime ?? null,
-            notes: openCycle.notes ?? null,
-          }}
-          stats={{ orderCount: stats?.orderCount ?? 0, grandTotal: stats?.grandTotal ?? 0 }}
-          suppliers={suppliers}
-        />
+      {openCycles.length > 0 ? (
+        <div className="mb-4 space-y-4">
+          {openCycles.map((openCycle) => {
+            const stats = statsMap.get(openCycle.cycleId);
+            return (
+              <OpenCycleCard
+                key={openCycle.cycleId}
+                cycle={{
+                  cycleId: openCycle.cycleId,
+                  title: openCycle.title,
+                  orderCloseAt: openCycle.orderCloseAt?.toISOString() ?? null,
+                  pickupDate: openCycle.pickupDate?.toISOString() ?? null,
+                  pickupEndTime: openCycle.pickupEndTime ?? null,
+                  notes: openCycle.notes ?? null,
+                }}
+                stats={{ orderCount: stats?.orderCount ?? 0, grandTotal: stats?.grandTotal ?? 0 }}
+                suppliers={suppliers}
+              />
+            );
+          })}
+        </div>
       ) : (
         <div className="mb-4 rounded-xl border border-dashed border-pm-border p-4 text-center text-[13px] text-pm-gray">
           Nessun ciclo aperto

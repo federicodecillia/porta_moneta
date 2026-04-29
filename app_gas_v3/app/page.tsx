@@ -7,7 +7,7 @@ import {
   getMemberBalance,
   getMemberLedger,
   getMemberOrderLines,
-  getOpenCycle,
+  getOpenCycles,
 } from "@/lib/db/queries";
 import { formatDateShort, formatEur, formatEurSigned, getProductEmoji } from "@/lib/utils";
 
@@ -16,27 +16,29 @@ export default async function HomePage() {
   const role = getUserRole(session);
   const memberId = session.user.memberId!;
 
-  const [balance, openCycle, recentMovements] = await Promise.all([
+  const [balance, openCycles, recentMovements] = await Promise.all([
     getMemberBalance(memberId),
-    getOpenCycle(),
+    getOpenCycles(),
     getMemberLedger(memberId, 4),
   ]);
 
-  const canOrder =
-    openCycle !== null &&
-    (openCycle.accessLevel === "all" ||
-      ["admin", "attivo", "member"].includes(role ?? ""));
+  const activeCycles = openCycles.filter(
+    (c) => c.accessLevel === "all" || ["admin", "attivo", "member"].includes(role ?? "")
+  );
 
-  const [cycleProducts, myLines] = canOrder
-    ? await Promise.all([
-        getCycleProducts(openCycle!.cycleId),
-        getMemberOrderLines(memberId, openCycle!.cycleId),
-      ])
-    : [[], []];
+  const cycleDataList = await Promise.all(
+    activeCycles.map(async (cycle) => {
+      const [cycleProducts, myLines] = await Promise.all([
+        getCycleProducts(cycle.cycleId),
+        getMemberOrderLines(memberId, cycle.cycleId),
+      ]);
+      const orderTotal = myLines.reduce((s, l) => s + parseFloat(l.lineTotal), 0);
+      return { cycle, cycleProducts, myLines, orderTotal };
+    })
+  );
 
-  const productMap = new Map(cycleProducts.map((p) => [p.productId, p]));
-  const orderTotal = myLines.reduce((s, l) => s + parseFloat(l.lineTotal), 0);
-  const afterBalance = balance - orderTotal;
+  const globalOrderTotal = cycleDataList.reduce((sum, d) => sum + d.orderTotal, 0);
+  const afterBalance = balance - globalOrderTotal;
 
   const isNegative = balance < 0;
 
@@ -77,7 +79,7 @@ export default async function HomePage() {
               Questo ordine
             </div>
             <div className="font-mono text-[13px] font-bold text-pm-near-black">
-              {formatEur(orderTotal)}
+              {formatEur(globalOrderTotal)}
             </div>
           </div>
           <div
@@ -110,15 +112,83 @@ export default async function HomePage() {
         )}
       </div>
 
-      {/* ── Cycle card ── */}
-      {canOrder && openCycle ? (
-        <CycleCountdown
-          title={openCycle.title}
-          orderCloseAt={(openCycle.orderCloseAt ?? new Date()).toISOString()}
-          orderOpenAt={(openCycle.orderOpenAt ?? openCycle.createdAt).toISOString()}
-          pickupDate={openCycle.pickupDate?.toISOString() ?? null}
-          pickupEndTime={openCycle.pickupEndTime ?? null}
-        />
+      {/* ── Cycles loop ── */}
+      {cycleDataList.length > 0 ? (
+        cycleDataList.map(({ cycle, cycleProducts, myLines, orderTotal }) => {
+          const productMap = new Map(cycleProducts.map((p) => [p.productId, p]));
+          return (
+            <div key={cycle.cycleId} className="mb-[24px]">
+              <div className="mb-[14px]">
+                <CycleCountdown
+                  title={cycle.title}
+                  orderCloseAt={(cycle.orderCloseAt ?? new Date()).toISOString()}
+                  orderOpenAt={(cycle.orderOpenAt ?? cycle.createdAt).toISOString()}
+                  pickupDate={cycle.pickupDate?.toISOString() ?? null}
+                  pickupEndTime={cycle.pickupEndTime ?? null}
+                />
+              </div>
+
+              {myLines.length > 0 ? (
+                <div className="overflow-hidden rounded-[18px] border border-pm-border bg-white shadow-[0_1px_2px_rgba(0,0,0,0.04)]">
+                  <div className="flex items-center justify-between border-b border-pm-border px-4 py-[14px]">
+                    <span className="font-mono text-[9px] uppercase tracking-[0.1em] text-pm-gray">
+                      Il tuo ordine
+                    </span>
+                    <Link
+                      href={`/ordine?cycleId=${cycle.cycleId}`}
+                      className="rounded-full border border-pm-border px-[13px] py-[5px] font-mono text-[11px] font-bold uppercase tracking-widest text-pm-near-black"
+                    >
+                      Modifica
+                    </Link>
+                  </div>
+                  {myLines.map((line) => {
+                    const p = productMap.get(line.productId);
+                    const meta = [p?.variant, p?.format].filter(Boolean).join(" · ");
+                    return (
+                      <div
+                        key={line.orderLineId}
+                        className="flex items-center justify-between border-b border-pm-border px-4 py-[11px] last:border-none"
+                      >
+                        <div className="flex items-start gap-2">
+                          <span className="mt-[1px] shrink-0 text-[18px] leading-none">
+                            {getProductEmoji(p?.name ?? "")}
+                          </span>
+                          <div>
+                            <div className="text-[14px] font-medium text-pm-near-black">
+                              {p?.name ?? "?"}
+                            </div>
+                            {meta && (
+                              <div className="mt-[1px] font-mono text-[11px] text-pm-gray">{meta}</div>
+                            )}
+                          </div>
+                        </div>
+                        <div className="font-mono text-[13px] font-semibold text-pm-near-black">
+                          ×{line.quantity} · {formatEur(parseFloat(line.lineTotal))}{p?.unit ? `/${p.unit}` : ""}
+                        </div>
+                      </div>
+                    );
+                  })}
+                  <div className="flex items-center justify-between rounded-b-[18px] border-t border-pm-border bg-[#f5f1ec] px-4 py-[12px]">
+                    <span className="text-[13px] font-extrabold text-pm-near-black">Totale</span>
+                    <span className="font-mono text-[13px] font-bold text-pm-near-black">
+                      {formatEur(orderTotal)}
+                    </span>
+                  </div>
+                </div>
+              ) : (
+                <div className="flex items-center justify-between rounded-[18px] border border-pm-border bg-white p-[18px] shadow-[0_1px_2px_rgba(0,0,0,0.04)]">
+                  <span className="text-[14px] text-pm-gray">Non hai ancora ordinato</span>
+                  <Link
+                    href={`/ordine?cycleId=${cycle.cycleId}`}
+                    className="rounded-full bg-pm-orange px-4 py-[10px] text-[13px] font-bold text-white"
+                  >
+                    Ordina →
+                  </Link>
+                </div>
+              )}
+            </div>
+          );
+        })
       ) : (
         <div className="mb-[14px] flex items-center justify-between rounded-[18px] border border-pm-border bg-white p-[18px] shadow-[0_1px_2px_rgba(0,0,0,0.04)]">
           <div>
@@ -130,68 +200,6 @@ export default async function HomePage() {
           <span className="rounded-full bg-black/[0.06] px-2.5 py-1 font-mono text-[10px] text-pm-gray">
             Chiuso
           </span>
-        </div>
-      )}
-
-      {/* ── Order summary card ── */}
-      {canOrder && openCycle && myLines.length > 0 && (
-        <div className="mb-[14px] overflow-hidden rounded-[18px] border border-pm-border bg-white shadow-[0_1px_2px_rgba(0,0,0,0.04)]">
-          <div className="flex items-center justify-between border-b border-pm-border px-4 py-[14px]">
-            <span className="font-mono text-[9px] uppercase tracking-[0.1em] text-pm-gray">
-              Il tuo ordine
-            </span>
-            <Link
-              href="/ordine"
-              className="rounded-full border border-pm-border px-[13px] py-[5px] font-mono text-[11px] font-bold uppercase tracking-widest text-pm-near-black"
-            >
-              Modifica
-            </Link>
-          </div>
-          {myLines.map((line) => {
-            const p = productMap.get(line.productId);
-            const meta = [p?.variant, p?.format].filter(Boolean).join(" · ");
-            return (
-              <div
-                key={line.orderLineId}
-                className="flex items-center justify-between border-b border-pm-border px-4 py-[11px] last:border-none"
-              >
-                <div className="flex items-start gap-2">
-                  <span className="mt-[1px] shrink-0 text-[18px] leading-none">
-                    {getProductEmoji(p?.name ?? "")}
-                  </span>
-                  <div>
-                    <div className="text-[14px] font-medium text-pm-near-black">
-                      {p?.name ?? "?"}
-                    </div>
-                    {meta && (
-                      <div className="mt-[1px] font-mono text-[11px] text-pm-gray">{meta}</div>
-                    )}
-                  </div>
-                </div>
-                <div className="font-mono text-[13px] font-semibold text-pm-near-black">
-                  ×{line.quantity} · {formatEur(parseFloat(line.lineTotal))}{p?.unit ? `/${p.unit}` : ""}
-                </div>
-              </div>
-            );
-          })}
-          <div className="flex items-center justify-between rounded-b-[18px] border-t border-pm-border bg-[#f5f1ec] px-4 py-[12px]">
-            <span className="text-[13px] font-extrabold text-pm-near-black">Totale</span>
-            <span className="font-mono text-[13px] font-bold text-pm-near-black">
-              {formatEur(orderTotal)}
-            </span>
-          </div>
-        </div>
-      )}
-
-      {canOrder && openCycle && myLines.length === 0 && (
-        <div className="mb-[14px] flex items-center justify-between rounded-[18px] border border-pm-border bg-white p-[18px] shadow-[0_1px_2px_rgba(0,0,0,0.04)]">
-          <span className="text-[14px] text-pm-gray">Non hai ancora ordinato</span>
-          <Link
-            href="/ordine"
-            className="rounded-full bg-pm-orange px-4 py-[10px] text-[13px] font-bold text-white"
-          >
-            Ordina →
-          </Link>
         </div>
       )}
 

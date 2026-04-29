@@ -3,7 +3,7 @@ import {
   getAllMembers,
   getAdminCycleSummary,
   getAdminMemberOrders,
-  getOpenCycle,
+  getOpenCycles,
 } from "@/lib/db/queries";
 import { formatDate, formatEur, getProductEmoji } from "@/lib/utils";
 import { Card, CardBody, CardHeader } from "@/components/ui/card";
@@ -12,8 +12,8 @@ import { CsvExportButton, OrdiniByMember, OrdiniFilters } from "./ordini-client"
 type Props = { cycleId?: string; memberId?: string };
 
 export async function TabOrdini({ cycleId, memberId }: Props) {
-  const [openCycle, allCycles, allMembers] = await Promise.all([
-    getOpenCycle(),
+  const [openCycles, allCycles, allMembers] = await Promise.all([
+    getOpenCycles(),
     getAllCycles(20),
     getAllMembers(),
   ]);
@@ -100,7 +100,7 @@ export async function TabOrdini({ cycleId, memberId }: Props) {
   }
 
   // ── Cycle view (default) ────────────────────────────────────────────────────
-  const selectedId = cycleId ?? openCycle?.cycleId ?? allCycles[0]?.cycleId;
+  const selectedId = cycleId ?? openCycles[0]?.cycleId ?? allCycles[0]?.cycleId;
 
   if (!selectedId) {
     return (

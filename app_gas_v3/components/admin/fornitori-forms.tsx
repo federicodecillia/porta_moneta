@@ -27,13 +27,6 @@ type Supplier = {
   cycleCount: number;
 };
 
-type SupplierProductItem = {
-  name: string;
-  variant: string | null;
-  format: string | null;
-  unitPrice: string;
-  cycleTitle: string;
-  pickupDate: string | null;
 };
 
 // ── Supplier Form ─────────────────────────────────────────────────────────────
@@ -273,11 +266,9 @@ export function CatalogProductForm({
 
 export function FornitoriList({
   suppliers,
-  productsBySupplier,
   catalogBySupplier,
 }: {
   suppliers: Supplier[];
-  productsBySupplier: Record<string, SupplierProductItem[]>;
   catalogBySupplier: Record<string, CatalogProductItem[]>;
 }) {
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -364,8 +355,7 @@ export function FornitoriList({
                       <div className="mt-0.5 font-mono text-[10px] text-pm-gray-light">
                         {s.macroCategory && `${s.macroCategory} · `}
                         {s.contactName && `${s.contactName} · `}
-                        {s.cycleCount} cicl{s.cycleCount === 1 ? "o" : "i"} ·{" "}
-                        {(productsBySupplier[s.supplierId] ?? []).length} prodotti
+                        {s.cycleCount} cicl{s.cycleCount === 1 ? "o" : "i"}
                       </div>
                     </div>
                     <div className="ml-3 flex shrink-0 items-center gap-1.5">
@@ -474,49 +464,6 @@ export function FornitoriList({
                           )}
                         </div>
                       </div>
-
-                      {/* Historic Products Section */}
-                      {(productsBySupplier[s.supplierId] ?? []).length === 0 ? (
-                        <p className="text-center text-[12px] text-pm-gray">
-                          Nessun prodotto associato nei cicli passati
-                        </p>
-                      ) : (
-                        <div>
-                          <p className="mb-2 font-mono text-[9px] uppercase tracking-wider text-pm-gray-light">
-                            Prodotti storici
-                          </p>
-                          <div className="space-y-1">
-                            {(productsBySupplier[s.supplierId] ?? []).slice(0, 20).map((p, i) => (
-                              <div
-                                key={i}
-                                className="flex items-center justify-between text-[12px]"
-                              >
-                                <div className="flex items-center gap-2">
-                                  <span className="text-[14px]">{getProductEmoji(p.name)}</span>
-                                  <span className="text-pm-near-black">{p.name}</span>
-                                  {p.variant && (
-                                    <span className="text-pm-gray">· {p.variant}</span>
-                                  )}
-                                  {p.format && (
-                                    <span className="font-mono text-[10px] text-pm-gray-light">
-                                      {p.format}
-                                    </span>
-                                  )}
-                                </div>
-                                <div className="flex items-center gap-2">
-                                  <span className="font-mono text-[11px] text-pm-gray-light">
-                                    {p.cycleTitle}
-                                    {p.pickupDate && ` (${formatDate(p.pickupDate)})`}
-                                  </span>
-                                  <span className="font-mono text-[12px] font-semibold text-pm-near-black">
-                                    {formatEur(parseFloat(p.unitPrice))}
-                                  </span>
-                                </div>
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                      )}
                     </div>
                   )}
                 </>

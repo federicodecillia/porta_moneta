@@ -31,14 +31,14 @@ export async function getMemberBalance(memberId: string): Promise<number> {
   return parseFloat(row?.total ?? "0");
 }
 
-export async function getOpenCycle() {
+export async function getOpenCycles() {
   const db = getDb();
-  const [cycle] = await db
+  const cycles = await db
     .select()
     .from(orderCycles)
     .where(eq(orderCycles.status, "open"))
-    .limit(1);
-  return cycle ?? null;
+    .orderBy(asc(orderCycles.orderCloseAt));
+  return cycles;
 }
 
 export async function getCycleProducts(cycleId: string) {
