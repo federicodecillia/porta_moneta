@@ -1,4 +1,4 @@
-import { desc, eq, and, sql, asc, or } from "drizzle-orm";
+import { desc, eq, and, sql, asc, or, isNotNull } from "drizzle-orm";
 import { getDb } from "./client";
 import {
   ledgerEntries,
@@ -356,4 +356,112 @@ export async function getAdminMemberOrders(memberId: string): Promise<MemberOrde
     });
   }
   return Array.from(cycleMap.values());
+}
+
+// ── Fornitori admin ───────────────────────────────────────────────────────────
+
+export async function getAllSuppliersAdmin() {
+  const db = getDb();
+  const rows = await db
+    .select({
+      supplierId: suppliers.supplierId,
+      name: suppliers.name,
+      macroCategory: suppliers.macroCategory,
+      contactName: suppliers.contactName,
+      phone: suppliers.phone,
+      email: suppliers.email,
+      address: suppliers.address,
+      notes: suppliers.notes,
+      active: suppliers.active,
+      cycleCount: sql<string>`count(distinct ${orderCycles.cycleId})`,
+    })
+    .from(suppliers)
+    .leftJoin(orderCycles, eq(suppliers.supplierId, orderCycles.supplierId))
+    .groupBy(suppliers.supplierId)
+    .orderBy(asc(suppliers.name));
+  return rows.map((r) => ({ ...r, cycleCount: parseInt(r.cycleCount) }));
+}
+
+export type SupplierProductItem = {
+  name: string;
+  variant: string | null;
+  format: string | null;
+  unitPrice: string;
+  cycleTitle: string;
+  pickupDate: string | null;
+};
+
+export async function getAllProductsWithSupplier(): Promise<Record<string, SupplierProductItem[]>> {
+  const db = getDb();
+  const rows = await db
+    .select({
+      supplierId: products.supplierId,
+      name: products.name,
+      variant: products.variant,
+      format: products.format,
+      unitPrice: products.unitPrice,
+      cycleTitle: orderCycles.title,
+      pickupDate: orderCycles.pickupDate,
+    })
+    .from(products)
+    .innerJoin(orderCycles, eq(products.cycleId, orderCycles.cycleId))
+    .where(isNotNull(products.supplierId))
+    .orderBy(desc(orderCycles.createdAt), asc(products.sortOrder));
+
+  const result: Record<string, SupplierProductItem[]> = {};
+  for (const row of rows) {
+    const sid = row.supplierId!;
+    if (!result[sid]) result[sid] = [];
+    result[sid].push({
+      name: row.name,
+      variant: row.variant,
+      format: row.format,
+      unitPrice: row.unitPrice,
+      cycleTitle: row.cycleTitle,
+      pickupDate: row.pickupDate?.toISOString() ?? null,
+    });
+  }
+  return result;
+}
+
+// ── Cassa inline ──────────────────────────────────────────────────────────────
+
+export type LedgerEntryItem = {
+  entryId: string;
+  entryDate: string | null;
+  type: string;
+  amount: string;
+  note: string | null;
+  cycleTitle: string | null;
+};
+
+export async function getAllMembersLedger(): Promise<Record<string, LedgerEntryItem[]>> {
+  const db = getDb();
+  const rows = await db
+    .select({
+      memberId: ledgerEntries.memberId,
+      entryId: ledgerEntries.entryId,
+      entryDate: ledgerEntries.entryDate,
+      type: ledgerEntries.type,
+      amount: ledgerEntries.amount,
+      note: ledgerEntries.note,
+      cycleTitle: orderCycles.title,
+    })
+    .from(ledgerEntries)
+    .leftJoin(orderCycles, eq(ledgerEntries.cycleId, orderCycles.cycleId))
+    .orderBy(desc(ledgerEntries.entryDate), desc(ledgerEntries.createdAt));
+
+  const result: Record<string, LedgerEntryItem[]> = {};
+  for (const row of rows) {
+    if (!result[row.memberId]) result[row.memberId] = [];
+    result[row.memberId].push({
+      entryId: row.entryId,
+      entryDate: row.entryDate?.toISOString() ?? null,
+      type: row.type,
+      amount: row.amount,
+      note: row.note,
+      cycleTitle: row.cycleTitle ?? null,
+    });
+  }
+  return result;
 }

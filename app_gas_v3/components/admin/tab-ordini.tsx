@@ -1,4 +1,3 @@
-import Link from "next/link";
 import {
   getAllCycles,
   getAllMembers,
@@ -6,9 +5,9 @@ import {
   getAdminMemberOrders,
   getOpenCycle,
 } from "@/lib/db/queries";
-import { formatDate, formatEur } from "@/lib/utils";
+import { formatDate, formatEur, getProductEmoji } from "@/lib/utils";
 import { Card, CardBody, CardHeader } from "@/components/ui/card";
-import { CsvExportButton, OrdiniByMember } from "./ordini-client";
+import { CsvExportButton, OrdiniByMember, OrdiniFilters } from "./ordini-client";
 
 type Props = { cycleId?: string; memberId?: string };
 
@@ -19,15 +18,17 @@ export async function TabOrdini({ cycleId, memberId }: Props) {
     getAllMembers(),
   ]);
 
-  // ── Member view ───────────────────────────────────────────────────
+  const filterCycles = allCycles.map((c) => ({ cycleId: c.cycleId, title: c.title }));
+  const filterMembers = allMembers.map((m) => ({ memberId: m.memberId, fullName: m.fullName }));
+
+  // ── Member view ─────────────────────────────────────────────────────────────
   if (memberId) {
     const selectedMember = allMembers.find((m) => m.memberId === memberId);
     const orders = await getAdminMemberOrders(memberId);
 
     return (
       <div className="space-y-4">
-        {/* Member selector row */}
-        <MemberSelector allMembers={allMembers} currentMemberId={memberId} />
+        <OrdiniFilters allCycles={filterCycles} allMembers={filterMembers} />
 
         {selectedMember && (
           <div className="rounded-xl border border-pm-border bg-white px-4 py-3 shadow-sm">
@@ -74,12 +75,13 @@ export async function TabOrdini({ cycleId, memberId }: Props) {
                 <div className="divide-y divide-pm-border">
                   {cycle.lines.map((line, i) => (
                     <div key={i} className="flex items-center justify-between px-4 py-2.5">
-                      <span className="text-[13px] text-pm-near-black">
+                      <span className="flex items-center gap-2 text-[13px] text-pm-near-black">
+                        <span className="text-[16px] leading-none">{getProductEmoji(line.productName)}</span>
                         {line.productName}
                         {line.variant && (
-                          <span className="ml-1 text-pm-gray">· {line.variant}</span>
+                          <span className="text-pm-gray">· {line.variant}</span>
                         )}
-                        <span className="ml-2 font-mono text-[11px] text-pm-gray-light">
+                        <span className="font-mono text-[11px] text-pm-gray-light">
                           ×{line.quantity}
                         </span>
                       </span>
@@ -97,13 +99,13 @@ export async function TabOrdini({ cycleId, memberId }: Props) {
     );
   }
 
-  // ── Cycle view (default) ─────────────────────────────────────────
+  // ── Cycle view (default) ────────────────────────────────────────────────────
   const selectedId = cycleId ?? openCycle?.cycleId ?? allCycles[0]?.cycleId;
 
   if (!selectedId) {
     return (
       <div className="space-y-4">
-        <MemberSelector allMembers={allMembers} currentMemberId={undefined} />
+        <OrdiniFilters allCycles={filterCycles} allMembers={filterMembers} />
         <div className="rounded-xl border border-dashed border-pm-border p-8 text-center text-[13px] text-pm-gray">
           Nessun ciclo disponibile.
         </div>
@@ -118,25 +120,7 @@ export async function TabOrdini({ cycleId, memberId }: Props) {
 
   return (
     <div className="space-y-4">
-      {/* Member selector */}
-      <MemberSelector allMembers={allMembers} currentMemberId={undefined} />
-
-      {/* Cycle selector */}
-      <div className="flex flex-wrap gap-1.5">
-        {allCycles.slice(0, 8).map((c) => (
-          <Link
-            key={c.cycleId}
-            href={`/admin?tab=ordini&cycle=${c.cycleId}`}
-            className={`rounded-full px-3 py-1 text-[12px] font-semibold transition-colors ${
-              c.cycleId === selectedId
-                ? "bg-pm-orange text-white"
-                : "bg-black/[0.05] text-pm-gray"
-            }`}
-          >
-            {c.title}
-          </Link>
-        ))}
-      </div>
+      <OrdiniFilters allCycles={filterCycles} allMembers={filterMembers} />
 
       {/* Stats */}
       <div className="grid grid-cols-2 gap-3">
@@ -166,10 +150,11 @@ export async function TabOrdini({ cycleId, memberId }: Props) {
             <div className="divide-y divide-pm-border">
               {summary.byProduct.map((p) => (
                 <div key={p.productId} className="flex items-center justify-between px-4 py-2.5">
-                  <div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-[16px] leading-none">{getProductEmoji(p.name)}</span>
                     <span className="text-[13px] font-medium text-pm-near-black">{p.name}</span>
                     {p.variant && (
-                      <span className="ml-1.5 text-[12px] text-pm-gray">{p.variant}</span>
+                      <span className="text-[12px] text-pm-gray">{p.variant}</span>
                     )}
                   </div>
                   <div className="flex items-center gap-3">
@@ -199,50 +184,6 @@ export async function TabOrdini({ cycleId, memberId }: Props) {
           </Card>
         </>
       )}
-    </div>
-  );
-}
-
-// ── Member selector ────────────────────────────────────────────────────────────
-
-function MemberSelector({
-  allMembers,
-  currentMemberId,
-}: {
-  allMembers: { memberId: string; fullName: string }[];
-  currentMemberId: string | undefined;
-}) {
-  return (
-    <div className="flex items-center gap-2">
-      <span className="shrink-0 font-mono text-[10px] uppercase tracking-wide text-pm-gray-light">
-        Socio
-      </span>
-      <div className="flex flex-1 flex-wrap gap-1.5">
-        <Link
-          href="/admin?tab=ordini"
-          className={`rounded-full px-3 py-1 text-[12px] font-semibold ${
-            !currentMemberId ? "bg-pm-orange text-white" : "bg-black/[0.05] text-pm-gray"
-          }`}
-        >
-          Tutti
-        </Link>
-        {allMembers
-          .filter((m) => m.memberId)
-          .slice(0, 12)
-          .map((m) => (
-            <Link
-              key={m.memberId}
-              href={`/admin?tab=ordini&member=${m.memberId}`}
-              className={`rounded-full px-3 py-1 text-[12px] font-semibold ${
-                m.memberId === currentMemberId
-                  ? "bg-pm-orange text-white"
-                  : "bg-black/[0.05] text-pm-gray"
-              }`}
-            >
-              {m.fullName.split(" ")[0]}
-            </Link>
-          ))}
-      </div>
     </div>
   );
 }

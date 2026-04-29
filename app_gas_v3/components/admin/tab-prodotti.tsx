@@ -1,5 +1,5 @@
 import { getAdminCycleProducts, getAllCycles, getOpenCycle } from "@/lib/db/queries";
-import { formatEur } from "@/lib/utils";
+import { formatEur, getProductEmoji } from "@/lib/utils";
 import { Card, CardHeader } from "@/components/ui/card";
 import { DuplicateProductsForm, LoadProductsForm } from "./prodotti-forms";
 
@@ -48,6 +48,7 @@ export async function TabProdotti() {
                 <span className="w-6 shrink-0 font-mono text-[11px] text-pm-gray-light">
                   {idx + 1}
                 </span>
+                <span className="shrink-0 text-[16px] leading-none">{getProductEmoji(p.name)}</span>
                 <div className="min-w-0 flex-1">
                   <span className="text-[13px] font-medium text-pm-near-black">{p.name}</span>
                   {p.variant && (
