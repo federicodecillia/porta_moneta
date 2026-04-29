@@ -188,3 +188,146 @@
 
 **Blockers / decisioni aperte:**
 - In questa workspace non disponibili `gh`/GitHub connector con permessi repo: PR/merge da completare via GitHub UI
+
+---
+
+## 2026-04-28 — Fase 2.4 completata (palette Tailwind v2)
+
+**Autore**: Federico + Codex  
+**Tempo**: ~25 min  
+**Fase corrente**: Fase 2
+
+**Cosa fatto:**
+- Palette v2 (`orange/teal/gray/red/frame/border`) mappata in token Tailwind via `@theme` in `app/globals.css`
+- Esposti token semantici (`pm-*`) per colori e spacing nav (`h-nav-h`)
+- Refactor classi UI principali (shell, bottom nav, login, placeholder pages) da `var(--...)` inline a classi Tailwind semantiche (`bg-pm-*`, `text-pm-*`, `border-pm-*`)
+- Allineato `layout.tsx` al token testo principale
+
+**Validazione locale:**
+- `npm run lint` ✅
+- `npm run build` ✅
+
+**Cosa resta (next):**
+- [ ] Fase 2.5 — componenti base riusabili (`Button`, `Card`, `Toast`, `ConfirmDialog`)
+- [ ] Fase 2.6 — import logo PM come asset reale in `public/`
+
+---
+
+## 2026-04-28 — Fase 2.5 completata (UI primitives base)
+
+**Autore**: Federico + Claude
+**Tempo**: ~40 min
+**Fase corrente**: Fase 2
+
+**Cosa fatto:**
+- Installate dipendenze UI: `clsx`, `tailwind-merge`, `sonner`, `@radix-ui/react-dialog`, `lucide-react`
+- Aggiunto helper `cn()` in `lib/utils.ts`
+- Creati componenti UI in `components/ui/`:
+  - `button.tsx` — 6 varianti (`primary`/`orange`/`teal`/`red`/`ghost`/`outline`), 2 size (`sm`/`md`), prop `block`. Stile pill match v2 (`Styles.html:380-411`).
+  - `card.tsx` — `<Card>`, `<CardHeader>`, `<CardBody>`, `<CardFooter>` con stile v2 (radius 18px, border, shadow soft).
+  - `toast.tsx` — re-export `toast` da sonner.
+  - `confirm-dialog.tsx` — API imperativa `confirm({title, message, danger?, ...}) → Promise<boolean>` su Radix Dialog (focus trap, Escape, ARIA gratis).
+- Provider `components/providers/toaster.tsx` — `<Toaster>` di sonner top-center, 3s, classi pm-* per success/warning/error.
+- `app/layout.tsx` monta `<Toaster />` e `<ConfirmDialogProvider />`.
+- Refactor minimo per validare i componenti:
+  - `app/login/page.tsx` → `<Button variant="teal" block>` al posto del `<button>` raw.
+  - `components/app-shell.tsx` + nuovo `components/logout-button.tsx` (Client Component) → bottone ghost piccolo + `confirm()` prima di `signOut`.
+
+**Decisioni:**
+- Niente CVA (con 5 varianti un record `{variant: classes}` è più leggibile e ~3 KB più leggero).
+- Niente `loading` prop sul Button: si aggiungerà in Fase 3.2 quando una pagina reale lo richiede.
+- Niente `SaldoCard`/`CycleCard` dedicati: la `<Card>` base supporta override via `className`, le hero card verranno create in Fase 3.1.
+
+**Validazione locale:**
+- `npm run lint` ✅
+- `npm run build` ✅ (10/10 routes generate, no warnings)
+
+**Cosa resta (next):**
+- [ ] Smoke test in `npm run dev`: login pill teal, logout con conferma modale (Esc/click fuori), `toast.warning("...")` da console.
+- [ ] Commit `[v3] feat: phase 2.5 base UI components` + push su `migration/nextjs-v3`.
+- [ ] Fase 2.6 — import logo PM come asset reale in `public/`.
+
+**Note tecniche:**
+- Le animazioni del Dialog usano classi `data-[state=open]:animate-in ...` che richiederebbero `tailwindcss-animate`; non installato, quindi il dialog appare/scompare senza fade/zoom — sufficiente per ora, polish in Fase 5.
+- Server action `signOut` passata come prop dal Server Component (`AppShell`) al Client Component (`LogoutButton`): pattern Next.js 15 standard, build OK.
+
+---
+
+## 2026-04-28 — Fase 2.6 completata (logo PM come asset)
+
+**Autore**: Federico + Claude
+**Tempo**: ~10 min
+**Fase corrente**: Fase 2
+
+**Cosa fatto:**
+- Estratto logo PM da base64 in `AppCore.html` v2 → `public/logo.png` (12KB PNG)
+- `components/app-shell.tsx` usa `next/image` al posto del placeholder testo
+
+**Validazione**: `npm run build` ✅ (10/10 routes, 0 warning)
+
+---
+
+## 2026-04-28 — Fase 3 completata (viste membro)
+
+**Autore**: Federico + Claude
+**Tempo**: ~2h
+**Fase corrente**: Fase 4
+
+**Cosa fatto:**
+- `lib/db/queries.ts` — query Drizzle per balance, ciclo aperto, prodotti, ordini, ledger, storico
+- `lib/actions/order.ts` — Server Action `saveOrder` (delete+insert, audit log, balance warning)
+- `auth.ts` + `lib/auth/session.ts` — aggiunto `memberId`+`fullName` al JWT/session
+- `lib/utils.ts` — helper `formatEur`, `formatEurSigned`, `formatDate`, `formatDateTime`
+- **Home** (`app/page.tsx`): saldo hero card (orange/red), cycle card con `CycleCountdown` (timer live), order summary card, ultimi 4 movimenti
+- **Ordine** (`app/ordine/page.tsx` + `order-form.tsx`): lista prodotti per categoria con pill stepper, sticky footer (fixed bottom-[82px]), `saveOrder` action con warning balance
+- **Storico** (`app/storico/page.tsx` + `storico-tabs.tsx`): tab segmentato Ordini/Movimenti, ordini espandibili, balance summary, ledger con icone topup/charge
+- **Guida** (`app/guida/page.tsx` + `faq-accordion.tsx`): how-to steps teal, FAQ accordion Client Component, contact card
+
+**Validazione**: `npm run lint` + `npm run build` ✅ (14 files, 0 errori, 0 warning)
+**Commit**: `29e714d [v3] feat: phase 3 member views`
+
+**Cosa resta (next):**
+- [ ] Smoke test cloud su Vercel (login → Home → ordine → storico → guida)
+- [x] Fase 4 — Admin panel (5 tab: Ciclo, Prodotti, Ordini, Cassa, Soci) ← vedi entry successiva
+
+**Note tecniche:**
+- `cycleRestricted`: ciclo `access_level=attivi` + ruolo `socio` → stato "Nessun ordine aperto"
+- Sticky footer ordine usa `fixed bottom-[82px]` (sopra BottomNav sticky) con spacer `h-36`
+- `saveOrder` fa delete+insert (no transazione — scala GAS OK); audit_log sempre scritto
+- Date serializzate come ISO string per passaggio Server→Client Component
+- `memberId`+`fullName` ora nel JWT: evita query extra per ogni page load
+
+---
+
+## 2026-04-29 — Fase 4 completata (admin panel)
+
+**Autore**: Federico + Claude
+**Tempo**: ~2h
+**Fase corrente**: Fase 5
+
+**Cosa fatto:**
+- `lib/db/queries.ts` — query admin: `getAllCycles`, `getOpenCycleStats`, `getAllSuppliers`, `getAllMembers`, `getAllMembersWithBalances`, `getAdminCycleSummary`, `getAdminCycleProducts`, `getAdminMemberLedger`
+- `lib/actions/admin.ts` — Server Actions con `requireAdmin()` e audit log:
+  - `adminCreateCycle`, `adminCloseCycle` (con generazione addebiti idempotente), `adminUpdateCycle`
+  - `adminLoadProducts` (parser testo semicolon-delimited con validazione), `adminDuplicateProducts`
+  - `adminRecordTopup`, `adminUpdateLedgerEntry`, `adminDeleteLedgerEntry`
+  - `adminUpsertMember`
+- **Tab Ciclo** (`tab-ciclo.tsx` + `ciclo-forms.tsx`): ciclo aperto con stats + badge teal, `CreateCycleForm` (form collapsibile), `CloseCycleButton` (confirm nativo + genera addebiti), lista ultimi cicli
+- **Tab Prodotti** (`tab-prodotti.tsx` + `prodotti-forms.tsx`): `LoadProductsForm` (textarea + parser), `DuplicateProductsForm` (selettore ciclo + conferma), lista prodotti correnti
+- **Tab Ordini** (`tab-ordini.tsx` + `ordini-client.tsx`): selettore ciclo via searchParams, stats 2-col, tabella per-prodotto, `OrdiniByMember` (righe espandibili), `CsvExportButton` (genera file CSV lato client)
+- **Tab Cassa** (`tab-cassa.tsx` + `cassa-forms.tsx`): `TopupForm`, tabella saldi con link movimenti (`?tab=cassa&member=id`), `LedgerEntryRow` (edit inline + delete)
+- **Tab Soci** (`tab-soci.tsx` + `soci-form.tsx`): `SociForm` (add/edit), `SociList` (gruppi attivi/soci, edit inline)
+- `app/admin/page.tsx` — routing searchParams (`tab`, `cycle`, `member`), `<Suspense>` per ogni tab con skeleton, `<AdminNav>` (tab segmentata client-side)
+
+**Validazione**: `npm run build` ✅ (10 routes, 0 errori, 0 warning)
+
+**Cosa resta (next):**
+- [ ] Smoke test cloud su Vercel (login admin → tutti e 5 i tab, crea ciclo, carica prodotti, registra topup, aggiorna socio)
+- [ ] Fase 5 — PWA manifest + polish (skeleton, error boundaries, animazioni, Lighthouse)
+
+**Note tecniche:**
+- `adminCloseCycle` è idempotente: controlla se esistono già `order_charge` prima di inserirne di nuovi
+- `genId(prefix)` → `prefix_` + 16 chars UUID (compatibile con formato v2)
+- Tab navigation usa `?tab=XXX` searchParams: ogni tab è un RSC separato con proprio fetch
+- `OrdiniByMember`: stato espansione locale, no URL params
+- CSV export: generazione client-side da dati già fetchati (no round-trip aggiuntivo)

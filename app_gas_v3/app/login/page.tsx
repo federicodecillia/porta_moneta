@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 import { auth, signIn } from "@/auth";
+import { Button } from "@/components/ui/button";
 
 type LoginPageProps = {
   searchParams: Promise<Record<string, string | string[] | undefined>>;
@@ -16,9 +17,9 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
 
   return (
     <main className="mx-auto flex min-h-screen w-full max-w-[480px] flex-col items-center justify-center p-6">
-      <div className="w-full rounded-lg border border-[var(--border)] bg-white p-6 shadow-sm">
+      <div className="w-full rounded-lg border border-pm-border bg-white p-6 shadow-sm">
         <h1 className="text-xl font-semibold">Porta Moneta v3</h1>
-        <p className="mt-2 text-sm text-[var(--gray)]">
+        <p className="text-pm-gray mt-2 text-sm">
           Accedi con Google per continuare.
         </p>
         {showAccessDenied ? (
@@ -33,12 +34,9 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
             await signIn("google", { redirectTo: "/" });
           }}
         >
-          <button
-            type="submit"
-            className="w-full rounded-md bg-[var(--teal)] px-4 py-2 font-semibold text-white"
-          >
+          <Button type="submit" variant="teal" block>
             Login con Google
-          </button>
+          </Button>
         </form>
       </div>
     </main>

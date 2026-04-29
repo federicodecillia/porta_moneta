@@ -1,0 +1,232 @@
+"use client";
+
+import { useState, useTransition } from "react";
+import { toast } from "@/components/ui/toast";
+import { formatEur, formatDateTime } from "@/lib/utils";
+import type { SaveOrderLine } from "@/lib/actions/order";
+
+type Product = {
+  productId: string;
+  name: string;
+  variant: string | null;
+  format: string | null;
+  unitPrice: string;
+  category: string | null;
+  sortOrder: number;
+};
+
+type OrderLine = {
+  productId: string;
+  quantity: number;
+};
+
+type Props = {
+  cycleId: string;
+  cycleTitle: string;
+  orderCloseAt: string | null;
+  products: Product[];
+  existingLines: OrderLine[];
+  balance: number;
+  saveAction: (cycleId: string, lines: SaveOrderLine[]) => Promise<{
+    success: boolean;
+    balanceWarning: string | null;
+  }>;
+};
+
+const CAT_ORDER = ["Frutta", "Verdura", "Insalate"];
+
+function groupByCategory(products: Product[]) {
+  const groups = new Map<string, Product[]>();
+  for (const p of products) {
+    const cat = p.category ?? "";
+    if (!groups.has(cat)) groups.set(cat, []);
+    groups.get(cat)!.push(p);
+  }
+  const keys = Array.from(groups.keys()).sort((a, b) => {
+    const ai = CAT_ORDER.indexOf(a) === -1 ? 99 : CAT_ORDER.indexOf(a);
+    const bi = CAT_ORDER.indexOf(b) === -1 ? 99 : CAT_ORDER.indexOf(b);
+    return ai !== bi ? ai - bi : a.localeCompare(b);
+  });
+  return keys.map((k) => ({ category: k, products: groups.get(k)! }));
+}
+
+export function OrderForm({
+  cycleId,
+  cycleTitle,
+  orderCloseAt,
+  products,
+  existingLines,
+  balance,
+  saveAction,
+}: Props) {
+  const [draft, setDraft] = useState<Record<string, number>>(
+    Object.fromEntries(existingLines.filter((l) => l.quantity > 0).map((l) => [l.productId, l.quantity])),
+  );
+  const [isPending, startTransition] = useTransition();
+
+  const productMap = new Map(products.map((p) => [p.productId, p]));
+
+  const orderTotal = Object.entries(draft).reduce((sum, [pid, qty]) => {
+    const p = productMap.get(pid);
+    return sum + (p ? parseFloat(p.unitPrice) * qty : 0);
+  }, 0);
+  const afterBalance = balance - orderTotal;
+  const hasOrder = orderTotal > 0;
+
+  function changeQty(productId: string, delta: number) {
+    setDraft((prev) => {
+      const next = Math.max(0, (prev[productId] ?? 0) + delta);
+      const updated = { ...prev };
+      if (next === 0) {
+        delete updated[productId];
+      } else {
+        updated[productId] = next;
+      }
+      return updated;
+    });
+  }
+
+  function handleSave() {
+    startTransition(async () => {
+      try {
+        const lines: SaveOrderLine[] = Object.entries(draft).map(([productId, quantity]) => ({
+          productId,
+          quantity,
+        }));
+        const result = await saveAction(cycleId, lines);
+        if (result.balanceWarning) {
+          toast.warning(result.balanceWarning);
+        } else {
+          toast.success("Ordine salvato ✓");
+        }
+      } catch (err) {
+        toast.error(err instanceof Error ? err.message : "Errore durante il salvataggio");
+      }
+    });
+  }
+
+  const groups = groupByCategory(products);
+
+  return (
+    <>
+      {/* Cycle header */}
+      <div className="mb-1">
+        <div className="flex items-center justify-between">
+          <h1 className="text-[20px] font-black tracking-[-0.03em] text-pm-near-black">
+            Il tuo ordine
+          </h1>
+          <span className="inline-flex items-center gap-1.5 rounded-full border border-pm-teal/20 bg-pm-teal-light px-2.5 py-0.5 font-mono text-[10px] font-semibold text-pm-teal">
+            <span className="h-1.5 w-1.5 rounded-full bg-pm-teal opacity-75" />
+            Aperto
+          </span>
+        </div>
+        <p className="font-mono text-[10px] text-pm-gray mt-[3px]">
+          {cycleTitle}
+          {orderCloseAt ? " · Chiude " + formatDateTime(orderCloseAt) : ""}
+        </p>
+      </div>
+
+      {/* Product list */}
+      {groups.map(({ category, products: prods }) => (
+        <div key={category}>
+          {category && (
+            <div className="pt-4 pb-2 font-mono text-[9px] uppercase tracking-[0.10em] text-pm-gray-light">
+              {category}
+            </div>
+          )}
+          {prods.map((p) => {
+            const qty = draft[p.productId] ?? 0;
+            const meta = [p.variant, p.format].filter(Boolean).join(" · ");
+            return (
+              <div
+                key={p.productId}
+                className="flex items-center justify-between border-b border-pm-border py-3 last:border-none"
+              >
+                <div className="mr-3 min-w-0 flex-1">
+                  <div className="text-[14px] font-medium text-pm-near-black">{p.name}</div>
+                  <div className="mt-[2px] flex items-center gap-2">
+                    {meta && <span className="font-mono text-[11px] text-pm-gray">{meta}</span>}
+                    <span className="font-mono text-[11px] font-semibold text-pm-orange">
+                      {formatEur(parseFloat(p.unitPrice))}
+                    </span>
+                  </div>
+                </div>
+                {qty === 0 ? (
+                  <div className="flex flex-shrink-0 items-center rounded-full bg-black/[0.06] p-0.5">
+                    <button
+                      onClick={() => changeQty(p.productId, 1)}
+                      aria-label="Aggiungi"
+                      className="flex h-8 w-8 items-center justify-center rounded-full text-[18px] font-light text-pm-gray"
+                    >
+                      +
+                    </button>
+                  </div>
+                ) : (
+                  <div className="flex flex-shrink-0 items-center rounded-full bg-pm-orange-light p-0.5">
+                    <button
+                      onClick={() => changeQty(p.productId, -1)}
+                      aria-label="Meno"
+                      className="flex h-8 w-8 items-center justify-center rounded-full text-[18px] font-light text-pm-gray"
+                    >
+                      −
+                    </button>
+                    <span className="min-w-[22px] text-center font-mono text-[13px] font-bold text-pm-near-black">
+                      {qty}
+                    </span>
+                    <button
+                      onClick={() => changeQty(p.productId, 1)}
+                      aria-label="Più"
+                      className="flex h-8 w-8 items-center justify-center rounded-full bg-pm-orange text-[18px] font-light text-white"
+                    >
+                      +
+                    </button>
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      ))}
+
+      {/* Spacer so content is not hidden behind sticky footer */}
+      {hasOrder && <div className="h-36" />}
+
+      {/* Sticky footer — fixed above bottom nav */}
+      {hasOrder && (
+        <div className="fixed bottom-[82px] inset-x-0 z-10">
+          <div className="mx-auto max-w-[480px] border-t border-pm-border bg-pm-warm-white/97 px-5 py-3.5 backdrop-blur-sm">
+            <div className="mb-3 flex items-end justify-between">
+              <div>
+                <div className="font-mono text-[9px] uppercase tracking-[0.09em] text-pm-gray-light">
+                  Totale ordine
+                </div>
+                <div className="mt-[2px] text-[24px] font-black tracking-[-0.03em] text-pm-near-black">
+                  {formatEur(orderTotal)}
+                </div>
+              </div>
+              <div className="text-right">
+                <div className="font-mono text-[9px] uppercase tracking-[0.09em] text-pm-gray-light">
+                  Saldo dopo
+                </div>
+                <div
+                  className={`mt-[2px] font-mono text-[14px] font-bold ${
+                    afterBalance < 0 ? "text-pm-red" : "text-pm-teal"
+                  }`}
+                >
+                  {formatEur(afterBalance)}
+                </div>
+              </div>
+            </div>
+            <button
+              onClick={handleSave}
+              disabled={isPending}
+              className="w-full rounded-full bg-pm-orange px-[22px] py-[14px] text-sm font-bold text-white transition-[opacity,transform] duration-150 active:scale-[0.98] disabled:opacity-40 disabled:cursor-not-allowed"
+            >
+              {isPending ? "Salvataggio..." : "Conferma ordine"}
+            </button>
+          </div>
+        </div>
+      )}
+    </>
+  );
+}

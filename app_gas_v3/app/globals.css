@@ -3,6 +3,7 @@
 :root {
   --background: #faf8f5;
   --foreground: #2d2b29;
+  --frame: #ddd8d0;
   --orange: #f5a623;
   --orange-l: #fef3dc;
   --teal: #00a896;
@@ -20,12 +21,38 @@
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
+  --color-pm-frame: var(--frame);
+  --color-pm-orange: var(--orange);
+  --color-pm-orange-light: var(--orange-l);
+  --color-pm-teal: var(--teal);
+  --color-pm-teal-light: var(--teal-l);
+  --color-pm-gray: var(--gray);
+  --color-pm-gray-light: var(--gray-l);
+  --color-pm-near-black: var(--near-blk);
+  --color-pm-warm-white: var(--warm-wh);
+  --color-pm-red: var(--red);
+  --color-pm-red-light: var(--red-l);
+  --color-pm-border: var(--border);
+  --color-pm-orange-mid: rgba(245, 166, 35, 0.3);
+  --spacing-nav-h: var(--nav-h);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
 }
 
 body {
-  background: #ddd8d0;
+  background: var(--frame);
   color: var(--foreground);
   font-family: var(--font-geist-sans), system-ui, sans-serif;
+  -webkit-tap-highlight-color: transparent;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }

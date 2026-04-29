@@ -82,18 +82,18 @@ export function BottomNav({ isAdmin }: BottomNavProps) {
   const pathname = usePathname();
 
   return (
-    <nav className="sticky bottom-0 z-20 border-t border-[var(--border)] bg-[var(--warm-wh)]">
-      <ul className="grid h-[var(--nav-h)] grid-cols-5">
+    <nav className="sticky bottom-0 z-20 border-t border-pm-border bg-pm-warm-white">
+      <ul className="grid h-nav-h grid-cols-5">
         {navItems.map((item) => {
           const active = isItemActive(pathname, item);
           const locked = item.adminOnly && !isAdmin;
           const baseClasses =
             "flex h-full flex-col items-center justify-center gap-1 text-[11px] font-medium tracking-[0.02em]";
           const stateClasses = active
-            ? "text-[var(--orange)]"
+            ? "text-pm-orange"
             : locked
-              ? "text-[var(--gray-l)]"
-              : "text-[var(--gray)]";
+              ? "text-pm-gray-light"
+              : "text-pm-gray";
 
           return (
             <li key={item.href}>

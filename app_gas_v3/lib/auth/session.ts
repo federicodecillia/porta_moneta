@@ -7,6 +7,8 @@ export type AppSession = {
     email: string;
     role?: string | null;
     active?: boolean;
+    memberId?: string | null;
+    fullName?: string | null;
   };
 };
 
@@ -18,13 +20,19 @@ export async function requireUserSession(): Promise<AppSession> {
     redirect("/login");
   }
 
+  const u = session.user as {
+    role?: string | null;
+    active?: boolean;
+    memberId?: string | null;
+    fullName?: string | null;
+  };
   return {
     user: {
       email,
-      role: (session.user as { role?: string | null } | undefined)?.role ?? null,
-      active: Boolean(
-        (session.user as { active?: boolean } | undefined)?.active,
-      ),
+      role: u?.role ?? null,
+      active: Boolean(u?.active),
+      memberId: u?.memberId ?? null,
+      fullName: u?.fullName ?? null,
     },
   };
 }
