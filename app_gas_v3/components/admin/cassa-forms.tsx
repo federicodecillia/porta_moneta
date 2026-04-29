@@ -3,6 +3,8 @@
 import { useState, useTransition } from "react";
 import { toast } from "@/components/ui/toast";
 import { adminDeleteLedgerEntry, adminRecordTopup, adminUpdateLedgerEntry } from "@/lib/actions/admin";
+import { formatDate } from "@/lib/utils";
+import type { LedgerEntryItem, MemberWithBalance } from "@/lib/db/queries";
 
 type Member = { memberId: string; fullName: string };
 
@@ -235,6 +237,96 @@ export function LedgerEntryRow({ entry }: { entry: LedgerEntry }) {
         >
           ✕
         </button>
+      </div>
+    </div>
+  );
+}
+
+// ── Cassa Inline List ─────────────────────────────────────────────────────────
+
+export function CassaInlineList({
+  members,
+  ledgerByMember,
+}: {
+  members: MemberWithBalance[];
+  ledgerByMember: Record<string, LedgerEntryItem[]>;
+}) {
+  const [filter, setFilter] = useState("");
+  const [expandedId, setExpandedId] = useState<string | null>(null);
+
+  const filtered = members.filter(
+    (m) =>
+      m.fullName.toLowerCase().includes(filter.toLowerCase()) ||
+      m.email.toLowerCase().includes(filter.toLowerCase()),
+  );
+
+  return (
+    <div>
+      <div className="border-b border-pm-border px-4 py-2">
+        <input
+          type="search"
+          value={filter}
+          onChange={(e) => setFilter(e.target.value)}
+          placeholder="Cerca socio…"
+          className="w-full rounded-lg border border-pm-border px-3 py-1.5 text-[12px] text-pm-near-black placeholder:text-pm-gray-light focus:outline-none focus:ring-2 focus:ring-pm-orange/30"
+        />
+      </div>
+      <div className="divide-y divide-pm-border">
+        {filtered.map((m) => {
+          const entries = ledgerByMember[m.memberId] ?? [];
+          const isExpanded = expandedId === m.memberId;
+          return (
+            <div key={m.memberId}>
+              <button
+                onClick={() => setExpandedId(isExpanded ? null : m.memberId)}
+                className="flex w-full items-center justify-between px-4 py-2.5 text-left"
+              >
+                <div className="min-w-0 flex-1">
+                  <div className="text-[13px] font-medium text-pm-near-black">{m.fullName}</div>
+                  <div className="font-mono text-[10px] text-pm-gray-light">
+                    {m.role}
+                    {m.active ? "" : " · inattivo"} · {entries.length} movimenti
+                  </div>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span
+                    className={`font-mono text-[13px] font-bold ${
+                      m.balance >= 0 ? "text-pm-teal" : "text-pm-red"
+                    }`}
+                  >
+                    {m.balance >= 0 ? "+" : ""}
+                    {m.balance.toFixed(2).replace(".", ",")}
+                  </span>
+                  <span className="text-[11px] text-pm-gray-light">{isExpanded ? "▲" : "▼"}</span>
+                </div>
+              </button>
+
+              {isExpanded && (
+                <div className="border-t border-pm-border bg-black/[0.01]">
+                  {entries.length === 0 ? (
+                    <p className="px-4 py-3 text-center text-[12px] text-pm-gray">
+                      Nessun movimento
+                    </p>
+                  ) : (
+                    entries.map((entry) => (
+                      <div key={entry.entryId}>
+                        <div className="px-4 pt-2 font-mono text-[10px] text-pm-gray-light">
+                          {entry.entryDate ? formatDate(entry.entryDate) : "—"}
+                        </div>
+                        <LedgerEntryRow entry={entry} />
+                      </div>
+                    ))
+                  )}
+                </div>
+              )}
+            </div>
+          );
+        })}
+        {filtered.length === 0 && (
+          <p className="px-4 py-6 text-center text-[12px] text-pm-gray">
+            Nessun socio trovato
+          </p>
+        )}
       </div>
     </div>
   );

@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { eq, and, sql } from "drizzle-orm";
 import { auth } from "@/auth";
 import { getDb } from "@/lib/db/client";
-import { auditLog, ledgerEntries, members, orderCycles, orders, products } from "@/lib/db/schema";
+import { auditLog, ledgerEntries, members, orderCycles, orders, products, suppliers } from "@/lib/db/schema";
 
 async function requireAdmin(): Promise<{ email: string }> {
   const session = await auth();
@@ -393,4 +393,88 @@ export async function adminUpsertMember(data: UpsertMemberInput) {
   }
 
   revalidatePath("/admin");
+}
+
+// ── Fornitori ─────────────────────────────────────────────────────────────────
+
+export type UpsertSupplierInput = {
+  supplierId?: string;
+  name: string;
+  macroCategory?: string;
+  contactName?: string;
+  phone?: string;
+  email?: string;
+  address?: string;
+  notes?: string;
+  active?: boolean;
+};
+
+export async function adminUpsertSupplier(data: UpsertSupplierInput) {
+  const admin = await requireAdmin();
+  if (!data.name?.trim()) throw new Error("Nome obbligatorio");
+
+  const db = getDb();
+  const now = new Date();
+  const trim = (v?: string) => v?.trim() || null;
+
+  if (data.supplierId) {
+    await db
+      .update(suppliers)
+      .set({
+        name: data.name.trim(),
+        macroCategory: trim(data.macroCategory),
+        contactName: trim(data.contactName),
+        phone: trim(data.phone),
+        email: trim(data.email),
+        address: trim(data.address),
+        notes: trim(data.notes),
+        active: data.active ?? true,
+      })
+      .where(eq(suppliers.supplierId, data.supplierId));
+    await writeAudit(db, admin.email, "update_supplier", "supplier", data.supplierId, data);
+  } else {
+    const supplierId = genId("sup");
+    await db.insert(suppliers).values({
+      supplierId,
+      name: data.name.trim(),
+      macroCategory: trim(data.macroCategory),
+      contactName: trim(data.contactName),
+      phone: trim(data.phone),
+      email: trim(data.email),
+      address: trim(data.address),
+      notes: trim(data.notes),
+      active: data.active ?? true,
+      createdAt: now,
+    });
+    await writeAudit(db, admin.email, "create_supplier", "supplier", supplierId, data);
+  }
+  revalidatePath("/admin");
+}
+
+export async function adminArchiveSupplier(supplierId: string, active: boolean) {
+  const admin = await requireAdmin();
+  const db = getDb();
+  await db.update(suppliers).set({ active }).where(eq(suppliers.supplierId, supplierId));
+  await writeAudit(db, admin.email, active ? "unarchive_supplier" : "archive_supplier", "supplier", supplierId);
+  revalidatePath("/admin");
+}
+
+export async function adminDeleteSupplier(supplierId: string): Promise<{ error?: string }> {
+  try {
+    const admin = await requireAdmin();
+    const db = getDb();
+    const [cycleCount] = await db
+      .select({ n: sql<string>`count(*)` })
+      .from(orderCycles)
+      .where(eq(orderCycles.supplierId, supplierId));
+    if (parseInt(cycleCount?.n ?? "0") > 0) {
+      return { error: "Non è possibile eliminare un fornitore con cicli associati. Archivialo invece." };
+    }
+    await db.delete(suppliers).where(eq(suppliers.supplierId, supplierId));
+    await writeAudit(db, admin.email, "delete_supplier", "supplier", supplierId);
+    revalidatePath("/admin");
+    return {};
+  } catch (e) {
+    return { error: e instanceof Error ? e.message : "Errore" };
+  }
 }

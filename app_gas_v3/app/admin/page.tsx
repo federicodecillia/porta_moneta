@@ -8,6 +8,7 @@ import { TabProdotti } from "@/components/admin/tab-prodotti";
 import { TabOrdini } from "@/components/admin/tab-ordini";
 import { TabCassa } from "@/components/admin/tab-cassa";
 import { TabSoci } from "@/components/admin/tab-soci";
+import { TabFornitori } from "@/components/admin/tab-fornitori";
 
 type SearchParams = Promise<{
   tab?: string;
@@ -47,7 +48,8 @@ export default async function AdminPage({ searchParams }: { searchParams: Search
         {tab === "ciclo" && <TabCiclo />}
         {tab === "prodotti" && <TabProdotti />}
         {tab === "ordini" && <TabOrdini cycleId={cycleId} memberId={memberId} />}
-        {tab === "cassa" && <TabCassa memberId={memberId} />}
+        {tab === "cassa" && <TabCassa />}
+        {tab === "fornitori" && <TabFornitori />}
         {tab === "soci" && <TabSoci />}
       </Suspense>
     </AppShell>
