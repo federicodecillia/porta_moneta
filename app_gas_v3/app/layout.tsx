@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { Toaster } from "@/components/providers/toaster";
@@ -15,8 +15,27 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Porta Moneta v3",
-  description: "Migrazione Porta Moneta GAS su Next.js",
+  title: {
+    default: "Porta Moneta GAS",
+    template: "%s · PM GAS",
+  },
+  description: "Ordini settimanali del Gruppo di Acquisto Solidale Porta Moneta",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "default",
+    title: "PM GAS",
+  },
+  formatDetection: {
+    telephone: false,
+  },
+};
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 1,
+  userScalable: false,
+  themeColor: "#f5a623",
 };
 
 export default function RootLayout({
@@ -29,6 +48,9 @@ export default function RootLayout({
       lang="it"
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
+      <head>
+        <link rel="apple-touch-icon" href="/logo.png" />
+      </head>
       <body className="text-pm-near-black flex min-h-full flex-col">
         {children}
         <Toaster />
