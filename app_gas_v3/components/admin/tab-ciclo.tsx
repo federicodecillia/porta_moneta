@@ -2,6 +2,7 @@ import { getAllCycles, getAllSuppliers, getOpenCycles, getOpenCycleStats } from 
 import { formatDate } from "@/lib/utils";
 import { Card, CardHeader } from "@/components/ui/card";
 import { CreateCycleForm, OpenCycleCard } from "./ciclo-forms";
+import { ClosedCycleDetails } from "./closed-cycle-details";
 
 export async function TabCiclo() {
   const [openCycles, cycles, suppliers] = await Promise.all([
@@ -75,6 +76,11 @@ export async function TabCiclo() {
                 >
                   {c.status === "open" ? "Aperto" : "Chiuso"}
                 </span>
+                {c.status !== "open" && (
+                  <div className="ml-3">
+                    <ClosedCycleDetails cycleId={c.cycleId} cycleTitle={c.title} />
+                  </div>
+                )}
               </div>
             ))}
           </div>

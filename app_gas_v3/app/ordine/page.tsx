@@ -8,6 +8,7 @@ import {
   getOpenCycles,
 } from "@/lib/db/queries";
 import { saveOrder } from "@/lib/actions/order";
+import Link from "next/link";
 
 export default async function OrdinePage({
   searchParams,
@@ -59,6 +60,23 @@ export default async function OrdinePage({
 
   return (
     <AppShell email={session.user.email} isAdmin={role === "admin"}>
+      {activeCycles.length > 1 && (
+        <div className="mb-6 flex gap-2 overflow-x-auto pb-2 no-scrollbar">
+          {activeCycles.map((c) => (
+            <Link
+              key={c.cycleId}
+              href={`/ordine?cycleId=${c.cycleId}`}
+              className={`shrink-0 rounded-full px-4 py-1.5 text-[12px] font-bold transition-colors ${
+                c.cycleId === openCycle!.cycleId
+                  ? "bg-pm-teal text-white shadow-sm"
+                  : "bg-white text-pm-gray border border-pm-border hover:bg-pm-warm-white"
+              }`}
+            >
+              {c.title}
+            </Link>
+          ))}
+        </div>
+      )}
       <OrderForm
         cycleId={openCycle!.cycleId}
         cycleTitle={openCycle!.title}

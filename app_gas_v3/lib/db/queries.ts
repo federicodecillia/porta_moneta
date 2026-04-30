@@ -281,10 +281,21 @@ export async function getAdminCycleSummary(cycleId: string): Promise<CycleSummar
 export async function getAdminCycleProducts(cycleId: string) {
   const db = getDb();
   return db
-    .select()
+    .select({
+      productId: products.productId,
+      name: products.name,
+      variant: products.variant,
+      format: products.format,
+      unitPrice: products.unitPrice,
+      unit: products.unit,
+      supplierName: suppliers.name,
+      supplierId: products.supplierId,
+      sortOrder: products.sortOrder,
+    })
     .from(products)
+    .leftJoin(suppliers, eq(products.supplierId, suppliers.supplierId))
     .where(eq(products.cycleId, cycleId))
-    .orderBy(asc(products.sortOrder), asc(products.name));
+    .orderBy(asc(suppliers.name), asc(products.name));
 }
 
 export async function getAdminMemberLedger(memberId: string, limit = 100) {
@@ -396,6 +407,7 @@ export type CatalogProductItem = {
   unitPrice: string;
   notes: string | null;
   category: string | null;
+  emoji: string | null;
   active: boolean;
   createdAt: Date;
   archivedAt: Date | null;

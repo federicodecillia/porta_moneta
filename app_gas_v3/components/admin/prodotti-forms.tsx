@@ -4,7 +4,6 @@ import { useState, useTransition } from "react";
 import { toast } from "@/components/ui/toast";
 import { 
   adminUpsertCatalogProduct, 
-  adminCleanupIncompleteProducts, 
   adminLoadFromCatalog,
   adminArchiveCatalogProduct
 } from "@/lib/actions/admin";
@@ -23,6 +22,7 @@ export function CatalogProductForm({
   onClose: () => void;
 }) {
   const [isPending, startTransition] = useTransition();
+  const [tempEmoji, setTempEmoji] = useState(product?.emoji ?? getProductEmoji(product?.name ?? ""));
 
   function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -37,6 +37,7 @@ export function CatalogProductForm({
       unitPrice: parseFloat((fd.get("unitPrice") as string).replace(",", ".")),
       notes: fd.get("notes") as string,
       category: fd.get("category") as string,
+      emoji: fd.get("emoji") as string,
     };
 
     startTransition(async () => {
@@ -70,9 +71,26 @@ export function CatalogProductForm({
       </div>
 
       <div className="grid grid-cols-2 gap-3">
-        <div className="col-span-2">
-          <label className={labelCls}>Nome *</label>
-          <input name="name" required defaultValue={product?.name} className={inputCls} />
+        <div className="col-span-2 flex gap-3">
+          <div className="flex-1">
+            <label className={labelCls}>Nome *</label>
+            <input 
+              name="name" 
+              required 
+              defaultValue={product?.name} 
+              className={inputCls} 
+              onChange={(e) => setTempEmoji(getProductEmoji(e.target.value))}
+            />
+          </div>
+          <div className="w-16">
+            <label className={labelCls}>Icona</label>
+            <input 
+              name="emoji" 
+              defaultValue={product?.emoji ?? tempEmoji} 
+              className={`${inputCls} text-center text-lg`} 
+              maxLength={2}
+            />
+          </div>
         </div>
         <div>
           <label className={labelCls}>Varietà</label>
@@ -111,33 +129,69 @@ export function CatalogProductForm({
   );
 }
 
-export function CleanupButton() {
+
+
+
+// ── CSV Import/Export ────────────────────────────────────────────────────────
+
+import { adminImportProductsCsv } from "@/lib/actions/admin-products";
+
+export function CatalogCsvActions({ supplierId }: { supplierId: string }) {
   const [isPending, startTransition] = useTransition();
 
-  function handleCleanup() {
-    if (!window.confirm("Sei sicuro di voler eliminare definitivamente tutti i prodotti incompleti (senza unità o prezzo)?")) return;
-    startTransition(async () => {
-      try {
-        const result = await adminCleanupIncompleteProducts();
-        if (result.error) toast.error(result.error);
-        else toast.success("Pulizia completata");
-      } catch {
-        toast.error("Errore durante la pulizia");
-      }
-    });
+  function downloadTemplate() {
+    const headers = "Nome,Varietà,Formato,Unità,Prezzo,Categoria,Icona,Note";
+    const example = "Mela Rossa,Bio,Sacco 2kg,kg,2.50,Frutta,🍎,Dolce e croccante";
+    const csvContent = "data:text/csv;charset=utf-8," + headers + "\n" + example;
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement("a");
+    link.setAttribute("href", encodedUri);
+    link.setAttribute("download", `template_prodotti.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  }
+
+  function handleFileUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const text = event.target?.result as string;
+      startTransition(async () => {
+        const result = await adminImportProductsCsv(supplierId, text);
+        if (result.error) {
+          toast.error(result.error);
+        } else {
+          toast.success(`Importati ${result.count} prodotti ✓`);
+        }
+      });
+    };
+    reader.readAsText(file);
   }
 
   return (
-    <button
-      onClick={handleCleanup}
-      disabled={isPending}
-      className="rounded-lg border border-red-200 bg-red-50 px-3 py-1.5 text-[11px] font-bold text-red-600 hover:bg-red-100 disabled:opacity-50"
-    >
-      {isPending ? "Pulizia..." : "🧹 Pulisci prodotti incompleti"}
-    </button>
+    <div className="flex flex-wrap gap-2">
+      <button
+        onClick={downloadTemplate}
+        className="rounded-lg border border-pm-border bg-white px-3 py-1.5 text-[11px] font-bold text-pm-teal shadow-sm hover:bg-pm-warm-white/50"
+      >
+        📥 Scarica Template
+      </button>
+      <label className="cursor-pointer rounded-lg border border-pm-border bg-white px-3 py-1.5 text-[11px] font-bold text-pm-teal shadow-sm hover:bg-pm-warm-white/50">
+        {isPending ? "Caricamento..." : "📤 Carica CSV"}
+        <input
+          type="file"
+          accept=".csv"
+          className="hidden"
+          onChange={handleFileUpload}
+          disabled={isPending}
+        />
+      </label>
+    </div>
   );
 }
-
 
 // ── Load from catalog ─────────────────────────────────────────────────────────
 
@@ -418,12 +472,15 @@ export function CatalogManager({
           <h3 className="text-[14px] font-bold text-pm-near-black">{supplierName}</h3>
           <p className="text-[11px] text-pm-gray">{products.length} prodotti a catalogo</p>
         </div>
-        <button
-          onClick={() => setShowAdd(true)}
-          className="rounded-lg bg-pm-teal px-3 py-1.5 text-[11px] font-bold text-white transition-transform active:scale-95"
-        >
-          + Aggiungi Prodotto
-        </button>
+        <div className="flex gap-2">
+          <CatalogCsvActions supplierId={supplierId} />
+          <button
+            onClick={() => setShowAdd(true)}
+            className="rounded-lg bg-pm-teal px-3 py-1.5 text-[11px] font-bold text-white transition-transform active:scale-95"
+          >
+            + Aggiungi Prodotto
+          </button>
+        </div>
       </div>
 
       {(showAdd || editingId) && (
@@ -446,7 +503,7 @@ export function CatalogManager({
                 !p.active ? "opacity-50 grayscale" : ""
               }`}
             >
-              <span className="shrink-0 text-[18px]">{getProductEmoji(p.name)}</span>
+              <span className="shrink-0 text-[18px]">{p.emoji || getProductEmoji(p.name)}</span>
               <div className="min-w-0 flex-1">
                 <div className="flex items-center gap-2">
                   <span className="truncate text-[13px] font-medium text-pm-near-black">{p.name}</span>
