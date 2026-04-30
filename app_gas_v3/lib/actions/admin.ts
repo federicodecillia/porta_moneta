@@ -1,11 +1,10 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { eq, and, sql } from "drizzle-orm";
+import { eq, and, sql, or, isNull, inArray } from "drizzle-orm";
 import { auth } from "@/auth";
 import { getDb } from "@/lib/db/client";
 import { auditLog, ledgerEntries, members, orderCycles, orders, products, suppliers, supplierProducts } from "@/lib/db/schema";
-import { inArray } from "drizzle-orm";
 
 async function requireAdmin(): Promise<{ email: string }> {
   const session = await auth();
@@ -43,10 +42,10 @@ async function writeAudit(
 export type CreateCycleInput = {
   title: string;
   pickupDate: string;
-  pickupEndTime?: string;
+  pickupEndTime: string;
   orderCloseAt: string;
-  supplierId: string;
-  accessLevel: "attivi" | "all";
+  supplierId?: string; // Principal supplier (optional)
+  accessLevel: "admin" | "soci" | "utenti" | string;
   notes: string;
 };
 
@@ -146,7 +145,7 @@ export async function adminCloseCycle(cycleId: string) {
 
 export async function adminUpdateCycle(
   cycleId: string,
-  data: { title?: string; pickupDate?: string; pickupEndTime?: string; orderCloseAt?: string; notes?: string },
+  data: { title?: string; pickupDate?: string; pickupEndTime?: string; orderCloseAt?: string; notes?: string; supplierId?: string; accessLevel?: string },
 ): Promise<{error?: string}> {
   try {
     const admin = await requireAdmin();
@@ -161,6 +160,8 @@ export async function adminUpdateCycle(
         ...(data.pickupEndTime !== undefined && { pickupEndTime: data.pickupEndTime || null }),
         ...(data.orderCloseAt !== undefined && { orderCloseAt: new Date(data.orderCloseAt) }),
         ...(data.notes !== undefined && { notes: data.notes || null }),
+        ...(data.supplierId !== undefined && { supplierId: data.supplierId || null }),
+        ...(data.accessLevel !== undefined && { accessLevel: data.accessLevel }),
       })
       .where(eq(orderCycles.cycleId, cycleId));
     await writeAudit(db, admin.email, "update_cycle", "cycle", cycleId, data);
@@ -699,3 +700,59 @@ export async function adminLoadFromCatalog(cycleId: string, catalogProductIds: s
     return { error: e instanceof Error ? e.message : "Errore" };
   }
 }
+
+export async function adminCleanupIncompleteProducts(): Promise<{error?: string}> {
+  try {
+    const admin = await requireAdmin();
+    const db = getDb();
+    
+    // Incomplete in catalog
+    await db.delete(supplierProducts)
+      .where(or(
+        isNull(supplierProducts.unit),
+        eq(supplierProducts.unit, ""),
+        eq(supplierProducts.unitPrice, "0")
+      ));
+    
+    // Incomplete in current cycles
+    await db.delete(products)
+      .where(or(
+        isNull(products.unit),
+        eq(products.unit, ""),
+        eq(products.unitPrice, "0")
+      ));
+    
+    await writeAudit(db, admin.email, "cleanup_incomplete_products", "catalog", "");
+    revalidatePath("/admin");
+    return {};
+  } catch (e) {
+    return { error: e instanceof Error ? e.message : "Errore" };
+  }
+}
+
+export async function adminRemoveProductFromCycle(productId: string): Promise<{error?: string}> {
+  try {
+    const admin = await requireAdmin();
+    const db = getDb();
+    await db.delete(products).where(eq(products.productId, productId));
+    await writeAudit(db, admin.email, "remove_product_from_cycle", "product", productId);
+    revalidatePath("/admin");
+    revalidatePath("/ordine");
+    return {};
+  } catch (e) {
+    return { error: e instanceof Error ? e.message : "Errore" };
+  }
+}
+
+export async function adminGetCatalogBySupplier(supplierId: string) {
+  await requireAdmin();
+  const { getCatalogBySupplier } = await import("@/lib/db/queries");
+  return getCatalogBySupplier(supplierId);
+}
+
+export async function adminGetCycleProducts(cycleId: string) {
+  await requireAdmin();
+  const { getAdminCycleProducts } = await import("@/lib/db/queries");
+  return getAdminCycleProducts(cycleId);
+}
+

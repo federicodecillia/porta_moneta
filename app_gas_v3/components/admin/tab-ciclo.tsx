@@ -34,8 +34,11 @@ export async function TabCiclo() {
                   pickupDate: openCycle.pickupDate?.toISOString() ?? null,
                   pickupEndTime: openCycle.pickupEndTime ?? null,
                   notes: openCycle.notes ?? null,
+                  supplierId: openCycle.supplierId ?? null,
+                  accessLevel: openCycle.accessLevel,
                 }}
                 stats={{ orderCount: stats?.orderCount ?? 0, grandTotal: stats?.grandTotal ?? 0 }}
+                suppliers={suppliers}
               />
             );
           })}

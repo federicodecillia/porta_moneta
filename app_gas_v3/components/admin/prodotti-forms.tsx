@@ -2,106 +2,142 @@
 
 import { useState, useTransition } from "react";
 import { toast } from "@/components/ui/toast";
-import { adminLoadProducts, adminDuplicateProducts, adminLoadFromCatalog } from "@/lib/actions/admin";
+import { 
+  adminUpsertCatalogProduct, 
+  adminCleanupIncompleteProducts, 
+  adminLoadFromCatalog,
+  adminArchiveCatalogProduct
+} from "@/lib/actions/admin";
 import { formatEur, getProductEmoji } from "@/lib/utils";
 import type { CatalogProductItem } from "@/lib/db/queries";
 
-type CycleOption = { cycleId: string; title: string };
+// ── Catalog Product Form ──────────────────────────────────────────────────────
 
-// ── Load from text ────────────────────────────────────────────────────────────
-
-export function LoadProductsForm({ cycleId }: { cycleId: string }) {
-  const [text, setText] = useState("");
+export function CatalogProductForm({
+  supplierId,
+  product,
+  onClose,
+}: {
+  supplierId: string;
+  product?: CatalogProductItem;
+  onClose: () => void;
+}) {
   const [isPending, startTransition] = useTransition();
 
-  function handleSubmit(e: React.FormEvent) {
+  function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
+    const fd = new FormData(e.currentTarget);
+    const data = {
+      catalogProductId: product?.catalogProductId,
+      supplierId,
+      name: fd.get("name") as string,
+      variant: fd.get("variant") as string,
+      format: fd.get("format") as string,
+      unit: fd.get("unit") as string,
+      unitPrice: parseFloat((fd.get("unitPrice") as string).replace(",", ".")),
+      notes: fd.get("notes") as string,
+      category: fd.get("category") as string,
+    };
+
     startTransition(async () => {
       try {
-        const result = await adminLoadProducts(cycleId, text);
-        toast.success(`${result.count} prodotti caricati`);
-        setText("");
-      } catch (err) {
-        toast.error(err instanceof Error ? err.message : "Errore nel parsing");
+        const result = await adminUpsertCatalogProduct(data);
+        if (result.error) {
+          toast.error(result.error);
+          return;
+        }
+        toast.success(product ? "Prodotto aggiornato" : "Prodotto creato");
+        onClose();
+      } catch {
+        toast.error("Errore nel salvataggio");
       }
     });
   }
 
+  const inputCls =
+    "w-full rounded-lg border border-pm-border px-3 py-2 text-[13px] text-pm-near-black focus:outline-none focus:ring-2 focus:ring-pm-teal/30";
+  const labelCls = "mb-1 block text-[11px] font-semibold uppercase tracking-wide text-pm-gray";
+
   return (
-    <form onSubmit={handleSubmit} className="rounded-xl border border-pm-border bg-white p-4 shadow-sm">
-      <p className="mb-1 text-[13px] font-bold text-pm-near-black">Carica prodotti da testo</p>
-      <p className="mb-3 font-mono text-[10px] text-pm-teal">
-        Formato: Nome;Varietà;Formato;Prezzo;Fornitore;Note;Categoria;Unità
-      </p>
-      <textarea
-        value={text}
-        onChange={(e) => setText(e.target.value)}
-        rows={8}
-        placeholder={"Carota;;500 g;1.75;Biofattoria Rossi;\nMela;Golden;1 kg;2.50;;"}
-        className="w-full rounded-lg border border-pm-border px-3 py-2 font-mono text-[12px] text-pm-near-black focus:outline-none focus:ring-2 focus:ring-pm-orange/30"
-      />
+    <form onSubmit={handleSubmit} className="mb-4 rounded-xl border border-pm-border bg-white p-4 shadow-sm">
+      <div className="mb-4 flex items-center justify-between">
+        <h4 className="text-[14px] font-bold text-pm-near-black">
+          {product ? "Modifica Prodotto" : "Nuovo Prodotto"}
+        </h4>
+        <button type="button" onClick={onClose} className="text-[12px] text-pm-gray hover:text-pm-near-black">
+          Annulla
+        </button>
+      </div>
+
+      <div className="grid grid-cols-2 gap-3">
+        <div className="col-span-2">
+          <label className={labelCls}>Nome *</label>
+          <input name="name" required defaultValue={product?.name} className={inputCls} />
+        </div>
+        <div>
+          <label className={labelCls}>Varietà</label>
+          <input name="variant" defaultValue={product?.variant ?? ""} className={inputCls} />
+        </div>
+        <div>
+          <label className={labelCls}>Formato</label>
+          <input name="format" placeholder="es. 1 kg" defaultValue={product?.format ?? ""} className={inputCls} />
+        </div>
+        <div>
+          <label className={labelCls}>Unità</label>
+          <input name="unit" placeholder="es. kg" defaultValue={product?.unit ?? ""} className={inputCls} />
+        </div>
+        <div>
+          <label className={labelCls}>Prezzo *</label>
+          <input name="unitPrice" type="number" step="0.01" required defaultValue={product?.unitPrice} className={inputCls} />
+        </div>
+        <div className="col-span-2">
+          <label className={labelCls}>Categoria</label>
+          <input name="category" defaultValue={product?.category ?? ""} className={inputCls} />
+        </div>
+        <div className="col-span-2">
+          <label className={labelCls}>Note</label>
+          <input name="notes" defaultValue={product?.notes ?? ""} className={inputCls} />
+        </div>
+      </div>
+
       <button
         type="submit"
-        disabled={isPending || !text.trim()}
-        className="mt-3 w-full rounded-xl bg-pm-orange py-2 text-[13px] font-bold text-white disabled:opacity-60"
+        disabled={isPending}
+        className="mt-4 w-full rounded-xl bg-pm-teal py-2 text-[13px] font-bold text-white disabled:opacity-60"
       >
-        {isPending ? "Caricamento…" : "Carica prodotti"}
+        {isPending ? "Salvataggio…" : product ? "Salva Modifiche" : "Crea Prodotto"}
       </button>
     </form>
   );
 }
 
-// ── Duplicate from cycle ──────────────────────────────────────────────────────
-
-export function DuplicateProductsForm({
-  cycleId,
-  pastCycles,
-}: {
-  cycleId: string;
-  pastCycles: CycleOption[];
-}) {
-  const [sourceCycleId, setSourceCycleId] = useState(pastCycles[0]?.cycleId ?? "");
+export function CleanupButton() {
   const [isPending, startTransition] = useTransition();
 
-  function handleDuplicate() {
-    if (!sourceCycleId) return;
-    if (!window.confirm("Sostituire i prodotti correnti con quelli del ciclo selezionato?")) return;
+  function handleCleanup() {
+    if (!window.confirm("Sei sicuro di voler eliminare definitivamente tutti i prodotti incompleti (senza unità o prezzo)?")) return;
     startTransition(async () => {
       try {
-        const result = await adminDuplicateProducts(sourceCycleId, cycleId);
-        toast.success(`${result.count} prodotti duplicati`);
-      } catch (err) {
-        toast.error(err instanceof Error ? err.message : "Errore");
+        const result = await adminCleanupIncompleteProducts();
+        if (result.error) toast.error(result.error);
+        else toast.success("Pulizia completata");
+      } catch {
+        toast.error("Errore durante la pulizia");
       }
     });
   }
 
-  if (pastCycles.length === 0) return null;
-
   return (
-    <div className="rounded-xl border border-pm-border bg-white p-4 shadow-sm">
-      <p className="mb-3 text-[13px] font-bold text-pm-near-black">Duplica da ciclo precedente</p>
-      <select
-        value={sourceCycleId}
-        onChange={(e) => setSourceCycleId(e.target.value)}
-        className="mb-3 w-full rounded-lg border border-pm-border px-3 py-2 text-[13px] text-pm-near-black focus:outline-none focus:ring-2 focus:ring-pm-teal/30"
-      >
-        {pastCycles.map((c) => (
-          <option key={c.cycleId} value={c.cycleId}>
-            {c.title}
-          </option>
-        ))}
-      </select>
-      <button
-        onClick={handleDuplicate}
-        disabled={isPending || !sourceCycleId}
-        className="w-full rounded-xl bg-pm-teal py-2 text-[13px] font-bold text-white disabled:opacity-60"
-      >
-        {isPending ? "Duplicazione…" : "Duplica prodotti"}
-      </button>
-    </div>
+    <button
+      onClick={handleCleanup}
+      disabled={isPending}
+      className="rounded-lg border border-red-200 bg-red-50 px-3 py-1.5 text-[11px] font-bold text-red-600 hover:bg-red-100 disabled:opacity-50"
+    >
+      {isPending ? "Pulizia..." : "🧹 Pulisci prodotti incompleti"}
+    </button>
   );
 }
+
 
 // ── Load from catalog ─────────────────────────────────────────────────────────
 
@@ -346,6 +382,110 @@ export function ProductListItem({
           Modifica
         </button>
       </div>
+    </div>
+  );
+}
+
+// ── Catalog Manager ───────────────────────────────────────────────────────────
+
+export function CatalogManager({
+  supplierId,
+  supplierName,
+  products,
+}: {
+  supplierId: string;
+  supplierName: string;
+  products: CatalogProductItem[];
+}) {
+  const [showAdd, setShowAdd] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [, startTransition] = useTransition();
+
+  const editingProduct = products.find((p) => p.catalogProductId === editingId);
+
+  function handleArchive(id: string, active: boolean) {
+    if (!window.confirm(active ? "Riattivare il prodotto?" : "Archiviare il prodotto?")) return;
+    startTransition(async () => {
+      const result = await adminArchiveCatalogProduct(id, active);
+      if (result.error) toast.error(result.error);
+    });
+  }
+
+  return (
+    <div className="space-y-4 rounded-xl border border-pm-border bg-[#fdfdfd] p-4 shadow-sm">
+      <div className="flex items-center justify-between">
+        <div>
+          <h3 className="text-[14px] font-bold text-pm-near-black">{supplierName}</h3>
+          <p className="text-[11px] text-pm-gray">{products.length} prodotti a catalogo</p>
+        </div>
+        <button
+          onClick={() => setShowAdd(true)}
+          className="rounded-lg bg-pm-teal px-3 py-1.5 text-[11px] font-bold text-white transition-transform active:scale-95"
+        >
+          + Aggiungi Prodotto
+        </button>
+      </div>
+
+      {(showAdd || editingId) && (
+        <CatalogProductForm
+          supplierId={supplierId}
+          product={editingProduct}
+          onClose={() => {
+            setShowAdd(false);
+            setEditingId(null);
+          }}
+        />
+      )}
+
+      {products.length > 0 ? (
+        <div className="divide-y divide-pm-border rounded-lg border border-pm-border bg-white overflow-hidden shadow-sm">
+          {products.map((p) => (
+            <div
+              key={p.catalogProductId}
+              className={`flex items-center gap-3 p-3 transition-colors hover:bg-pm-warm-white/30 ${
+                !p.active ? "opacity-50 grayscale" : ""
+              }`}
+            >
+              <span className="shrink-0 text-[18px]">{getProductEmoji(p.name)}</span>
+              <div className="min-w-0 flex-1">
+                <div className="flex items-center gap-2">
+                  <span className="truncate text-[13px] font-medium text-pm-near-black">{p.name}</span>
+                  {!p.active && <span className="rounded bg-pm-gray-light px-1 py-0.5 text-[9px] font-bold uppercase text-pm-gray">Archiviato</span>}
+                </div>
+                <div className="flex items-center gap-2 text-[11px] text-pm-gray">
+                  {p.variant && <span>{p.variant}</span>}
+                  {p.format && <span className="font-mono text-[10px] text-pm-gray-light">({p.format})</span>}
+                  {p.category && <span className="rounded-full bg-pm-teal-light px-2 text-pm-teal">{p.category}</span>}
+                </div>
+              </div>
+              <div className="text-right">
+                <div className="font-mono text-[13px] font-bold text-pm-near-black">
+                  {formatEur(parseFloat(p.unitPrice))}
+                  {p.unit ? `/${p.unit}` : ""}
+                </div>
+                <div className="mt-1 flex justify-end gap-2">
+                  <button
+                    onClick={() => setEditingId(p.catalogProductId)}
+                    className="text-[10px] font-bold text-pm-teal hover:underline"
+                  >
+                    Modifica
+                  </button>
+                  <button
+                    onClick={() => handleArchive(p.catalogProductId, !p.active)}
+                    className="text-[10px] font-bold text-pm-gray hover:text-pm-near-black hover:underline"
+                  >
+                    {p.active ? "Archivia" : "Ripristina"}
+                  </button>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      ) : (
+        <div className="rounded-lg border border-dashed border-pm-border py-8 text-center text-[12px] text-pm-gray">
+          Nessun prodotto per questo fornitore.
+        </div>
+      )}
     </div>
   );
 }

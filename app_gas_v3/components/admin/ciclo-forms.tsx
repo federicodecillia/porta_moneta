@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useState, useTransition, useEffect, useCallback } from "react";
 import { toast } from "@/components/ui/toast";
 import {
   adminCloseCycle,
@@ -10,6 +10,7 @@ import {
 } from "@/lib/actions/admin";
 import { formatEur } from "@/lib/utils";
 import { Card, CardBody, CardHeader } from "@/components/ui/card";
+import type { CatalogProductItem } from "@/lib/db/queries";
 
 type Supplier = { supplierId: string; name: string };
 
@@ -20,6 +21,8 @@ type SerializedCycle = {
   pickupDate: string | null;
   pickupEndTime: string | null;
   notes: string | null;
+  supplierId: string | null;
+  accessLevel: string;
 };
 
 // ── Open Cycle Card ───────────────────────────────────────────────────────────
@@ -27,11 +30,14 @@ type SerializedCycle = {
 export function OpenCycleCard({
   cycle,
   stats,
+  suppliers,
 }: {
   cycle: SerializedCycle;
   stats: { orderCount: number; grandTotal: number };
+  suppliers: Supplier[];
 }) {
   const [editing, setEditing] = useState(false);
+  const [managingProducts, setManagingProducts] = useState(false);
 
   return (
     <Card className="mb-4 border-l-4 border-l-pm-teal">
@@ -45,6 +51,12 @@ export function OpenCycleCard({
         </div>
         <div className="flex shrink-0 gap-2">
           <button
+            onClick={() => setManagingProducts((v) => !v)}
+            className="rounded-xl border border-pm-teal/30 bg-pm-teal-light px-3 py-1.5 text-[11px] font-bold text-pm-teal"
+          >
+            {managingProducts ? "Chiudi Prodotti" : "Gestisci Prodotti"}
+          </button>
+          <button
             onClick={() => setEditing((v) => !v)}
             className="rounded-xl border border-pm-border px-3 py-1.5 text-[11px] font-semibold text-pm-gray"
           >
@@ -55,7 +67,7 @@ export function OpenCycleCard({
       </CardHeader>
       {editing ? (
         <CardBody>
-          <EditCycleForm cycle={cycle} onClose={() => setEditing(false)} />
+          <EditCycleForm cycle={cycle} suppliers={suppliers} onClose={() => setEditing(false)} />
         </CardBody>
       ) : (
         <CardBody>
@@ -102,6 +114,11 @@ export function OpenCycleCard({
               </div>
             )}
           </div>
+          {managingProducts && (
+            <div className="mt-6 border-t border-pm-border pt-4">
+              <CycleProductPicker cycleId={cycle.cycleId} suppliers={suppliers} />
+            </div>
+          )}
         </CardBody>
       )}
     </Card>
@@ -110,7 +127,7 @@ export function OpenCycleCard({
 
 // ── Edit Cycle Form ───────────────────────────────────────────────────────────
 
-function EditCycleForm({ cycle, onClose }: { cycle: SerializedCycle; onClose: () => void }) {
+function EditCycleForm({ cycle, suppliers, onClose }: { cycle: SerializedCycle; suppliers: Supplier[]; onClose: () => void }) {
   const [isPending, startTransition] = useTransition();
 
   function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
@@ -123,6 +140,8 @@ function EditCycleForm({ cycle, onClose }: { cycle: SerializedCycle; onClose: ()
         pickupEndTime: fd.get("pickupEndTime") as string,
         orderCloseAt: fd.get("orderCloseAt") as string,
         notes: fd.get("notes") as string,
+        supplierId: fd.get("supplierId") as string,
+        accessLevel: fd.get("accessLevel") as string,
       });
       if (result.error) {
         toast.error(result.error);
@@ -179,6 +198,39 @@ function EditCycleForm({ cycle, onClose }: { cycle: SerializedCycle; onClose: ()
           </div>
         </div>
       </div>
+      <div className="grid grid-cols-2 gap-3">
+        <div>
+          <label className="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-pm-gray">
+            Fornitore Principale
+          </label>
+          <select
+            name="supplierId"
+            defaultValue={cycle.supplierId ?? ""}
+            className="w-full rounded-lg border border-pm-border px-3 py-2 text-[13px] text-pm-near-black focus:outline-none focus:ring-2 focus:ring-pm-orange/30"
+          >
+            <option value="">— nessuno —</option>
+            {suppliers.map((s) => (
+              <option key={s.supplierId} value={s.supplierId}>
+                {s.name}
+              </option>
+            ))}
+          </select>
+        </div>
+        <div>
+          <label className="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-pm-gray">
+            Accesso
+          </label>
+          <select
+            name="accessLevel"
+            defaultValue={cycle.accessLevel}
+            className="w-full rounded-lg border border-pm-border px-3 py-2 text-[13px] text-pm-near-black focus:outline-none focus:ring-2 focus:ring-pm-orange/30"
+          >
+            <option value="admin">Solo Admin</option>
+            <option value="soci">Soci Attivi</option>
+            <option value="utenti">Tutti gli utenti</option>
+          </select>
+        </div>
+      </div>
       <div>
         <label className="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-pm-gray">
           Note
@@ -216,7 +268,7 @@ export function CreateCycleForm({ suppliers }: { suppliers: Supplier[] }) {
       pickupEndTime: fd.get("pickupEndTime") as string,
       orderCloseAt: fd.get("orderCloseAt") as string,
       supplierId: fd.get("supplierId") as string,
-      accessLevel: (fd.get("accessLevel") as "attivi" | "all") ?? "attivi",
+      accessLevel: fd.get("accessLevel") as string,
       notes: fd.get("notes") as string,
     };
     startTransition(async () => {
@@ -309,10 +361,12 @@ export function CreateCycleForm({ suppliers }: { suppliers: Supplier[] }) {
             </label>
             <select
               name="accessLevel"
+              defaultValue="soci"
               className="w-full rounded-lg border border-pm-border px-3 py-2 text-[13px] text-pm-near-black focus:outline-none focus:ring-2 focus:ring-pm-orange/30"
             >
-              <option value="attivi">Solo attivi</option>
-              <option value="all">Tutti i soci</option>
+              <option value="admin">Solo Admin</option>
+              <option value="soci">Soci Attivi</option>
+              <option value="utenti">Tutti gli utenti</option>
             </select>
           </div>
         </div>
@@ -377,5 +431,149 @@ export function CloseCycleButton({ cycleId, cycleTitle }: { cycleId: string; cyc
     >
       {isPending ? "Chiusura…" : "Chiudi ciclo"}
     </button>
+  );
+}
+
+// ── Cycle Product Picker ──────────────────────────────────────────────────────
+
+import { adminGetCatalogBySupplier, adminGetCycleProducts, adminRemoveProductFromCycle, adminLoadFromCatalog } from "@/lib/actions/admin";
+
+type CycleProduct = {
+  productId: string;
+  name: string;
+  variant: string | null;
+  format: string | null;
+};
+
+export function CycleProductPicker({
+  cycleId,
+  suppliers,
+}: {
+  cycleId: string;
+  suppliers: Supplier[];
+}) {
+  const [selectedSupplierId, setSelectedSupplierId] = useState("");
+  const [catalog, setCatalog] = useState<CatalogProductItem[]>([]);
+  const [currentProducts, setCurrentProducts] = useState<CycleProduct[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [, startTransition] = useTransition();
+
+  // Load current products in cycle
+  const refresh = useCallback(async () => {
+    setLoading(true);
+    try {
+      const prods = await adminGetCycleProducts(cycleId);
+      setCurrentProducts(prods as CycleProduct[]);
+      if (selectedSupplierId) {
+        const cat = await adminGetCatalogBySupplier(selectedSupplierId);
+        setCatalog(cat as CatalogProductItem[]);
+      }
+    } catch {
+      toast.error("Errore nel caricamento prodotti");
+    } finally {
+      setLoading(false);
+    }
+  }, [cycleId, selectedSupplierId]);
+
+  useEffect(() => {
+    refresh();
+  }, [refresh]);
+
+  function handleAdd(catalogProductId: string) {
+    startTransition(async () => {
+      const result = await adminLoadFromCatalog(cycleId, [catalogProductId]);
+      if (result.error) toast.error(result.error);
+      else {
+        toast.success("Prodotto aggiunto");
+        refresh();
+      }
+    });
+  }
+
+  function handleRemove(productId: string) {
+    if (!window.confirm("Rimuovere questo prodotto dal ciclo?")) return;
+    startTransition(async () => {
+      const result = await adminRemoveProductFromCycle(productId);
+      if (result.error) toast.error(result.error);
+      else {
+        toast.success("Prodotto rimosso");
+        refresh();
+      }
+    });
+  }
+
+  return (
+    <div className="space-y-4">
+      <div className="flex items-center justify-between">
+        <h4 className="text-[13px] font-bold text-pm-near-black">Prodotti in questo ciclo</h4>
+        <div className="text-[11px] text-pm-gray">{currentProducts.length} prodotti</div>
+      </div>
+
+      {currentProducts.length > 0 ? (
+        <div className="divide-y divide-pm-border rounded-lg border border-pm-border bg-white overflow-hidden shadow-sm">
+          {currentProducts.map((p) => (
+            <div key={p.productId} className="flex items-center justify-between p-2.5 hover:bg-pm-warm-white/30">
+              <div className="min-w-0 flex-1">
+                <div className="truncate text-[12px] font-medium text-pm-near-black">{p.name}</div>
+                <div className="text-[10px] text-pm-gray">{p.variant} {p.format && `(${p.format})`}</div>
+              </div>
+              <button
+                onClick={() => handleRemove(p.productId)}
+                className="ml-2 rounded-lg bg-red-50 px-2 py-1 text-[10px] font-bold text-red-600 hover:bg-red-100"
+              >
+                Rimuovi
+              </button>
+            </div>
+          ))}
+        </div>
+      ) : (
+        <div className="rounded-lg border border-dashed border-pm-border py-4 text-center text-[12px] text-pm-gray">
+          Nessun prodotto selezionato per questo ciclo.
+        </div>
+      )}
+
+      <div className="mt-6 border-t border-pm-border pt-4">
+        <h4 className="mb-3 text-[13px] font-bold text-pm-near-black">Aggiungi dal Catalogo</h4>
+        <select
+          value={selectedSupplierId}
+          onChange={(e) => setSelectedSupplierId(e.target.value)}
+          className="mb-4 w-full rounded-lg border border-pm-border px-3 py-2 text-[13px] text-pm-near-black focus:outline-none focus:ring-2 focus:ring-pm-teal/30"
+        >
+          <option value="">— seleziona fornitore —</option>
+          {suppliers.map((s) => (
+            <option key={s.supplierId} value={s.supplierId}>
+              {s.name}
+            </option>
+          ))}
+        </select>
+
+        {selectedSupplierId && (
+          <div className="space-y-2">
+            {loading ? (
+              <div className="text-center py-4 text-pm-gray text-[12px]">Caricamento catalogo...</div>
+            ) : catalog.length > 0 ? (
+              <div className="max-h-[300px] overflow-y-auto divide-y divide-pm-border rounded-lg border border-pm-border bg-[#fdfdfd]">
+                {catalog.filter(cp => !currentProducts.some(p => p.name === cp.name && p.variant === cp.variant && p.format === cp.format)).map((cp) => (
+                  <div key={cp.catalogProductId} className="flex items-center justify-between p-2.5 hover:bg-pm-warm-white/50">
+                    <div className="min-w-0 flex-1">
+                      <div className="truncate text-[12px] font-medium text-pm-near-black">{cp.name}</div>
+                      <div className="text-[10px] text-pm-gray">{cp.variant} {cp.format && `(${cp.format})`}</div>
+                    </div>
+                    <button
+                      onClick={() => handleAdd(cp.catalogProductId)}
+                      className="ml-2 rounded-lg bg-pm-teal px-3 py-1 text-[10px] font-bold text-white hover:bg-pm-teal-dark"
+                    >
+                      Aggiungi
+                    </button>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-4 text-pm-gray text-[12px]">Nessun prodotto trovato a catalogo per questo fornitore.</div>
+            )}
+          </div>
+        )}
+      </div>
+    </div>
   );
 }
