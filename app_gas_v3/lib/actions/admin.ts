@@ -579,7 +579,7 @@ export type UpsertCatalogProductInput = {
   unitPrice: number;
   notes?: string;
   category?: string;
-  // emoji?: string;
+  emoji?: string;
 };
 
 export async function adminUpsertCatalogProduct(data: UpsertCatalogProductInput): Promise<{error?: string; archived?: boolean}> {
@@ -629,7 +629,7 @@ export async function adminUpsertCatalogProduct(data: UpsertCatalogProductInput)
             unitPrice: data.unitPrice.toString(),
             notes: data.notes || null,
             category: data.category || null,
-            // emoji: data.emoji || null,
+            emoji: data.emoji || null,
           })
           .where(eq(supplierProducts.catalogProductId, data.catalogProductId));
         await writeAudit(db, admin.email, "update_catalog_product", "catalog", data.catalogProductId, data);
@@ -648,7 +648,7 @@ export async function adminUpsertCatalogProduct(data: UpsertCatalogProductInput)
         unitPrice: data.unitPrice.toString(),
         notes: data.notes || null,
         category: data.category || null,
-        // emoji: data.emoji || null,
+        emoji: data.emoji || null,
         active: true,
         createdAt: now,
       });
