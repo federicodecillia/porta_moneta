@@ -59,6 +59,14 @@ const FAQS = [
     q: "Come aggiungo l'app alla schermata Home?",
     a: 'Su iPhone (Safari): tocca l\'icona di condivisione → "Aggiungi a schermata Home". Su Android (Chrome): tocca i tre puntini → "Aggiungi a schermata Home".',
   },
+  {
+    q: "Cosa succede se il mio saldo è insufficiente?",
+    a: "L'app ti permette di ordinare anche se il saldo è basso o negativo (entro certi limiti), per non impedirti di fare la spesa. Tuttavia, è fondamentale ricaricare prontamente per mantenere l'associazione in salute e permettere il pagamento dei fornitori.",
+  },
+  {
+    q: "Chi sono i fornitori?",
+    a: "Collaboriamo con produttori locali e biologici. Ogni ciclo d'ordine può coinvolgere uno o più fornitori diversi (es. frutta/verdura, uova, formaggi). Puoi vedere i dettagli dei prodotti nel tab Ordine.",
+  },
 ];
 
 export default async function GuidaPage() {
@@ -101,14 +109,22 @@ export default async function GuidaPage() {
         <div className="mb-[10px] text-[32px]">📬</div>
         <div className="mb-[6px] text-[15px] font-bold text-pm-near-black">Hai altre domande?</div>
         <p className="mb-4 text-[13px] text-pm-gray">
-          Scrivici o parla direttamente con la tesoriera al prossimo ritiro.
+          Scrivici o parla con la tesoriera al ritiro. Per problemi tecnici contatta il team IT di Porta Moneta.
         </p>
-        <a
-          href="mailto:info@portamoneta.org"
-          className="inline-flex items-center justify-center rounded-full bg-pm-orange px-[22px] py-[14px] text-sm font-bold text-white no-underline transition-[opacity,transform] duration-150 active:scale-[0.98]"
-        >
-          Contattaci
-        </a>
+        <div className="flex flex-col gap-3">
+          <a
+            href="mailto:info@portamoneta.org"
+            className="inline-flex items-center justify-center rounded-full bg-pm-orange px-[22px] py-[12px] text-sm font-bold text-white no-underline transition-transform active:scale-95"
+          >
+            Email Associazione
+          </a>
+          <a
+            href="mailto:it@portamoneta.org"
+            className="inline-flex items-center justify-center rounded-full bg-pm-near-black px-[22px] py-[12px] text-sm font-bold text-white no-underline transition-transform active:scale-95"
+          >
+            Contatta Team IT
+          </a>
+        </div>
       </div>
     </AppShell>
   );

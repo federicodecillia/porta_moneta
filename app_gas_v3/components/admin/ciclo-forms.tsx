@@ -443,6 +443,9 @@ type CycleProduct = {
   name: string;
   variant: string | null;
   format: string | null;
+  unitPrice: string;
+  unit: string | null;
+  supplierName: string | null;
 };
 
 export function CycleProductPicker({
@@ -510,19 +513,33 @@ export function CycleProductPicker({
       </div>
 
       {currentProducts.length > 0 ? (
-        <div className="divide-y divide-pm-border rounded-lg border border-pm-border bg-white overflow-hidden shadow-sm">
-          {currentProducts.map((p) => (
-            <div key={p.productId} className="flex items-center justify-between p-2.5 hover:bg-pm-warm-white/30">
-              <div className="min-w-0 flex-1">
-                <div className="truncate text-[12px] font-medium text-pm-near-black">{p.name}</div>
-                <div className="text-[10px] text-pm-gray">{p.variant} {p.format && `(${p.format})`}</div>
+        <div className="space-y-4">
+          {Array.from(new Set(currentProducts.map(p => p.supplierName || "Altro"))).map(sName => (
+            <div key={sName} className="space-y-1">
+              <div className="px-1 text-[10px] font-bold uppercase tracking-wider text-pm-gray-light">
+                {sName}
               </div>
-              <button
-                onClick={() => handleRemove(p.productId)}
-                className="ml-2 rounded-lg bg-red-50 px-2 py-1 text-[10px] font-bold text-red-600 hover:bg-red-100"
-              >
-                Rimuovi
-              </button>
+              <div className="divide-y divide-pm-border rounded-lg border border-pm-border bg-white overflow-hidden shadow-sm">
+                {currentProducts.filter(p => (p.supplierName || "Altro") === sName).map((p) => (
+                  <div key={p.productId} className="flex items-center justify-between p-2.5 hover:bg-pm-warm-white/30">
+                    <div className="min-w-0 flex-1">
+                      <div className="truncate text-[12px] font-medium text-pm-near-black">{p.name}</div>
+                      <div className="flex items-center gap-2 text-[10px] text-pm-gray">
+                        <span>{p.variant} {p.format && `(${p.format})`}</span>
+                        <span className="font-mono font-bold text-pm-orange">
+                          {formatEur(parseFloat(p.unitPrice))}{p.unit ? `/${p.unit}` : ""}
+                        </span>
+                      </div>
+                    </div>
+                    <button
+                      onClick={() => handleRemove(p.productId)}
+                      className="ml-2 rounded-lg bg-red-50 px-2 py-1 text-[10px] font-bold text-red-600 hover:bg-red-100"
+                    >
+                      Rimuovi
+                    </button>
+                  </div>
+                ))}
+              </div>
             </div>
           ))}
         </div>
@@ -557,7 +574,12 @@ export function CycleProductPicker({
                   <div key={cp.catalogProductId} className="flex items-center justify-between p-2.5 hover:bg-pm-warm-white/50">
                     <div className="min-w-0 flex-1">
                       <div className="truncate text-[12px] font-medium text-pm-near-black">{cp.name}</div>
-                      <div className="text-[10px] text-pm-gray">{cp.variant} {cp.format && `(${cp.format})`}</div>
+                      <div className="flex items-center gap-2 text-[10px] text-pm-gray">
+                        <span>{cp.variant} {cp.format && `(${cp.format})`}</span>
+                        <span className="font-mono font-bold text-pm-orange">
+                          {formatEur(parseFloat(cp.unitPrice))}{cp.unit ? `/${cp.unit}` : ""}
+                        </span>
+                      </div>
                     </div>
                     <button
                       onClick={() => handleAdd(cp.catalogProductId)}

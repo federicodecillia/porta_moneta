@@ -579,6 +579,7 @@ export type UpsertCatalogProductInput = {
   unitPrice: number;
   notes?: string;
   category?: string;
+  emoji?: string;
 };
 
 export async function adminUpsertCatalogProduct(data: UpsertCatalogProductInput): Promise<{error?: string; archived?: boolean}> {
@@ -618,20 +619,25 @@ export async function adminUpsertCatalogProduct(data: UpsertCatalogProductInput)
         return { archived: true };
       } else {
         // Simple update
-        await db.update(supplierProducts).set({
-          name: data.name,
-          variant: data.variant || null,
-          format: data.format || null,
-          unit: data.unit || null,
-          notes: data.notes || null,
-          category: data.category || null,
-        }).where(eq(supplierProducts.catalogProductId, data.catalogProductId));
+        await db
+          .update(supplierProducts)
+          .set({
+            name: data.name,
+            variant: data.variant || null,
+            format: data.format || null,
+            unit: data.unit || null,
+            unitPrice: data.unitPrice.toString(),
+            notes: data.notes || null,
+            category: data.category || null,
+            emoji: data.emoji || null,
+          })
+          .where(eq(supplierProducts.catalogProductId, data.catalogProductId));
         await writeAudit(db, admin.email, "update_catalog_product", "catalog", data.catalogProductId, data);
         revalidatePath("/admin");
         return {};
       }
     } else {
-      const newId = genId("cat");
+      const newId = genId("cp");
       await db.insert(supplierProducts).values({
         catalogProductId: newId,
         supplierId: data.supplierId,
@@ -639,9 +645,10 @@ export async function adminUpsertCatalogProduct(data: UpsertCatalogProductInput)
         variant: data.variant || null,
         format: data.format || null,
         unit: data.unit || null,
-        unitPrice: data.unitPrice.toFixed(2),
+        unitPrice: data.unitPrice.toString(),
         notes: data.notes || null,
         category: data.category || null,
+        emoji: data.emoji || null,
         active: true,
         createdAt: now,
       });
