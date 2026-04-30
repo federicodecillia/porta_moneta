@@ -407,7 +407,7 @@ export type CatalogProductItem = {
   unitPrice: string;
   notes: string | null;
   category: string | null;
-  emoji: string | null;
+  // emoji: string | null;
   active: boolean;
   createdAt: Date;
   archivedAt: Date | null;

@@ -60,7 +60,7 @@ export const supplierProducts = pgTable("supplier_products", {
   unitPrice: numeric("unit_price", { precision: 10, scale: 2 }).notNull(),
   notes: text("notes"),
   category: text("category"),
-  emoji: text("emoji"),
+  // emoji: text("emoji"),
   active: boolean("active").notNull().default(true),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull(),
   archivedAt: timestamp("archived_at", { withTimezone: true }),
@@ -82,7 +82,7 @@ export const products = pgTable("products", {
   active: boolean("active").notNull().default(true),
   supplierId: text("supplier_id").references(() => suppliers.supplierId),
   category: text("category"),
-  emoji: text("emoji"),
+  // emoji: text("emoji"),
 });
 
 export const orders = pgTable(

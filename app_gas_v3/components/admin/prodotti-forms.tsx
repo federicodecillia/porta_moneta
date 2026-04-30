@@ -22,7 +22,7 @@ export function CatalogProductForm({
   onClose: () => void;
 }) {
   const [isPending, startTransition] = useTransition();
-  const [tempEmoji, setTempEmoji] = useState(product?.emoji ?? getProductEmoji(product?.name ?? ""));
+  const [tempEmoji, setTempEmoji] = useState(getProductEmoji(product?.name ?? ""));
 
   function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -37,7 +37,7 @@ export function CatalogProductForm({
       unitPrice: parseFloat((fd.get("unitPrice") as string).replace(",", ".")),
       notes: fd.get("notes") as string,
       category: fd.get("category") as string,
-      emoji: fd.get("emoji") as string,
+      // emoji: fd.get("emoji") as string,
     };
 
     startTransition(async () => {
@@ -86,7 +86,7 @@ export function CatalogProductForm({
             <label className={labelCls}>Icona</label>
             <input 
               name="emoji" 
-              defaultValue={product?.emoji ?? tempEmoji} 
+              defaultValue={tempEmoji} 
               className={`${inputCls} text-center text-lg`} 
               maxLength={2}
             />
@@ -503,7 +503,7 @@ export function CatalogManager({
                 !p.active ? "opacity-50 grayscale" : ""
               }`}
             >
-              <span className="shrink-0 text-[18px]">{p.emoji || getProductEmoji(p.name)}</span>
+              <span className="shrink-0 text-[18px]">{getProductEmoji(p.name)}</span>
               <div className="min-w-0 flex-1">
                 <div className="flex items-center gap-2">
                   <span className="truncate text-[13px] font-medium text-pm-near-black">{p.name}</span>
