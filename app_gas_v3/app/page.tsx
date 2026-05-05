@@ -6,7 +6,6 @@ import {
   getCycleProducts,
   getMemberBalance,
   getMemberLedger,
-  getMemberNotifications,
   getMemberOrderLines,
   getOpenCycles,
 } from "@/lib/db/queries";
@@ -17,11 +16,10 @@ export default async function HomePage() {
   const role = getUserRole(session);
   const memberId = session.user.memberId!;
 
-  const [balance, openCycles, recentMovements, notifications] = await Promise.all([
+  const [balance, openCycles, recentMovements] = await Promise.all([
     getMemberBalance(memberId),
     getOpenCycles(),
     getMemberLedger(memberId, 4),
-    getMemberNotifications(memberId, 4),
   ]);
 
   const activeCycles = openCycles.filter((c) => canAccessCycle(c.accessLevel, role));
@@ -43,7 +41,7 @@ export default async function HomePage() {
   const isNegative = balance < 0;
 
   return (
-    <AppShell email={session.user.email} isAdmin={role === "admin"}>
+    <AppShell email={session.user.email} isAdmin={role === "admin"} memberId={memberId}>
       {/* ── Saldo hero card ── */}
       <div
         className={`mb-[14px] rounded-[20px] p-[20px_22px_22px] ${
@@ -111,29 +109,6 @@ export default async function HomePage() {
           </div>
         )}
       </div>
-
-      {notifications.length > 0 && (
-        <div className="mb-[18px] overflow-hidden rounded-[18px] border border-pm-border bg-white shadow-[0_1px_2px_rgba(0,0,0,0.04)]">
-          <div className="border-b border-pm-border px-4 py-[12px]">
-            <span className="font-mono text-[9px] uppercase tracking-[0.1em] text-pm-gray">
-              Notifiche
-            </span>
-          </div>
-          {notifications.map((notification) => (
-            <Link
-              key={notification.notificationId}
-              href={notification.href ?? "/storico"}
-              className="block border-b border-pm-border px-4 py-[12px] last:border-none"
-            >
-              <div className="text-[13px] font-bold text-pm-near-black">{notification.title}</div>
-              <div className="mt-[3px] text-[12px] leading-snug text-pm-gray">{notification.body}</div>
-              <div className="mt-[5px] font-mono text-[10px] text-pm-gray-light">
-                {formatDateShort(notification.createdAt)}
-              </div>
-            </Link>
-          ))}
-        </div>
-      )}
 
       {/* ── Cycles loop ── */}
       {cycleDataList.length > 0 ? (

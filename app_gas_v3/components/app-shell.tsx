@@ -3,14 +3,19 @@ import type { ReactNode } from "react";
 import { signOut } from "@/auth";
 import { BottomNav } from "@/components/bottom-nav";
 import { LogoutButton } from "@/components/logout-button";
+import { NotificationBell } from "@/components/notification-bell";
+import { getUnreadNotificationCount } from "@/lib/db/queries";
 
 type AppShellProps = {
   children: ReactNode;
   email: string;
   isAdmin: boolean;
+  memberId: string;
 };
 
-export function AppShell({ children, email, isAdmin }: AppShellProps) {
+export async function AppShell({ children, email, isAdmin, memberId }: AppShellProps) {
+  const unreadCount = await getUnreadNotificationCount(memberId);
+
   return (
     <div className="min-h-screen bg-pm-frame sm:p-6">
       <div className="mx-auto flex min-h-screen w-full max-w-[480px] flex-col bg-pm-warm-white sm:min-h-[calc(100vh-3rem)] sm:rounded-xl sm:border sm:border-pm-border sm:shadow-sm">
@@ -26,12 +31,15 @@ export function AppShell({ children, email, isAdmin }: AppShellProps) {
                 className="h-[26px] w-auto"
               />
             </div>
-            <LogoutButton
-              action={async () => {
-                "use server";
-                await signOut({ redirectTo: "/login" });
-              }}
-            />
+            <div className="flex items-center gap-2">
+              <NotificationBell unreadCount={unreadCount} />
+              <LogoutButton
+                action={async () => {
+                  "use server";
+                  await signOut({ redirectTo: "/login" });
+                }}
+              />
+            </div>
           </div>
           <p className="text-pm-gray mt-3 truncate text-xs">{email}</p>
         </header>

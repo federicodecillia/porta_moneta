@@ -28,6 +28,11 @@ const STEPS = [
     title: "Ritira e ricarica",
     body: "Vieni a ritirare nel giorno indicato. Per ricaricare il saldo fai un bonifico — la tesoriera lo registra nell'app.",
   },
+  {
+    n: 6,
+    title: "Notifiche",
+    body: "Quando un ciclo viene chiuso o un bonifico viene registrato, vedrai un pallino rosso sulla campanella in alto. Toccala per leggere le notifiche.",
+  },
 ];
 
 const FAQS = [
@@ -67,6 +72,10 @@ const FAQS = [
     q: "Chi sono i fornitori?",
     a: "Collaboriamo con produttori locali e biologici. Ogni ciclo d'ordine può coinvolgere uno o più fornitori diversi (es. frutta/verdura, uova, formaggi). Puoi vedere i dettagli dei prodotti nel tab Ordine.",
   },
+  {
+    q: "Come funzionano le notifiche?",
+    a: "L'app ti avvisa automaticamente quando un ciclo viene chiuso (con l'importo addebitato) e quando un bonifico viene registrato dalla tesoriera. La campanella in alto nell'app mostra il numero di notifiche non lette. Toccala per vederle tutte e marcarle come lette.",
+  },
 ];
 
 export default async function GuidaPage() {
@@ -74,7 +83,7 @@ export default async function GuidaPage() {
   const role = getUserRole(session);
 
   return (
-    <AppShell email={session.user.email} isAdmin={role === "admin"}>
+    <AppShell email={session.user.email} isAdmin={role === "admin"} memberId={session.user.memberId!}>
       <h1 className="mb-5 text-[20px] font-black tracking-[-0.03em] text-pm-near-black">
         Come funziona
       </h1>

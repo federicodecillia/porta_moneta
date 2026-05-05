@@ -209,6 +209,19 @@ export async function getAdminNotifications(limit = 6): Promise<NotificationItem
   }
 }
 
+export async function getUnreadNotificationCount(memberId: string): Promise<number> {
+  const db = getDb();
+  try {
+    const [row] = await db
+      .select({ count: sql<string>`count(*)` })
+      .from(notifications)
+      .where(and(eq(notifications.memberId, memberId), isNull(notifications.readAt)));
+    return parseInt(row?.count ?? "0", 10);
+  } catch {
+    return 0;
+  }
+}
+
 // ── Admin queries ─────────────────────────────────────────────────────────────
 
 export async function getAllCycles(limit = 30) {

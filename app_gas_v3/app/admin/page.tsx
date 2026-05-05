@@ -35,19 +35,19 @@ export default async function AdminPage({ searchParams }: { searchParams: Search
   const role = getUserRole(session);
   if (role !== "admin") redirect("/");
 
-  const { tab: tabParam, cycle: cycleId, member: memberId } = await searchParams;
+  const { tab: tabParam, cycle: cycleId, member: filterMemberId } = await searchParams;
   const tab = tabParam ?? "ciclo";
 
   return (
-    <AppShell email={session.user.email} isAdmin>
+    <AppShell email={session.user.email} isAdmin memberId={session.user.memberId!}>
       <Suspense fallback={null}>
         <AdminNav />
       </Suspense>
 
-      <Suspense key={`${tab}-${cycleId ?? ""}-${memberId ?? ""}`} fallback={<TabSkeleton />}>
+      <Suspense key={`${tab}-${cycleId ?? ""}-${filterMemberId ?? ""}`} fallback={<TabSkeleton />}>
         {tab === "ciclo" && <TabCiclo />}
         {tab === "prodotti" && <TabProdotti />}
-        {tab === "ordini" && <TabOrdini cycleId={cycleId} memberId={memberId} />}
+        {tab === "ordini" && <TabOrdini cycleId={cycleId} memberId={filterMemberId} />}
         {tab === "cassa" && <TabCassa />}
         {tab === "fornitori" && <TabFornitori />}
         {tab === "soci" && <TabSoci />}

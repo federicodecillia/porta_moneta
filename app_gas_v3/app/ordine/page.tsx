@@ -40,7 +40,7 @@ export default async function OrdinePage({
 
   if (!openCycle) {
     return (
-      <AppShell email={session.user.email} isAdmin={role === "admin"}>
+      <AppShell email={session.user.email} isAdmin={role === "admin"} memberId={memberId}>
         <div className="flex flex-col items-center justify-center py-16 text-center">
           <span className="mb-4 text-4xl">🛒</span>
           <h2 className="text-[18px] font-bold text-pm-near-black">Nessun ordine aperto</h2>
@@ -58,7 +58,7 @@ export default async function OrdinePage({
   ]);
 
   return (
-    <AppShell email={session.user.email} isAdmin={role === "admin"}>
+    <AppShell email={session.user.email} isAdmin={role === "admin"} memberId={memberId}>
       {activeCycles.length > 1 && (
         <div className="mb-6 flex gap-2 overflow-x-auto pb-2 no-scrollbar">
           {activeCycles.map((c) => (
