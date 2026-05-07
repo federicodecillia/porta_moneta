@@ -35,10 +35,13 @@ export async function TabCiclo() {
                   orderCloseAt: openCycle.orderCloseAt?.toISOString() ?? null,
                   pickupDate: openCycle.pickupDate?.toISOString() ?? null,
                   pickupEndTime: openCycle.pickupEndTime ?? null,
+                  pickup2Date: openCycle.pickup2Date?.toISOString() ?? null,
+                  pickup2EndTime: openCycle.pickup2EndTime ?? null,
                   notes: openCycle.notes ?? null,
                   supplierId: openCycle.supplierId ?? null,
                   accessLevel: openCycle.accessLevel,
                   isOverdue: openCycle.orderCloseAt ? openCycle.orderCloseAt < now : false,
+                  shippingCostPerMember: openCycle.shippingCostPerMember ?? null,
                 }}
                 stats={{ orderCount: stats?.orderCount ?? 0, grandTotal: stats?.grandTotal ?? 0 }}
                 suppliers={suppliers}

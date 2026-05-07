@@ -68,10 +68,13 @@ export type CreateCycleInput = {
   title: string;
   pickupDate: string;
   pickupEndTime: string;
+  pickup2Date: string;
+  pickup2EndTime: string;
   orderCloseAt: string;
-  supplierId?: string; // Principal supplier (optional)
+  supplierId?: string;
   accessLevel: "admin" | "soci" | "utenti" | string;
   notes: string;
+  shippingCostPerMember: string;
 };
 
 export async function adminCreateCycle(data: CreateCycleInput): Promise<{error?: string}> {
@@ -89,6 +92,9 @@ export async function adminCreateCycle(data: CreateCycleInput): Promise<{error?:
       title: data.title.trim(),
       pickupDate: data.pickupDate ? new Date(data.pickupDate) : null,
       pickupEndTime: data.pickupEndTime || null,
+      pickup2Date: data.pickup2Date ? new Date(data.pickup2Date) : null,
+      pickup2EndTime: data.pickup2EndTime || null,
+      shippingCostPerMember: data.shippingCostPerMember || null,
       orderOpenAt: now,
       orderCloseAt: new Date(data.orderCloseAt),
       status: "open",
@@ -113,7 +119,11 @@ export async function adminCloseCycle(cycleId: string) {
   const db = getDb();
 
   const [cycle] = await db
-    .select({ status: orderCycles.status, title: orderCycles.title })
+    .select({
+      status: orderCycles.status,
+      title: orderCycles.title,
+      shippingCostPerMember: orderCycles.shippingCostPerMember,
+    })
     .from(orderCycles)
     .where(eq(orderCycles.cycleId, cycleId))
     .limit(1);
@@ -175,6 +185,25 @@ export async function adminCloseCycle(cycleId: string) {
         }),
       );
       chargesGenerated = toInsert.length;
+
+      const shippingAmount = cycle.shippingCostPerMember
+        ? parseFloat(cycle.shippingCostPerMember)
+        : 0;
+      if (shippingAmount > 0) {
+        await db.insert(ledgerEntries).values(
+          toInsert.map((r) => ({
+            entryId: genId("led"),
+            memberId: r.memberId,
+            entryDate: now,
+            type: "shipping_charge",
+            amount: (-shippingAmount).toFixed(2),
+            cycleId,
+            note: "Spedizione",
+            createdBy: admin.email,
+            createdAt: now,
+          })),
+        );
+      }
     }
   }
 
@@ -187,7 +216,18 @@ export async function adminCloseCycle(cycleId: string) {
 
 export async function adminUpdateCycle(
   cycleId: string,
-  data: { title?: string; pickupDate?: string; pickupEndTime?: string; orderCloseAt?: string; notes?: string; supplierId?: string; accessLevel?: string },
+  data: {
+    title?: string;
+    pickupDate?: string;
+    pickupEndTime?: string;
+    pickup2Date?: string;
+    pickup2EndTime?: string;
+    orderCloseAt?: string;
+    notes?: string;
+    supplierId?: string;
+    accessLevel?: string;
+    shippingCostPerMember?: string;
+  },
 ): Promise<{error?: string}> {
   try {
     const admin = await requireAdmin();
@@ -200,10 +240,17 @@ export async function adminUpdateCycle(
           pickupDate: data.pickupDate ? new Date(data.pickupDate) : null,
         }),
         ...(data.pickupEndTime !== undefined && { pickupEndTime: data.pickupEndTime || null }),
+        ...(data.pickup2Date !== undefined && {
+          pickup2Date: data.pickup2Date ? new Date(data.pickup2Date) : null,
+        }),
+        ...(data.pickup2EndTime !== undefined && { pickup2EndTime: data.pickup2EndTime || null }),
         ...(data.orderCloseAt !== undefined && { orderCloseAt: new Date(data.orderCloseAt) }),
         ...(data.notes !== undefined && { notes: data.notes || null }),
         ...(data.supplierId !== undefined && { supplierId: data.supplierId || null }),
         ...(data.accessLevel !== undefined && { accessLevel: data.accessLevel }),
+        ...(data.shippingCostPerMember !== undefined && {
+          shippingCostPerMember: data.shippingCostPerMember || null,
+        }),
       })
       .where(eq(orderCycles.cycleId, cycleId));
     await writeAudit(db, admin.email, "update_cycle", "cycle", cycleId, data);

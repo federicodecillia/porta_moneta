@@ -21,10 +21,13 @@ type SerializedCycle = {
   orderCloseAt: string | null;
   pickupDate: string | null;
   pickupEndTime: string | null;
+  pickup2Date: string | null;
+  pickup2EndTime: string | null;
   notes: string | null;
   supplierId: string | null;
   accessLevel: string;
   isOverdue: boolean;
+  shippingCostPerMember: string | null;
 };
 
 // ── Open Cycle Card ───────────────────────────────────────────────────────────
@@ -106,17 +109,37 @@ export function OpenCycleCard({
             )}
             {cycle.pickupDate && (
               <div>
-                Ritiro:{" "}
+                {cycle.pickup2Date ? "Ritiro 1: " : "Ritiro: "}
                 <span className="font-semibold text-pm-near-black">
-                  {new Date(cycle.pickupDate).toLocaleDateString("it-IT", {
+                  {new Date(cycle.pickupDate).toLocaleString("it-IT", {
                     day: "numeric",
                     month: "short",
-                    year: "numeric",
+                    hour: "2-digit",
+                    minute: "2-digit",
                   })}
-                  {/* show time if set */}
-                  {cycle.pickupDate.includes("T") && !cycle.pickupDate.endsWith("T00:00:00.000Z") &&
-                    ` dalle ${new Date(cycle.pickupDate).toLocaleTimeString("it-IT", { hour: "2-digit", minute: "2-digit" })}`}
-                  {cycle.pickupEndTime && ` alle ${cycle.pickupEndTime}`}
+                  {cycle.pickupEndTime && `–${cycle.pickupEndTime}`}
+                </span>
+              </div>
+            )}
+            {cycle.pickup2Date && (
+              <div>
+                Ritiro 2:{" "}
+                <span className="font-semibold text-pm-near-black">
+                  {new Date(cycle.pickup2Date).toLocaleString("it-IT", {
+                    day: "numeric",
+                    month: "short",
+                    hour: "2-digit",
+                    minute: "2-digit",
+                  })}
+                  {cycle.pickup2EndTime && `–${cycle.pickup2EndTime}`}
+                </span>
+              </div>
+            )}
+            {cycle.shippingCostPerMember && parseFloat(cycle.shippingCostPerMember) > 0 && (
+              <div>
+                Spedizione:{" "}
+                <span className="font-semibold text-pm-near-black">
+                  {parseFloat(cycle.shippingCostPerMember).toFixed(2).replace(".", ",")} €/socio
                 </span>
               </div>
             )}
@@ -141,6 +164,15 @@ export function OpenCycleCard({
 
 // ── Edit Cycle Form ───────────────────────────────────────────────────────────
 
+function buildDateTime(date: string, time: string): string {
+  if (!date) return "";
+  return `${date}T${time || "00:00"}`;
+}
+
+const inputCls = "rounded-lg border border-pm-border px-2 py-2 text-[13px] text-pm-near-black focus:outline-none focus:ring-2 focus:ring-pm-orange/30";
+const labelCls = "mb-1 block text-[11px] font-semibold uppercase tracking-wide text-pm-gray";
+const miniLabelCls = "shrink-0 text-[11px] font-medium text-pm-gray";
+
 function EditCycleForm({ cycle, suppliers, onClose }: { cycle: SerializedCycle; suppliers: Supplier[]; onClose: () => void }) {
   const [isPending, startTransition] = useTransition();
 
@@ -150,12 +182,15 @@ function EditCycleForm({ cycle, suppliers, onClose }: { cycle: SerializedCycle; 
     startTransition(async () => {
       const result = await adminUpdateCycle(cycle.cycleId, {
         title: fd.get("title") as string,
-        pickupDate: fd.get("pickupDate") as string,
+        pickupDate: buildDateTime(fd.get("pickupDateOnly") as string, fd.get("pickupStartTime") as string),
         pickupEndTime: fd.get("pickupEndTime") as string,
+        pickup2Date: buildDateTime(fd.get("pickup2DateOnly") as string, fd.get("pickup2StartTime") as string),
+        pickup2EndTime: fd.get("pickup2EndTime") as string,
         orderCloseAt: fd.get("orderCloseAt") as string,
         notes: fd.get("notes") as string,
         supplierId: fd.get("supplierId") as string,
         accessLevel: fd.get("accessLevel") as string,
+        shippingCostPerMember: fd.get("shippingCostPerMember") as string,
       });
       if (result.error) {
         toast.error(result.error);
@@ -169,58 +204,101 @@ function EditCycleForm({ cycle, suppliers, onClose }: { cycle: SerializedCycle; 
   return (
     <form onSubmit={handleSubmit} className="space-y-3">
       <div>
-        <label className="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-pm-gray">
-          Titolo *
-        </label>
+        <label className={labelCls}>Titolo *</label>
         <input
           name="title"
           required
           defaultValue={cycle.title}
-          className="w-full rounded-lg border border-pm-border px-3 py-2 text-[13px] text-pm-near-black focus:outline-none focus:ring-2 focus:ring-pm-orange/30"
+          className={`w-full ${inputCls}`}
         />
       </div>
-      <div className="grid grid-cols-2 gap-3">
-        <div>
-          <label className="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-pm-gray">
-            Chiusura ordini *
-          </label>
+
+      {/* Chiusura ordini + Spedizione sulla stessa riga */}
+      <div className="flex gap-3">
+        <div className="flex-1 min-w-0">
+          <label className={labelCls}>Chiusura ordini *</label>
           <input
             name="orderCloseAt"
             type="datetime-local"
             required
             defaultValue={cycle.orderCloseAt?.slice(0, 16) ?? ""}
-            className="w-full rounded-lg border border-pm-border px-3 py-2 text-[13px] text-pm-near-black focus:outline-none focus:ring-2 focus:ring-pm-orange/30"
+            className={`w-full ${inputCls}`}
           />
         </div>
-        <div>
-          <label className="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-pm-gray">
-            Data ritiro
-          </label>
-          <div className="flex flex-wrap gap-2">
+        <div className="w-[88px] shrink-0">
+          <label className={labelCls}>Sped. €</label>
+          <input
+            name="shippingCostPerMember"
+            type="number"
+            min="0"
+            step="0.01"
+            defaultValue={cycle.shippingCostPerMember ?? ""}
+            placeholder="0.00"
+            className={`w-full ${inputCls}`}
+          />
+        </div>
+      </div>
+
+      {/* Ritiri: due righe allineate verticalmente */}
+      <div>
+        <label className={labelCls}>Ritiri (opzionale)</label>
+        <div className="space-y-2">
+          <div className="flex items-center gap-1.5">
+            <span className={`w-[46px] shrink-0 text-[12px] font-semibold text-pm-near-black`}>Ritiro 1</span>
             <input
-              name="pickupDate"
-              type="datetime-local"
-              defaultValue={cycle.pickupDate?.slice(0, 16) ?? ""}
-              className="flex-1 min-w-[150px] rounded-lg border border-pm-border px-3 py-2 text-[13px] text-pm-near-black focus:outline-none focus:ring-2 focus:ring-pm-orange/30"
+              name="pickupDateOnly"
+              type="date"
+              defaultValue={cycle.pickupDate?.slice(0, 10) ?? ""}
+              className={`w-[130px] shrink-0 ${inputCls}`}
             />
+            <span className={miniLabelCls}>Dalle</span>
+            <input
+              name="pickupStartTime"
+              type="time"
+              defaultValue={cycle.pickupDate?.slice(11, 16) ?? ""}
+              className={`flex-1 min-w-[72px] ${inputCls}`}
+            />
+            <span className={miniLabelCls}>Alle</span>
             <input
               name="pickupEndTime"
               type="time"
               defaultValue={cycle.pickupEndTime ?? ""}
-              className="w-24 shrink-0 rounded-lg border border-pm-border px-3 py-2 text-[13px] text-pm-near-black focus:outline-none focus:ring-2 focus:ring-pm-orange/30"
+              className={`flex-1 min-w-[72px] ${inputCls}`}
+            />
+          </div>
+          <div className="flex items-center gap-1.5">
+            <span className={`w-[46px] shrink-0 text-[12px] font-semibold text-pm-near-black`}>Ritiro 2</span>
+            <input
+              name="pickup2DateOnly"
+              type="date"
+              defaultValue={cycle.pickup2Date?.slice(0, 10) ?? ""}
+              className={`w-[130px] shrink-0 ${inputCls}`}
+            />
+            <span className={miniLabelCls}>Dalle</span>
+            <input
+              name="pickup2StartTime"
+              type="time"
+              defaultValue={cycle.pickup2Date?.slice(11, 16) ?? ""}
+              className={`flex-1 min-w-[72px] ${inputCls}`}
+            />
+            <span className={miniLabelCls}>Alle</span>
+            <input
+              name="pickup2EndTime"
+              type="time"
+              defaultValue={cycle.pickup2EndTime ?? ""}
+              className={`flex-1 min-w-[72px] ${inputCls}`}
             />
           </div>
         </div>
       </div>
+
       <div className="grid grid-cols-2 gap-3">
         <div>
-          <label className="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-pm-gray">
-            Fornitore Principale
-          </label>
+          <label className={labelCls}>Fornitore</label>
           <select
             name="supplierId"
             defaultValue={cycle.supplierId ?? ""}
-            className="w-full rounded-lg border border-pm-border px-3 py-2 text-[13px] text-pm-near-black focus:outline-none focus:ring-2 focus:ring-pm-orange/30"
+            className={`w-full ${inputCls}`}
           >
             <option value="">— nessuno —</option>
             {suppliers.map((s) => (
@@ -231,13 +309,11 @@ function EditCycleForm({ cycle, suppliers, onClose }: { cycle: SerializedCycle; 
           </select>
         </div>
         <div>
-          <label className="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-pm-gray">
-            Accesso
-          </label>
+          <label className={labelCls}>Accesso</label>
           <select
             name="accessLevel"
             defaultValue={cycle.accessLevel}
-            className="w-full rounded-lg border border-pm-border px-3 py-2 text-[13px] text-pm-near-black focus:outline-none focus:ring-2 focus:ring-pm-orange/30"
+            className={`w-full ${inputCls}`}
           >
             <option value="admin">Solo Admin</option>
             <option value="soci">Soci Attivi</option>
@@ -246,14 +322,12 @@ function EditCycleForm({ cycle, suppliers, onClose }: { cycle: SerializedCycle; 
         </div>
       </div>
       <div>
-        <label className="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-pm-gray">
-          Note
-        </label>
+        <label className={labelCls}>Note</label>
         <textarea
           name="notes"
           rows={2}
           defaultValue={cycle.notes ?? ""}
-          className="w-full rounded-lg border border-pm-border px-3 py-2 text-[13px] text-pm-near-black focus:outline-none focus:ring-2 focus:ring-pm-orange/30"
+          className={`w-full ${inputCls}`}
         />
       </div>
       <button
@@ -278,12 +352,15 @@ export function CreateCycleForm({ suppliers }: { suppliers: Supplier[] }) {
     const fd = new FormData(e.currentTarget);
     const data: CreateCycleInput = {
       title: fd.get("title") as string,
-      pickupDate: fd.get("pickupDate") as string,
+      pickupDate: buildDateTime(fd.get("pickupDateOnly") as string, fd.get("pickupStartTime") as string),
       pickupEndTime: fd.get("pickupEndTime") as string,
+      pickup2Date: buildDateTime(fd.get("pickup2DateOnly") as string, fd.get("pickup2StartTime") as string),
+      pickup2EndTime: fd.get("pickup2EndTime") as string,
       orderCloseAt: fd.get("orderCloseAt") as string,
       supplierId: fd.get("supplierId") as string,
       accessLevel: fd.get("accessLevel") as string,
       notes: fd.get("notes") as string,
+      shippingCostPerMember: fd.get("shippingCostPerMember") as string,
     };
     startTransition(async () => {
       const result = await adminCreateCycle(data);
@@ -312,55 +389,66 @@ export function CreateCycleForm({ suppliers }: { suppliers: Supplier[] }) {
       <p className="mb-3 text-[13px] font-bold text-pm-near-black">Crea nuovo ciclo</p>
       <div className="space-y-3">
         <div>
-          <label className="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-pm-gray">
-            Titolo *
-          </label>
+          <label className={labelCls}>Titolo *</label>
           <input
             name="title"
             required
             placeholder="es. Ordine frutta 03/05"
-            className="w-full rounded-lg border border-pm-border px-3 py-2 text-[13px] text-pm-near-black focus:outline-none focus:ring-2 focus:ring-pm-orange/30"
+            className={`w-full ${inputCls}`}
           />
         </div>
-        <div className="grid grid-cols-2 gap-3">
-          <div>
-            <label className="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-pm-gray">
-              Chiusura ordini *
-            </label>
+
+        {/* Chiusura ordini + Spedizione sulla stessa riga */}
+        <div className="flex gap-3">
+          <div className="flex-1 min-w-0">
+            <label className={labelCls}>Chiusura ordini *</label>
             <input
               name="orderCloseAt"
               type="datetime-local"
               required
-              className="w-full rounded-lg border border-pm-border px-3 py-2 text-[13px] text-pm-near-black focus:outline-none focus:ring-2 focus:ring-pm-orange/30"
+              className={`w-full ${inputCls}`}
             />
           </div>
-          <div>
-            <label className="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-pm-gray">
-              Data ritiro
-            </label>
-            <div className="flex flex-wrap gap-2">
-              <input
-                name="pickupDate"
-                type="datetime-local"
-                className="flex-1 min-w-[150px] rounded-lg border border-pm-border px-3 py-2 text-[13px] text-pm-near-black focus:outline-none focus:ring-2 focus:ring-pm-orange/30"
-              />
-              <input
-                name="pickupEndTime"
-                type="time"
-                className="w-24 shrink-0 rounded-lg border border-pm-border px-3 py-2 text-[13px] text-pm-near-black focus:outline-none focus:ring-2 focus:ring-pm-orange/30"
-              />
+          <div className="w-[88px] shrink-0">
+            <label className={labelCls}>Sped. €</label>
+            <input
+              name="shippingCostPerMember"
+              type="number"
+              min="0"
+              step="0.01"
+              placeholder="0.00"
+              className={`w-full ${inputCls}`}
+            />
+          </div>
+        </div>
+
+        {/* Ritiri: due righe allineate verticalmente */}
+        <div>
+          <label className={labelCls}>Ritiri (opzionale)</label>
+          <div className="space-y-2">
+            <div className="flex items-center gap-1.5">
+              <span className="w-[46px] shrink-0 text-[12px] font-semibold text-pm-near-black">Ritiro 1</span>
+              <input name="pickupDateOnly" type="date" className={`w-[130px] shrink-0 ${inputCls}`} />
+              <span className={miniLabelCls}>Dalle</span>
+              <input name="pickupStartTime" type="time" className={`flex-1 min-w-[72px] ${inputCls}`} />
+              <span className={miniLabelCls}>Alle</span>
+              <input name="pickupEndTime" type="time" className={`flex-1 min-w-[72px] ${inputCls}`} />
+            </div>
+            <div className="flex items-center gap-1.5">
+              <span className="w-[46px] shrink-0 text-[12px] font-semibold text-pm-near-black">Ritiro 2</span>
+              <input name="pickup2DateOnly" type="date" className={`w-[130px] shrink-0 ${inputCls}`} />
+              <span className={miniLabelCls}>Dalle</span>
+              <input name="pickup2StartTime" type="time" className={`flex-1 min-w-[72px] ${inputCls}`} />
+              <span className={miniLabelCls}>Alle</span>
+              <input name="pickup2EndTime" type="time" className={`flex-1 min-w-[72px] ${inputCls}`} />
             </div>
           </div>
         </div>
+
         <div className="grid grid-cols-2 gap-3">
           <div>
-            <label className="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-pm-gray">
-              Fornitore
-            </label>
-            <select
-              name="supplierId"
-              className="w-full rounded-lg border border-pm-border px-3 py-2 text-[13px] text-pm-near-black focus:outline-none focus:ring-2 focus:ring-pm-orange/30"
-            >
+            <label className={labelCls}>Fornitore</label>
+            <select name="supplierId" className={`w-full ${inputCls}`}>
               <option value="">— nessuno —</option>
               {suppliers.map((s) => (
                 <option key={s.supplierId} value={s.supplierId}>
@@ -370,14 +458,8 @@ export function CreateCycleForm({ suppliers }: { suppliers: Supplier[] }) {
             </select>
           </div>
           <div>
-            <label className="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-pm-gray">
-              Accesso
-            </label>
-            <select
-              name="accessLevel"
-              defaultValue="soci"
-              className="w-full rounded-lg border border-pm-border px-3 py-2 text-[13px] text-pm-near-black focus:outline-none focus:ring-2 focus:ring-pm-orange/30"
-            >
+            <label className={labelCls}>Accesso</label>
+            <select name="accessLevel" defaultValue="soci" className={`w-full ${inputCls}`}>
               <option value="admin">Solo Admin</option>
               <option value="soci">Soci Attivi</option>
               <option value="utenti">Tutti gli utenti</option>
@@ -385,13 +467,11 @@ export function CreateCycleForm({ suppliers }: { suppliers: Supplier[] }) {
           </div>
         </div>
         <div>
-          <label className="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-pm-gray">
-            Note
-          </label>
+          <label className={labelCls}>Note</label>
           <textarea
             name="notes"
             rows={2}
-            className="w-full rounded-lg border border-pm-border px-3 py-2 text-[13px] text-pm-near-black focus:outline-none focus:ring-2 focus:ring-pm-orange/30"
+            className={`w-full ${inputCls}`}
           />
         </div>
       </div>

@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { formatDateTime, formatDate } from "@/lib/utils";
+import { formatDateTime } from "@/lib/utils";
 import Link from "next/link";
 
 type Props = {
@@ -10,6 +10,8 @@ type Props = {
   orderOpenAt: string;
   pickupDate: string | null;
   pickupEndTime: string | null;
+  pickup2Date: string | null;
+  pickup2EndTime: string | null;
 };
 
 function computeCountdown(closeAt: string, openAt: string, now: Date) {
@@ -25,7 +27,16 @@ function computeCountdown(closeAt: string, openAt: string, now: Date) {
   return { days, hrs, mins, hoursLeft, pct };
 }
 
-export function CycleCountdown({ title, orderCloseAt, orderOpenAt, pickupDate, pickupEndTime }: Props) {
+function formatPickupSlot(date: string, endTime: string | null): string {
+  const d = new Date(date);
+  const dateStr = d.toLocaleDateString("it-IT", { weekday: "short", day: "numeric", month: "short" });
+  const hasStartTime = d.getHours() !== 0 || d.getMinutes() !== 0;
+  if (!hasStartTime) return dateStr;
+  const startStr = d.toLocaleTimeString("it-IT", { hour: "2-digit", minute: "2-digit" });
+  return endTime ? `${dateStr} · ${startStr}–${endTime}` : `${dateStr} · ${startStr}`;
+}
+
+export function CycleCountdown({ title, orderCloseAt, orderOpenAt, pickupDate, pickupEndTime, pickup2Date, pickup2EndTime }: Props) {
   const [now, setNow] = useState<Date | null>(null);
 
   useEffect(() => {
@@ -41,16 +52,6 @@ export function CycleCountdown({ title, orderCloseAt, orderOpenAt, pickupDate, p
   );
 
   const danger = hoursLeft <= 12;
-  
-  // Build pickup string with optional time range
-  const pickupStr = pickupDate
-    ? ` · Ritiro ${formatDate(pickupDate)}` +
-      (new Date(pickupDate).getHours() !== 0
-        ? ` dalle ${new Date(pickupDate).toLocaleTimeString("it-IT", { hour: "2-digit", minute: "2-digit" })}`
-        : "") +
-      (pickupEndTime ? ` alle ${pickupEndTime}` : "")
-    : "";
-  const closeStr = formatDateTime(orderCloseAt) + pickupStr;
 
   return (
     <div className="mb-[14px] rounded-[18px] border border-pm-border bg-white shadow-[0_1px_2px_rgba(0,0,0,0.04)] p-[18px]">
@@ -59,7 +60,22 @@ export function CycleCountdown({ title, orderCloseAt, orderOpenAt, pickupDate, p
           <div className="text-[16px] font-extrabold tracking-[-0.02em] text-pm-near-black leading-snug">
             {title}
           </div>
-          <div className="mt-[3px] font-mono text-[10px] text-pm-gray">{closeStr}</div>
+          <div className="mt-[3px] space-y-[2px]">
+            <div className="font-mono text-[10px] text-pm-gray">
+              Chiude: {formatDateTime(orderCloseAt)}
+            </div>
+            {pickupDate && (
+              <div className="font-mono text-[10px] text-pm-gray">
+                {pickup2Date ? "Ritiro 1: " : "Ritiro: "}
+                {formatPickupSlot(pickupDate, pickupEndTime)}
+              </div>
+            )}
+            {pickup2Date && (
+              <div className="font-mono text-[10px] text-pm-gray">
+                Ritiro 2: {formatPickupSlot(pickup2Date, pickup2EndTime)}
+              </div>
+            )}
+          </div>
         </div>
         <span className="inline-flex items-center gap-1.5 rounded-full border border-pm-teal/20 bg-pm-teal-light px-2.5 py-0.5 font-mono text-[10px] font-semibold text-pm-teal">
           <span className="h-1.5 w-1.5 rounded-full bg-pm-teal opacity-75" />
