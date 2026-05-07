@@ -21,10 +21,13 @@ type SerializedCycle = {
   orderCloseAt: string | null;
   pickupDate: string | null;
   pickupEndTime: string | null;
+  pickup2Date: string | null;
+  pickup2EndTime: string | null;
   notes: string | null;
   supplierId: string | null;
   accessLevel: string;
   isOverdue: boolean;
+  shippingCostPerMember: string | null;
 };
 
 // ── Open Cycle Card ───────────────────────────────────────────────────────────
@@ -106,17 +109,37 @@ export function OpenCycleCard({
             )}
             {cycle.pickupDate && (
               <div>
-                Ritiro:{" "}
+                {cycle.pickup2Date ? "Ritiro 1: " : "Ritiro: "}
                 <span className="font-semibold text-pm-near-black">
-                  {new Date(cycle.pickupDate).toLocaleDateString("it-IT", {
+                  {new Date(cycle.pickupDate).toLocaleString("it-IT", {
                     day: "numeric",
                     month: "short",
-                    year: "numeric",
+                    hour: "2-digit",
+                    minute: "2-digit",
                   })}
-                  {/* show time if set */}
-                  {cycle.pickupDate.includes("T") && !cycle.pickupDate.endsWith("T00:00:00.000Z") &&
-                    ` dalle ${new Date(cycle.pickupDate).toLocaleTimeString("it-IT", { hour: "2-digit", minute: "2-digit" })}`}
-                  {cycle.pickupEndTime && ` alle ${cycle.pickupEndTime}`}
+                  {cycle.pickupEndTime && `–${cycle.pickupEndTime}`}
+                </span>
+              </div>
+            )}
+            {cycle.pickup2Date && (
+              <div>
+                Ritiro 2:{" "}
+                <span className="font-semibold text-pm-near-black">
+                  {new Date(cycle.pickup2Date).toLocaleString("it-IT", {
+                    day: "numeric",
+                    month: "short",
+                    hour: "2-digit",
+                    minute: "2-digit",
+                  })}
+                  {cycle.pickup2EndTime && `–${cycle.pickup2EndTime}`}
+                </span>
+              </div>
+            )}
+            {cycle.shippingCostPerMember && parseFloat(cycle.shippingCostPerMember) > 0 && (
+              <div>
+                Spedizione:{" "}
+                <span className="font-semibold text-pm-near-black">
+                  {parseFloat(cycle.shippingCostPerMember).toFixed(2).replace(".", ",")} €/socio
                 </span>
               </div>
             )}
@@ -152,10 +175,13 @@ function EditCycleForm({ cycle, suppliers, onClose }: { cycle: SerializedCycle; 
         title: fd.get("title") as string,
         pickupDate: fd.get("pickupDate") as string,
         pickupEndTime: fd.get("pickupEndTime") as string,
+        pickup2Date: fd.get("pickup2Date") as string,
+        pickup2EndTime: fd.get("pickup2EndTime") as string,
         orderCloseAt: fd.get("orderCloseAt") as string,
         notes: fd.get("notes") as string,
         supplierId: fd.get("supplierId") as string,
         accessLevel: fd.get("accessLevel") as string,
+        shippingCostPerMember: fd.get("shippingCostPerMember") as string,
       });
       if (result.error) {
         toast.error(result.error);
@@ -211,6 +237,39 @@ function EditCycleForm({ cycle, suppliers, onClose }: { cycle: SerializedCycle; 
             />
           </div>
         </div>
+      </div>
+      <div>
+        <label className="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-pm-gray">
+          Secondo ritiro (opzionale)
+        </label>
+        <div className="flex flex-wrap gap-2">
+          <input
+            name="pickup2Date"
+            type="datetime-local"
+            defaultValue={cycle.pickup2Date?.slice(0, 16) ?? ""}
+            className="flex-1 min-w-[150px] rounded-lg border border-pm-border px-3 py-2 text-[13px] text-pm-near-black focus:outline-none focus:ring-2 focus:ring-pm-orange/30"
+          />
+          <input
+            name="pickup2EndTime"
+            type="time"
+            defaultValue={cycle.pickup2EndTime ?? ""}
+            className="w-24 shrink-0 rounded-lg border border-pm-border px-3 py-2 text-[13px] text-pm-near-black focus:outline-none focus:ring-2 focus:ring-pm-orange/30"
+          />
+        </div>
+      </div>
+      <div>
+        <label className="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-pm-gray">
+          Spedizione (€/socio)
+        </label>
+        <input
+          name="shippingCostPerMember"
+          type="number"
+          min="0"
+          step="0.01"
+          defaultValue={cycle.shippingCostPerMember ?? ""}
+          placeholder="0.00"
+          className="w-full rounded-lg border border-pm-border px-3 py-2 text-[13px] text-pm-near-black focus:outline-none focus:ring-2 focus:ring-pm-orange/30"
+        />
       </div>
       <div className="grid grid-cols-2 gap-3">
         <div>
@@ -280,10 +339,13 @@ export function CreateCycleForm({ suppliers }: { suppliers: Supplier[] }) {
       title: fd.get("title") as string,
       pickupDate: fd.get("pickupDate") as string,
       pickupEndTime: fd.get("pickupEndTime") as string,
+      pickup2Date: fd.get("pickup2Date") as string,
+      pickup2EndTime: fd.get("pickup2EndTime") as string,
       orderCloseAt: fd.get("orderCloseAt") as string,
       supplierId: fd.get("supplierId") as string,
       accessLevel: fd.get("accessLevel") as string,
       notes: fd.get("notes") as string,
+      shippingCostPerMember: fd.get("shippingCostPerMember") as string,
     };
     startTransition(async () => {
       const result = await adminCreateCycle(data);
@@ -351,6 +413,36 @@ export function CreateCycleForm({ suppliers }: { suppliers: Supplier[] }) {
               />
             </div>
           </div>
+        </div>
+        <div>
+          <label className="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-pm-gray">
+            Secondo ritiro (opzionale)
+          </label>
+          <div className="flex flex-wrap gap-2">
+            <input
+              name="pickup2Date"
+              type="datetime-local"
+              className="flex-1 min-w-[150px] rounded-lg border border-pm-border px-3 py-2 text-[13px] text-pm-near-black focus:outline-none focus:ring-2 focus:ring-pm-orange/30"
+            />
+            <input
+              name="pickup2EndTime"
+              type="time"
+              className="w-24 shrink-0 rounded-lg border border-pm-border px-3 py-2 text-[13px] text-pm-near-black focus:outline-none focus:ring-2 focus:ring-pm-orange/30"
+            />
+          </div>
+        </div>
+        <div>
+          <label className="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-pm-gray">
+            Spedizione (€/socio)
+          </label>
+          <input
+            name="shippingCostPerMember"
+            type="number"
+            min="0"
+            step="0.01"
+            placeholder="0.00"
+            className="w-full rounded-lg border border-pm-border px-3 py-2 text-[13px] text-pm-near-black focus:outline-none focus:ring-2 focus:ring-pm-orange/30"
+          />
         </div>
         <div className="grid grid-cols-2 gap-3">
           <div>
