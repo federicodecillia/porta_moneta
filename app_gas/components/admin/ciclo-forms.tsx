@@ -249,21 +249,21 @@ function EditCycleForm({ cycle, suppliers, onClose }: { cycle: SerializedCycle; 
               name="pickupDateOnly"
               type="date"
               defaultValue={cycle.pickupDate?.slice(0, 10) ?? ""}
-              className={`flex-1 min-w-0 ${inputCls}`}
+              className={`w-[130px] shrink-0 ${inputCls}`}
             />
             <span className={miniLabelCls}>Dalle</span>
             <input
               name="pickupStartTime"
               type="time"
               defaultValue={cycle.pickupDate?.slice(11, 16) ?? ""}
-              className={`w-[72px] shrink-0 ${inputCls}`}
+              className={`flex-1 min-w-[72px] ${inputCls}`}
             />
             <span className={miniLabelCls}>Alle</span>
             <input
               name="pickupEndTime"
               type="time"
               defaultValue={cycle.pickupEndTime ?? ""}
-              className={`w-[72px] shrink-0 ${inputCls}`}
+              className={`flex-1 min-w-[72px] ${inputCls}`}
             />
           </div>
           <div className="flex items-center gap-1.5">
@@ -272,21 +272,21 @@ function EditCycleForm({ cycle, suppliers, onClose }: { cycle: SerializedCycle; 
               name="pickup2DateOnly"
               type="date"
               defaultValue={cycle.pickup2Date?.slice(0, 10) ?? ""}
-              className={`flex-1 min-w-0 ${inputCls}`}
+              className={`w-[130px] shrink-0 ${inputCls}`}
             />
             <span className={miniLabelCls}>Dalle</span>
             <input
               name="pickup2StartTime"
               type="time"
               defaultValue={cycle.pickup2Date?.slice(11, 16) ?? ""}
-              className={`w-[72px] shrink-0 ${inputCls}`}
+              className={`flex-1 min-w-[72px] ${inputCls}`}
             />
             <span className={miniLabelCls}>Alle</span>
             <input
               name="pickup2EndTime"
               type="time"
               defaultValue={cycle.pickup2EndTime ?? ""}
-              className={`w-[72px] shrink-0 ${inputCls}`}
+              className={`flex-1 min-w-[72px] ${inputCls}`}
             />
           </div>
         </div>
@@ -428,19 +428,19 @@ export function CreateCycleForm({ suppliers }: { suppliers: Supplier[] }) {
           <div className="space-y-2">
             <div className="flex items-center gap-1.5">
               <span className="w-[46px] shrink-0 text-[12px] font-semibold text-pm-near-black">Ritiro 1</span>
-              <input name="pickupDateOnly" type="date" className={`flex-1 min-w-0 ${inputCls}`} />
+              <input name="pickupDateOnly" type="date" className={`w-[130px] shrink-0 ${inputCls}`} />
               <span className={miniLabelCls}>Dalle</span>
-              <input name="pickupStartTime" type="time" className={`w-[72px] shrink-0 ${inputCls}`} />
+              <input name="pickupStartTime" type="time" className={`flex-1 min-w-[72px] ${inputCls}`} />
               <span className={miniLabelCls}>Alle</span>
-              <input name="pickupEndTime" type="time" className={`w-[72px] shrink-0 ${inputCls}`} />
+              <input name="pickupEndTime" type="time" className={`flex-1 min-w-[72px] ${inputCls}`} />
             </div>
             <div className="flex items-center gap-1.5">
               <span className="w-[46px] shrink-0 text-[12px] font-semibold text-pm-near-black">Ritiro 2</span>
-              <input name="pickup2DateOnly" type="date" className={`flex-1 min-w-0 ${inputCls}`} />
+              <input name="pickup2DateOnly" type="date" className={`w-[130px] shrink-0 ${inputCls}`} />
               <span className={miniLabelCls}>Dalle</span>
-              <input name="pickup2StartTime" type="time" className={`w-[72px] shrink-0 ${inputCls}`} />
+              <input name="pickup2StartTime" type="time" className={`flex-1 min-w-[72px] ${inputCls}`} />
               <span className={miniLabelCls}>Alle</span>
-              <input name="pickup2EndTime" type="time" className={`w-[72px] shrink-0 ${inputCls}`} />
+              <input name="pickup2EndTime" type="time" className={`flex-1 min-w-[72px] ${inputCls}`} />
             </div>
           </div>
         </div>
