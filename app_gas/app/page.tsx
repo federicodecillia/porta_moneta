@@ -123,6 +123,8 @@ export default async function HomePage() {
                   orderOpenAt={new Date(cycle.orderOpenAt ?? cycle.createdAt).toISOString()}
                   pickupDate={cycle.pickupDate ? new Date(cycle.pickupDate).toISOString() : null}
                   pickupEndTime={cycle.pickupEndTime ?? null}
+                  pickup2Date={cycle.pickup2Date ? new Date(cycle.pickup2Date).toISOString() : null}
+                  pickup2EndTime={cycle.pickup2EndTime ?? null}
                 />
               </div>
 

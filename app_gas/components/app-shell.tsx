@@ -18,7 +18,7 @@ export async function AppShell({ children, email, isAdmin, memberId }: AppShellP
 
   return (
     <div className="min-h-screen bg-pm-frame sm:p-6">
-      <div className="mx-auto flex min-h-screen w-full max-w-[480px] flex-col bg-pm-warm-white sm:min-h-[calc(100vh-3rem)] sm:rounded-xl sm:border sm:border-pm-border sm:shadow-sm">
+      <div className="mx-auto flex min-h-screen w-full max-w-[480px] md:max-w-[640px] flex-col bg-pm-warm-white sm:min-h-[calc(100vh-3rem)] sm:rounded-xl sm:border sm:border-pm-border sm:shadow-sm">
         <header className="border-b border-pm-border px-5 py-4">
           <div className="flex items-start justify-between gap-3">
             <div>
