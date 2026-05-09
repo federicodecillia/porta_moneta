@@ -40,6 +40,8 @@ export const orderCycles = pgTable("order_cycles", {
   pickup2Date: timestamp("pickup_2_date", { withTimezone: true }),
   pickup2EndTime: text("pickup_2_end_time"),
   shippingCostPerMember: numeric("shipping_cost_per_member", { precision: 10, scale: 2 }),
+  shippingMode: text("shipping_mode").notNull().default("fixed_per_member"),
+  shippingTotal: numeric("shipping_total", { precision: 10, scale: 2 }),
   orderOpenAt: timestamp("order_open_at", { withTimezone: true }),
   orderCloseAt: timestamp("order_close_at", { withTimezone: true }),
   status: text("status").notNull(),

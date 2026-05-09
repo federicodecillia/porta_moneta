@@ -64,6 +64,8 @@ async function createNotification(
 
 // ── Ciclo ─────────────────────────────────────────────────────────────────────
 
+export type ShippingMode = "fixed_per_member" | "proportional";
+
 export type CreateCycleInput = {
   title: string;
   pickupDate: string;
@@ -74,8 +76,68 @@ export type CreateCycleInput = {
   supplierId?: string;
   accessLevel: "admin" | "soci" | "utenti" | string;
   notes: string;
+  shippingMode: ShippingMode;
   shippingCostPerMember: string;
+  shippingTotal: string;
 };
+
+function normalizeShippingMode(mode: string | undefined): ShippingMode {
+  return mode === "proportional" ? "proportional" : "fixed_per_member";
+}
+
+// Returns each member's shipping share in euros, keyed by memberId.
+// - fixed_per_member: every member pays shippingCostPerMember.
+// - proportional: shippingTotal is split weighted by each member's order total,
+//   each share rounded to 2 decimals. Any cent left over by the rounding (so
+//   that sum-of-shares equals shippingTotal exactly) is added to the member
+//   with the largest order — picking deterministically so reruns match.
+function computeShippingShares(
+  memberTotals: ReadonlyArray<{ memberId: string; total: string }>,
+  cycle: {
+    shippingMode: string;
+    shippingCostPerMember: string | null;
+    shippingTotal: string | null;
+  },
+): Map<string, number> {
+  const shares = new Map<string, number>();
+  if (memberTotals.length === 0) return shares;
+
+  if (cycle.shippingMode === "proportional") {
+    const shippingTotal = cycle.shippingTotal ? parseFloat(cycle.shippingTotal) : 0;
+    if (shippingTotal <= 0) return shares;
+
+    const grand = memberTotals.reduce((sum, r) => sum + parseFloat(r.total), 0);
+    if (grand <= 0) return shares;
+
+    let allocatedCents = 0;
+    const targetCents = Math.round(shippingTotal * 100);
+
+    for (const r of memberTotals) {
+      const memberTotal = parseFloat(r.total);
+      const cents = Math.round((memberTotal / grand) * targetCents);
+      shares.set(r.memberId, cents / 100);
+      allocatedCents += cents;
+    }
+
+    const drift = targetCents - allocatedCents;
+    if (drift !== 0) {
+      // Pick the member with the largest order; ties broken by memberId for
+      // determinism so two reruns produce the same allocation.
+      const heaviest = [...memberTotals].sort((a, b) => {
+        const diff = parseFloat(b.total) - parseFloat(a.total);
+        return diff !== 0 ? diff : a.memberId.localeCompare(b.memberId);
+      })[0];
+      const current = shares.get(heaviest.memberId) ?? 0;
+      shares.set(heaviest.memberId, current + drift / 100);
+    }
+    return shares;
+  }
+
+  const flat = cycle.shippingCostPerMember ? parseFloat(cycle.shippingCostPerMember) : 0;
+  if (flat <= 0) return shares;
+  for (const r of memberTotals) shares.set(r.memberId, flat);
+  return shares;
+}
 
 export async function adminCreateCycle(data: CreateCycleInput): Promise<{error?: string}> {
   try {
@@ -87,6 +149,7 @@ export async function adminCreateCycle(data: CreateCycleInput): Promise<{error?:
 
     const cycleId = genId("cyc");
     const now = new Date();
+    const shippingMode = normalizeShippingMode(data.shippingMode);
     await db.insert(orderCycles).values({
       cycleId,
       title: data.title.trim(),
@@ -94,7 +157,13 @@ export async function adminCreateCycle(data: CreateCycleInput): Promise<{error?:
       pickupEndTime: data.pickupEndTime || null,
       pickup2Date: data.pickup2Date ? new Date(data.pickup2Date) : null,
       pickup2EndTime: data.pickup2EndTime || null,
-      shippingCostPerMember: data.shippingCostPerMember || null,
+      shippingMode,
+      shippingCostPerMember:
+        shippingMode === "fixed_per_member" && data.shippingCostPerMember
+          ? data.shippingCostPerMember
+          : null,
+      shippingTotal:
+        shippingMode === "proportional" && data.shippingTotal ? data.shippingTotal : null,
       orderOpenAt: now,
       orderCloseAt: new Date(data.orderCloseAt),
       status: "open",
@@ -128,7 +197,9 @@ export async function adminCloseCycle(cycleId: string) {
     .returning({
       cycleId: orderCycles.cycleId,
       title: orderCycles.title,
+      shippingMode: orderCycles.shippingMode,
       shippingCostPerMember: orderCycles.shippingCostPerMember,
+      shippingTotal: orderCycles.shippingTotal,
     });
 
   if (closed.length === 0) {
@@ -166,9 +237,11 @@ export async function adminCloseCycle(cycleId: string) {
         .groupBy(orders.memberId);
 
       const toInsert = memberTotals.filter((r) => parseFloat(r.total) > 0);
-      const shippingAmount = cycle.shippingCostPerMember
-        ? parseFloat(cycle.shippingCostPerMember)
-        : 0;
+
+      // Pre-compute each member's shipping share. For "proportional" mode the
+      // shares sum to shippingTotal; rounding leftovers (sum-of-cents drift)
+      // are absorbed by the largest order so the total stays exact.
+      const shippingShares = computeShippingShares(toInsert, cycle);
 
       if (toInsert.length > 0) {
         await db.insert(ledgerEntries).values(
@@ -185,16 +258,22 @@ export async function adminCloseCycle(cycleId: string) {
           })),
         );
 
-        if (shippingAmount > 0) {
+        const shippingEntries = toInsert
+          .map((r) => ({ memberId: r.memberId, share: shippingShares.get(r.memberId) ?? 0 }))
+          .filter((s) => s.share > 0);
+        if (shippingEntries.length > 0) {
           await db.insert(ledgerEntries).values(
-            toInsert.map((r) => ({
+            shippingEntries.map((s) => ({
               entryId: genId("led"),
-              memberId: r.memberId,
+              memberId: s.memberId,
               entryDate: now,
               type: "shipping_charge",
-              amount: (-shippingAmount).toFixed(2),
+              amount: (-s.share).toFixed(2),
               cycleId,
-              note: "Spedizione",
+              note:
+                cycle.shippingMode === "proportional"
+                  ? "Spedizione (quota proporzionale)"
+                  : "Spedizione",
               createdBy: admin.email,
               createdAt: now,
             })),
@@ -204,10 +283,11 @@ export async function adminCloseCycle(cycleId: string) {
         await db.insert(notifications).values(
           toInsert.map((r) => {
             const orderTotal = parseFloat(r.total);
-            const totalCharged = orderTotal + shippingAmount;
+            const shippingShare = shippingShares.get(r.memberId) ?? 0;
+            const totalCharged = orderTotal + shippingShare;
             const body =
-              shippingAmount > 0
-                ? `E' stato chiuso "${cycle.title}". Ti e' stato addebitato ${totalCharged.toFixed(2).replace(".", ",")} euro (ordine ${orderTotal.toFixed(2).replace(".", ",")} + spedizione ${shippingAmount.toFixed(2).replace(".", ",")}).`
+              shippingShare > 0
+                ? `E' stato chiuso "${cycle.title}". Ti e' stato addebitato ${totalCharged.toFixed(2).replace(".", ",")} euro (ordine ${orderTotal.toFixed(2).replace(".", ",")} + spedizione ${shippingShare.toFixed(2).replace(".", ",")}).`
                 : `E' stato chiuso "${cycle.title}". Ti e' stato addebitato ${orderTotal.toFixed(2).replace(".", ",")} euro.`;
             return {
               notificationId: genId("not"),
@@ -254,12 +334,38 @@ export async function adminUpdateCycle(
     notes?: string;
     supplierId?: string;
     accessLevel?: string;
+    shippingMode?: string;
     shippingCostPerMember?: string;
+    shippingTotal?: string;
   },
 ): Promise<{error?: string}> {
   try {
     const admin = await requireAdmin();
     const db = getDb();
+
+    // When shippingMode is provided we treat it as authoritative: also clear
+    // the field belonging to the other mode so we never end up with stale
+    // values being read at close time.
+    const shippingPatch =
+      data.shippingMode !== undefined
+        ? (() => {
+            const mode = normalizeShippingMode(data.shippingMode);
+            return {
+              shippingMode: mode,
+              shippingCostPerMember:
+                mode === "fixed_per_member" ? data.shippingCostPerMember || null : null,
+              shippingTotal: mode === "proportional" ? data.shippingTotal || null : null,
+            };
+          })()
+        : {
+            ...(data.shippingCostPerMember !== undefined && {
+              shippingCostPerMember: data.shippingCostPerMember || null,
+            }),
+            ...(data.shippingTotal !== undefined && {
+              shippingTotal: data.shippingTotal || null,
+            }),
+          };
+
     await db
       .update(orderCycles)
       .set({
@@ -276,9 +382,7 @@ export async function adminUpdateCycle(
         ...(data.notes !== undefined && { notes: data.notes || null }),
         ...(data.supplierId !== undefined && { supplierId: data.supplierId || null }),
         ...(data.accessLevel !== undefined && { accessLevel: data.accessLevel }),
-        ...(data.shippingCostPerMember !== undefined && {
-          shippingCostPerMember: data.shippingCostPerMember || null,
-        }),
+        ...shippingPatch,
       })
       .where(eq(orderCycles.cycleId, cycleId));
     await writeAudit(db, admin.email, "update_cycle", "cycle", cycleId, data);

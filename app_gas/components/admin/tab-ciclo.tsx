@@ -41,7 +41,9 @@ export async function TabCiclo() {
                   supplierId: openCycle.supplierId ?? null,
                   accessLevel: openCycle.accessLevel,
                   isOverdue: openCycle.orderCloseAt ? openCycle.orderCloseAt < now : false,
+                  shippingMode: openCycle.shippingMode ?? "fixed_per_member",
                   shippingCostPerMember: openCycle.shippingCostPerMember ?? null,
+                  shippingTotal: openCycle.shippingTotal ?? null,
                 }}
                 stats={{ orderCount: stats?.orderCount ?? 0, grandTotal: stats?.grandTotal ?? 0 }}
                 suppliers={suppliers}
