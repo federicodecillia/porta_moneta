@@ -379,6 +379,69 @@ export async function getAdminCycleSummary(cycleId: string): Promise<CycleSummar
   };
 }
 
+// Returns each product in the cycle with the total quantity ordered and the
+// total ordered amount at the current snapshot price. Used by the
+// "close with adjustments" modal so the admin can see how much was ordered
+// per product and decide a corrected unit price (e.g. for weight-based items
+// where actual weight differs from ordered quantity). Products with zero
+// orders are included so the admin can still adjust prices that nobody
+// happened to order this round.
+export type CycleProductForReview = {
+  productId: string;
+  name: string;
+  variant: string | null;
+  format: string | null;
+  unit: string | null;
+  emoji: string | null;
+  unitPrice: number;
+  totalQty: number;
+  totalAmount: number;
+};
+
+export async function getCycleProductsForReview(
+  cycleId: string,
+): Promise<CycleProductForReview[]> {
+  const db = getDb();
+  const rows = await db
+    .select({
+      productId: products.productId,
+      name: products.name,
+      variant: products.variant,
+      format: products.format,
+      unit: products.unit,
+      emoji: products.emoji,
+      unitPrice: products.unitPrice,
+      totalQty: sql<string>`coalesce(sum(${orders.quantity}), 0)`,
+      totalAmount: sql<string>`coalesce(sum(${orders.lineTotal}), '0')`,
+    })
+    .from(products)
+    .leftJoin(orders, and(eq(orders.productId, products.productId), eq(orders.cycleId, cycleId)))
+    .where(eq(products.cycleId, cycleId))
+    .groupBy(
+      products.productId,
+      products.name,
+      products.variant,
+      products.format,
+      products.unit,
+      products.emoji,
+      products.unitPrice,
+      products.sortOrder,
+    )
+    .orderBy(asc(products.sortOrder), asc(products.name));
+
+  return rows.map((r) => ({
+    productId: r.productId,
+    name: r.name,
+    variant: r.variant,
+    format: r.format,
+    unit: r.unit,
+    emoji: r.emoji,
+    unitPrice: parseFloat(r.unitPrice),
+    totalQty: parseInt(r.totalQty as string) || 0,
+    totalAmount: parseFloat(r.totalAmount as string) || 0,
+  }));
+}
+
 export async function getAdminCycleProducts(cycleId: string) {
   const db = getDb();
   return db

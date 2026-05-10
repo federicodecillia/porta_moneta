@@ -12,6 +12,7 @@ import { formatEur } from "@/lib/utils";
 import { Card, CardBody, CardHeader } from "@/components/ui/card";
 import type { CatalogProductItem } from "@/lib/db/queries";
 import { ClosedCycleDetails } from "./closed-cycle-details";
+import { CycleReviewCloseButton } from "./cycle-review-modal";
 
 type Supplier = { supplierId: string; name: string };
 
@@ -69,6 +70,7 @@ export function OpenCycleCard({
           >
             {editing ? "Annulla" : "Modifica"}
           </button>
+          <CycleReviewCloseButton cycleId={cycle.cycleId} cycleTitle={cycle.title} />
           <CloseCycleButton cycleId={cycle.cycleId} cycleTitle={cycle.title} />
         </div>
       </CardHeader>
