@@ -1,12 +1,14 @@
 import Link from "next/link";
 import { AppShell } from "@/components/app-shell";
 import { CycleCountdown } from "@/components/home/cycle-countdown";
+import { NextPickupCard } from "@/components/home/next-pickup-card";
 import { getUserRole, requireUserSession } from "@/lib/auth/session";
 import {
   getCycleProducts,
   getMemberBalance,
   getMemberLedger,
   getMemberOrderLines,
+  getNextMemberPickup,
   getOpenCycles,
 } from "@/lib/db/queries";
 import { canAccessCycle, formatDateShort, formatEur, formatEurSigned, getProductEmoji } from "@/lib/utils";
@@ -16,10 +18,11 @@ export default async function HomePage() {
   const role = getUserRole(session);
   const memberId = session.user.memberId!;
 
-  const [balance, openCycles, recentMovements] = await Promise.all([
+  const [balance, openCycles, recentMovements, nextPickup] = await Promise.all([
     getMemberBalance(memberId),
     getOpenCycles(),
     getMemberLedger(memberId, 4),
+    getNextMemberPickup(memberId),
   ]);
 
   const activeCycles = openCycles.filter((c) => canAccessCycle(c.accessLevel, role));
@@ -109,6 +112,9 @@ export default async function HomePage() {
           </div>
         )}
       </div>
+
+      {/* ── Prossimo ritiro card ── */}
+      {nextPickup && <NextPickupCard pickup={nextPickup} />}
 
       {/* ── Cycles loop ── */}
       {cycleDataList.length > 0 ? (
