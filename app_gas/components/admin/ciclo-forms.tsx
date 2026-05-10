@@ -12,6 +12,7 @@ import { formatEur } from "@/lib/utils";
 import { Card, CardBody, CardHeader } from "@/components/ui/card";
 import type { CatalogProductItem } from "@/lib/db/queries";
 import { ClosedCycleDetails } from "./closed-cycle-details";
+import { CycleReviewCloseButton } from "./cycle-review-modal";
 
 type Supplier = { supplierId: string; name: string };
 
@@ -27,7 +28,9 @@ type SerializedCycle = {
   supplierId: string | null;
   accessLevel: string;
   isOverdue: boolean;
+  shippingMode: string;
   shippingCostPerMember: string | null;
+  shippingTotal: string | null;
 };
 
 // ── Open Cycle Card ───────────────────────────────────────────────────────────
@@ -67,6 +70,7 @@ export function OpenCycleCard({
           >
             {editing ? "Annulla" : "Modifica"}
           </button>
+          <CycleReviewCloseButton cycleId={cycle.cycleId} cycleTitle={cycle.title} />
           <CloseCycleButton cycleId={cycle.cycleId} cycleTitle={cycle.title} />
         </div>
       </CardHeader>
@@ -135,14 +139,26 @@ export function OpenCycleCard({
                 </span>
               </div>
             )}
-            {cycle.shippingCostPerMember && parseFloat(cycle.shippingCostPerMember) > 0 && (
-              <div>
-                Spedizione:{" "}
-                <span className="font-semibold text-pm-near-black">
-                  {parseFloat(cycle.shippingCostPerMember).toFixed(2).replace(".", ",")} €/socio
-                </span>
-              </div>
-            )}
+            {cycle.shippingMode === "proportional" &&
+              cycle.shippingTotal &&
+              parseFloat(cycle.shippingTotal) > 0 && (
+                <div>
+                  Spedizione:{" "}
+                  <span className="font-semibold text-pm-near-black">
+                    {parseFloat(cycle.shippingTotal).toFixed(2).replace(".", ",")} € totali (proporzionale al valore ordine)
+                  </span>
+                </div>
+              )}
+            {cycle.shippingMode !== "proportional" &&
+              cycle.shippingCostPerMember &&
+              parseFloat(cycle.shippingCostPerMember) > 0 && (
+                <div>
+                  Spedizione:{" "}
+                  <span className="font-semibold text-pm-near-black">
+                    {parseFloat(cycle.shippingCostPerMember).toFixed(2).replace(".", ",")} €/socio
+                  </span>
+                </div>
+              )}
           </div>
           <div className="mt-3">
             <ClosedCycleDetails
@@ -173,8 +189,86 @@ const inputCls = "rounded-lg border border-pm-border px-2 py-2 text-[13px] text-
 const labelCls = "mb-1 block text-[11px] font-semibold uppercase tracking-wide text-pm-gray";
 const miniLabelCls = "shrink-0 text-[11px] font-medium text-pm-gray";
 
+// Shared shipping section: a segmented switch between flat per-member fee
+// and proportional split, with the relevant input rendered below.
+function ShippingModeFields({
+  mode,
+  onModeChange,
+  defaultPerMember,
+  defaultTotal,
+}: {
+  mode: "fixed_per_member" | "proportional";
+  onModeChange: (mode: "fixed_per_member" | "proportional") => void;
+  defaultPerMember: string;
+  defaultTotal: string;
+}) {
+  return (
+    <div>
+      <label className={labelCls}>Spedizione</label>
+      <div className="mb-2 flex rounded-lg bg-black/[0.05] p-0.5">
+        {(
+          [
+            { v: "fixed_per_member", label: "Fissa €/socio" },
+            { v: "proportional", label: "Proporzionale" },
+          ] as const
+        ).map((opt) => (
+          <button
+            key={opt.v}
+            type="button"
+            onClick={() => onModeChange(opt.v)}
+            className={`flex-1 rounded-md py-1.5 text-[11px] font-semibold transition-colors ${
+              mode === opt.v
+                ? "bg-white text-pm-near-black shadow-sm"
+                : "bg-transparent text-pm-gray"
+            }`}
+          >
+            {opt.label}
+          </button>
+        ))}
+      </div>
+      {mode === "fixed_per_member" ? (
+        <div>
+          <input
+            name="shippingCostPerMember"
+            type="number"
+            min="0"
+            step="0.01"
+            defaultValue={defaultPerMember}
+            placeholder="0.00"
+            className={`w-full ${inputCls}`}
+          />
+          <p className="mt-1 text-[10px] text-pm-gray-light">
+            Importo addebitato a ogni socio con un ordine.
+          </p>
+          {/* Hidden so the form data shape stays uniform across modes. */}
+          <input type="hidden" name="shippingTotal" value="" />
+        </div>
+      ) : (
+        <div>
+          <input
+            name="shippingTotal"
+            type="number"
+            min="0"
+            step="0.01"
+            defaultValue={defaultTotal}
+            placeholder="0.00"
+            className={`w-full ${inputCls}`}
+          />
+          <p className="mt-1 text-[10px] text-pm-gray-light">
+            Costo totale spedizione: viene diviso tra i soci in proporzione al valore del loro ordine.
+          </p>
+          <input type="hidden" name="shippingCostPerMember" value="" />
+        </div>
+      )}
+    </div>
+  );
+}
+
 function EditCycleForm({ cycle, suppliers, onClose }: { cycle: SerializedCycle; suppliers: Supplier[]; onClose: () => void }) {
   const [isPending, startTransition] = useTransition();
+  const [shippingMode, setShippingMode] = useState<"fixed_per_member" | "proportional">(
+    cycle.shippingMode === "proportional" ? "proportional" : "fixed_per_member",
+  );
 
   function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -190,7 +284,9 @@ function EditCycleForm({ cycle, suppliers, onClose }: { cycle: SerializedCycle; 
         notes: fd.get("notes") as string,
         supplierId: fd.get("supplierId") as string,
         accessLevel: fd.get("accessLevel") as string,
+        shippingMode,
         shippingCostPerMember: fd.get("shippingCostPerMember") as string,
+        shippingTotal: fd.get("shippingTotal") as string,
       });
       if (result.error) {
         toast.error(result.error);
@@ -213,31 +309,24 @@ function EditCycleForm({ cycle, suppliers, onClose }: { cycle: SerializedCycle; 
         />
       </div>
 
-      {/* Chiusura ordini + Spedizione sulla stessa riga */}
-      <div className="flex gap-3">
-        <div className="flex-1 min-w-0">
-          <label className={labelCls}>Chiusura ordini *</label>
-          <input
-            name="orderCloseAt"
-            type="datetime-local"
-            required
-            defaultValue={cycle.orderCloseAt?.slice(0, 16) ?? ""}
-            className={`w-full ${inputCls}`}
-          />
-        </div>
-        <div className="w-[88px] shrink-0">
-          <label className={labelCls}>Sped. €</label>
-          <input
-            name="shippingCostPerMember"
-            type="number"
-            min="0"
-            step="0.01"
-            defaultValue={cycle.shippingCostPerMember ?? ""}
-            placeholder="0.00"
-            className={`w-full ${inputCls}`}
-          />
-        </div>
+      <div>
+        <label className={labelCls}>Chiusura ordini *</label>
+        <input
+          name="orderCloseAt"
+          type="datetime-local"
+          required
+          defaultValue={cycle.orderCloseAt?.slice(0, 16) ?? ""}
+          className={`w-full ${inputCls}`}
+        />
       </div>
+
+      <ShippingModeFields
+        mode={shippingMode}
+        onModeChange={setShippingMode}
+        defaultPerMember={cycle.shippingCostPerMember ?? ""}
+        defaultTotal={cycle.shippingTotal ?? ""}
+      />
+
 
       {/* Ritiri: due righe allineate verticalmente */}
       <div>
@@ -346,6 +435,9 @@ function EditCycleForm({ cycle, suppliers, onClose }: { cycle: SerializedCycle; 
 export function CreateCycleForm({ suppliers }: { suppliers: Supplier[] }) {
   const [open, setOpen] = useState(false);
   const [isPending, startTransition] = useTransition();
+  const [shippingMode, setShippingMode] = useState<"fixed_per_member" | "proportional">(
+    "fixed_per_member",
+  );
 
   function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -360,7 +452,9 @@ export function CreateCycleForm({ suppliers }: { suppliers: Supplier[] }) {
       supplierId: fd.get("supplierId") as string,
       accessLevel: fd.get("accessLevel") as string,
       notes: fd.get("notes") as string,
+      shippingMode,
       shippingCostPerMember: fd.get("shippingCostPerMember") as string,
+      shippingTotal: fd.get("shippingTotal") as string,
     };
     startTransition(async () => {
       const result = await adminCreateCycle(data);
@@ -398,29 +492,22 @@ export function CreateCycleForm({ suppliers }: { suppliers: Supplier[] }) {
           />
         </div>
 
-        {/* Chiusura ordini + Spedizione sulla stessa riga */}
-        <div className="flex gap-3">
-          <div className="flex-1 min-w-0">
-            <label className={labelCls}>Chiusura ordini *</label>
-            <input
-              name="orderCloseAt"
-              type="datetime-local"
-              required
-              className={`w-full ${inputCls}`}
-            />
-          </div>
-          <div className="w-[88px] shrink-0">
-            <label className={labelCls}>Sped. €</label>
-            <input
-              name="shippingCostPerMember"
-              type="number"
-              min="0"
-              step="0.01"
-              placeholder="0.00"
-              className={`w-full ${inputCls}`}
-            />
-          </div>
+        <div>
+          <label className={labelCls}>Chiusura ordini *</label>
+          <input
+            name="orderCloseAt"
+            type="datetime-local"
+            required
+            className={`w-full ${inputCls}`}
+          />
         </div>
+
+        <ShippingModeFields
+          mode={shippingMode}
+          onModeChange={setShippingMode}
+          defaultPerMember=""
+          defaultTotal=""
+        />
 
         {/* Ritiri: due righe allineate verticalmente */}
         <div>
