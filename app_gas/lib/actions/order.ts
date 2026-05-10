@@ -7,6 +7,7 @@ import { getDb } from "@/lib/db/client";
 import { auditLog, orders } from "@/lib/db/schema";
 import {
   getCycleProducts,
+  getLastMemberOrderForPrefill,
   getMemberBalance,
   getMemberByEmail,
   getOpenCycles,
@@ -91,4 +92,21 @@ export async function saveOrder(
         ? `Attenzione: dopo l'ordine il tuo saldo sarà €${Math.abs(afterBalance).toFixed(2).replace(".", ",")} negativo.`
         : null,
   };
+}
+
+// Loads the member's most recent past order and maps its products to the
+// current cycle's products (matched by name/variant/format/unit). Used by
+// the order form's "Riproponi ultimo ordine" button.
+export async function loadLastOrderForPrefill(
+  cycleId: string,
+): Promise<{ cycleTitle: string; quantities: Record<string, number>; matched: number }> {
+  const session = await auth();
+  const email = session?.user?.email;
+  if (!email) redirect("/login");
+
+  const member = await getMemberByEmail(email);
+  if (!member) throw new Error("Socio non trovato");
+
+  const result = await getLastMemberOrderForPrefill(member.memberId, cycleId);
+  return { ...result, matched: Object.keys(result.quantities).length };
 }

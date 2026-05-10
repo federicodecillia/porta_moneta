@@ -66,6 +66,142 @@ export async function getMemberOrderLines(memberId: string, cycleId: string) {
     .where(and(eq(orders.memberId, memberId), eq(orders.cycleId, cycleId)));
 }
 
+// Returns the next upcoming pickup the member should care about: a cycle
+// where they have at least one order line and whose pickup date (either
+// pickup or pickup2) is in the future. Used by the "Prossimo ritiro" home
+// card. Returns null if there is no future pickup with an order.
+export type NextPickup = {
+  cycleId: string;
+  cycleTitle: string;
+  pickupDate: Date;
+  pickupEndTime: string | null;
+  supplierName: string | null;
+  isSecondPickup: boolean;
+};
+
+export async function getNextMemberPickup(memberId: string): Promise<NextPickup | null> {
+  const db = getDb();
+
+  // Cycles where the member has at least one order line. We don't filter
+  // by status here — a member should still see the pickup info even after
+  // the cycle has been closed (charges already posted but pickup is later).
+  const rows = await db
+    .selectDistinct({
+      cycleId: orderCycles.cycleId,
+      cycleTitle: orderCycles.title,
+      pickupDate: orderCycles.pickupDate,
+      pickupEndTime: orderCycles.pickupEndTime,
+      pickup2Date: orderCycles.pickup2Date,
+      pickup2EndTime: orderCycles.pickup2EndTime,
+      supplierName: suppliers.name,
+    })
+    .from(orderCycles)
+    .innerJoin(orders, eq(orders.cycleId, orderCycles.cycleId))
+    .leftJoin(suppliers, eq(orderCycles.supplierId, suppliers.supplierId))
+    .where(eq(orders.memberId, memberId));
+
+  const now = new Date();
+  // Flatten each cycle into up-to-two candidate pickups, then pick the
+  // earliest one that is still in the future.
+  const candidates: NextPickup[] = [];
+  for (const r of rows) {
+    if (r.pickupDate && r.pickupDate >= now) {
+      candidates.push({
+        cycleId: r.cycleId,
+        cycleTitle: r.cycleTitle,
+        pickupDate: r.pickupDate,
+        pickupEndTime: r.pickupEndTime,
+        supplierName: r.supplierName,
+        isSecondPickup: false,
+      });
+    }
+    if (r.pickup2Date && r.pickup2Date >= now) {
+      candidates.push({
+        cycleId: r.cycleId,
+        cycleTitle: r.cycleTitle,
+        pickupDate: r.pickup2Date,
+        pickupEndTime: r.pickup2EndTime,
+        supplierName: r.supplierName,
+        isSecondPickup: true,
+      });
+    }
+  }
+
+  if (candidates.length === 0) return null;
+  candidates.sort((a, b) => a.pickupDate.getTime() - b.pickupDate.getTime());
+  return candidates[0];
+}
+
+// Returns the order lines from the most recent cycle (excluding the
+// supplied currentCycleId) where the member ordered something. Each line
+// is matched by product identity (name/variant/format/unit) against the
+// current cycle's products so the caller can prefill the order form even
+// if the productId differs (products are recreated per-cycle).
+//
+// Quantities are returned as { productId: quantity } where productId
+// refers to the *current* cycle's product. Products from the past order
+// that are no longer offered in this cycle are silently skipped.
+export async function getLastMemberOrderForPrefill(
+  memberId: string,
+  currentCycleId: string,
+): Promise<{ cycleTitle: string; quantities: Record<string, number> }> {
+  const db = getDb();
+
+  // Find the most recent cycle (by createdAt) where this member has at
+  // least one order line, excluding the current cycle.
+  const [recent] = await db
+    .select({
+      cycleId: orders.cycleId,
+      cycleTitle: orderCycles.title,
+      cycleCreatedAt: orderCycles.createdAt,
+    })
+    .from(orders)
+    .innerJoin(orderCycles, eq(orders.cycleId, orderCycles.cycleId))
+    .where(and(eq(orders.memberId, memberId), sql`${orders.cycleId} <> ${currentCycleId}`))
+    .orderBy(desc(orderCycles.createdAt))
+    .limit(1);
+
+  if (!recent) return { cycleTitle: "", quantities: {} };
+
+  // Pull the past order lines joined with their product metadata.
+  const pastLines = await db
+    .select({
+      quantity: orders.quantity,
+      name: products.name,
+      variant: products.variant,
+      format: products.format,
+      unit: products.unit,
+    })
+    .from(orders)
+    .innerJoin(products, eq(orders.productId, products.productId))
+    .where(and(eq(orders.memberId, memberId), eq(orders.cycleId, recent.cycleId)));
+
+  // Pull the current cycle's products to map by identity.
+  const currentProducts = await db
+    .select({
+      productId: products.productId,
+      name: products.name,
+      variant: products.variant,
+      format: products.format,
+      unit: products.unit,
+    })
+    .from(products)
+    .where(and(eq(products.cycleId, currentCycleId), eq(products.active, true)));
+
+  const key = (p: { name: string; variant: string | null; format: string | null; unit: string | null }) =>
+    `${p.name.toLowerCase().trim()}|${(p.variant ?? "").toLowerCase().trim()}|${(p.format ?? "").toLowerCase().trim()}|${(p.unit ?? "").toLowerCase().trim()}`;
+
+  const currentByKey = new Map(currentProducts.map((p) => [key(p), p.productId]));
+
+  const quantities: Record<string, number> = {};
+  for (const line of pastLines) {
+    const productId = currentByKey.get(key(line));
+    if (productId) quantities[productId] = line.quantity;
+  }
+
+  return { cycleTitle: recent.cycleTitle, quantities };
+}
+
 export async function getMemberLedger(memberId: string, limit = 50) {
   const db = getDb();
   return db
