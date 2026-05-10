@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { toast } from "@/components/ui/toast";
 import { formatEur, formatDateTime, getProductEmoji } from "@/lib/utils";
 import type { SaveOrderLine } from "@/lib/actions/order";
+import { loadLastOrderForPrefill } from "@/lib/actions/order";
 
 type Product = {
   productId: string;
@@ -95,6 +96,30 @@ export function OrderForm({
     });
   }
 
+  function handlePrefillFromLast() {
+    startTransition(async () => {
+      try {
+        const result = await loadLastOrderForPrefill(cycleId);
+        if (result.matched === 0) {
+          toast.warning(
+            result.cycleTitle
+              ? `Nessun prodotto del tuo ultimo ordine ("${result.cycleTitle}") è disponibile in questo ciclo.`
+              : "Non hai ordini precedenti da riproporre.",
+          );
+          return;
+        }
+        // Replace the draft entirely so the user sees exactly what gets
+        // re-proposed. They can still tweak before confirming.
+        setDraft(result.quantities);
+        toast.success(
+          `Riproposti ${result.matched} prodotti da "${result.cycleTitle}". Modifica e conferma.`,
+        );
+      } catch (err) {
+        toast.error(err instanceof Error ? err.message : "Errore");
+      }
+    });
+  }
+
   function handleSave() {
     startTransition(async () => {
       try {
@@ -141,6 +166,23 @@ export function OrderForm({
           {orderCloseAt ? " · Chiude " + formatDateTime(orderCloseAt) : ""}
         </p>
       </div>
+
+      {/* "Riproponi ultimo ordine" — visible only when the cart is empty
+          so we never silently overwrite an in-progress order. */}
+      {!hasOrder && (
+        <button
+          type="button"
+          onClick={handlePrefillFromLast}
+          disabled={isPending}
+          className="mt-3 inline-flex w-full items-center justify-center gap-1.5 rounded-full border border-pm-teal/30 bg-pm-teal-light px-4 py-2 text-[12px] font-semibold text-pm-teal disabled:opacity-50"
+        >
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M3 12a9 9 0 1 0 3-6.7" />
+            <path d="M3 4v4h4" />
+          </svg>
+          Riproponi ultimo ordine
+        </button>
+      )}
 
       {/* Product list */}
       {groups.map(({ category, products: prods }) => (

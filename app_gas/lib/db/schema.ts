@@ -71,24 +71,28 @@ export const supplierProducts = pgTable("supplier_products", {
   archivedAt: timestamp("archived_at", { withTimezone: true }),
 });
 
-export const products = pgTable("products", {
-  productId: text("product_id").primaryKey(),
-  cycleId: text("cycle_id")
-    .notNull()
-    .references(() => orderCycles.cycleId),
-  name: text("name").notNull(),
-  variant: text("variant"),
-  format: text("format"),
-  unitPrice: numeric("unit_price", { precision: 10, scale: 2 }).notNull(),
-  unit: text("unit"),
-  supplier: text("supplier"),
-  notes: text("notes"),
-  sortOrder: integer("sort_order").notNull().default(0),
-  active: boolean("active").notNull().default(true),
-  supplierId: text("supplier_id").references(() => suppliers.supplierId),
-  category: text("category"),
-  emoji: text("emoji"),
-});
+export const products = pgTable(
+  "products",
+  {
+    productId: text("product_id").primaryKey(),
+    cycleId: text("cycle_id")
+      .notNull()
+      .references(() => orderCycles.cycleId),
+    name: text("name").notNull(),
+    variant: text("variant"),
+    format: text("format"),
+    unitPrice: numeric("unit_price", { precision: 10, scale: 2 }).notNull(),
+    unit: text("unit"),
+    supplier: text("supplier"),
+    notes: text("notes"),
+    sortOrder: integer("sort_order").notNull().default(0),
+    active: boolean("active").notNull().default(true),
+    supplierId: text("supplier_id").references(() => suppliers.supplierId),
+    category: text("category"),
+    emoji: text("emoji"),
+  },
+  (table) => [index("products_cycle_id_idx").on(table.cycleId)],
+);
 
 export const orders = pgTable(
   "orders",
@@ -134,7 +138,10 @@ export const ledgerEntries = pgTable(
     updatedAt: timestamp("updated_at", { withTimezone: true }),
     updatedBy: text("updated_by"),
   },
-  (table) => [index("ledger_entries_member_id_idx").on(table.memberId)],
+  (table) => [
+    index("ledger_entries_member_id_idx").on(table.memberId),
+    index("ledger_entries_cycle_id_idx").on(table.cycleId),
+  ],
 );
 
 export const auditLog = pgTable("audit_log", {
