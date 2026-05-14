@@ -10,6 +10,7 @@ const TABS = [
   { id: "cassa", label: "Cassa" },
   { id: "soci", label: "Soci" },
   { id: "fornitori", label: "Fornit." },
+  { id: "statistiche", label: "Stats" },
 ] as const;
 
 export function AdminNav() {
