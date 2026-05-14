@@ -1,4 +1,4 @@
-import { and, asc, desc, eq, isNotNull, isNull, or, sql } from "drizzle-orm";
+import { and, asc, desc, eq, inArray, isNotNull, isNull, or, sql } from "drizzle-orm";
 import { getDb } from "./client";
 import {
   ledgerEntries,
@@ -822,4 +822,254 @@ export async function getAllMembersLedger(): Promise<Record<string, LedgerEntryI
     });
   }
   return result;
+}
+
+// ── Analytics ────────────────────────────────────────────────────────────────
+// Aggregations used by the admin "Statistiche" tab. They all operate over
+// closed cycles only (status = 'closed') because that's when the data is
+// final — orders in open cycles can still change.
+
+export type AnalyticsOverview = {
+  closedCycles: number;
+  totalRevenue: number;
+  activeMembers: number; // members with at least one order in the last N cycles
+  topProductName: string | null;
+  topProductQty: number;
+};
+
+export type ProductRanking = {
+  name: string;
+  variant: string | null;
+  unit: string | null;
+  emoji: string | null;
+  totalQty: number;
+  totalAmount: number;
+  cyclesCount: number;
+};
+
+export type CycleRevenuePoint = {
+  cycleId: string;
+  title: string;
+  closedAt: string | null;
+  pickupDate: string | null;
+  total: number;
+  orderCount: number;
+};
+
+export type MemberParticipation = {
+  memberId: string;
+  fullName: string;
+  cyclesOrdered: number;
+  totalSpent: number;
+  lastOrderAt: string | null;
+};
+
+export type SupplierStat = {
+  supplierId: string;
+  name: string;
+  cyclesCount: number;
+  totalRevenue: number;
+  topProductName: string | null;
+};
+
+const ACTIVE_LOOKBACK_CYCLES = 3;
+
+export async function getAnalyticsOverview(): Promise<AnalyticsOverview> {
+  const db = getDb();
+
+  const [closedCount] = await db
+    .select({ n: sql<string>`count(*)` })
+    .from(orderCycles)
+    .where(eq(orderCycles.status, "closed"));
+
+  const [revenueRow] = await db
+    .select({ total: sql<string>`coalesce(sum(${orders.lineTotal}), '0')` })
+    .from(orders)
+    .innerJoin(orderCycles, eq(orders.cycleId, orderCycles.cycleId))
+    .where(eq(orderCycles.status, "closed"));
+
+  // Active members: distinct memberIds with at least one order in the
+  // ACTIVE_LOOKBACK_CYCLES most recently closed cycles. Computed via a
+  // subquery for portability instead of window functions.
+  const recentCycles = await db
+    .select({ cycleId: orderCycles.cycleId })
+    .from(orderCycles)
+    .where(eq(orderCycles.status, "closed"))
+    .orderBy(desc(orderCycles.closedAt))
+    .limit(ACTIVE_LOOKBACK_CYCLES);
+
+  const recentCycleIds = recentCycles.map((c) => c.cycleId);
+  let activeMembers = 0;
+  if (recentCycleIds.length > 0) {
+    const [activeRow] = await db
+      .select({ n: sql<string>`count(distinct ${orders.memberId})` })
+      .from(orders)
+      .where(inArray(orders.cycleId, recentCycleIds));
+    activeMembers = parseInt(activeRow?.n ?? "0");
+  }
+
+  // Top product by quantity ordered across all closed cycles. We group by
+  // name (case-insensitive) so the same product appearing in multiple
+  // cycles is aggregated even if recreated with a different productId.
+  const [topProduct] = await db
+    .select({
+      name: products.name,
+      totalQty: sql<string>`sum(${orders.quantity})`,
+    })
+    .from(orders)
+    .innerJoin(products, eq(orders.productId, products.productId))
+    .innerJoin(orderCycles, eq(orders.cycleId, orderCycles.cycleId))
+    .where(eq(orderCycles.status, "closed"))
+    .groupBy(products.name)
+    .orderBy(sql`sum(${orders.quantity}) desc`)
+    .limit(1);
+
+  return {
+    closedCycles: parseInt(closedCount?.n ?? "0"),
+    totalRevenue: parseFloat(revenueRow?.total ?? "0"),
+    activeMembers,
+    topProductName: topProduct?.name ?? null,
+    topProductQty: topProduct ? parseInt(topProduct.totalQty as string) : 0,
+  };
+}
+
+export async function getProductRankings(limit = 10): Promise<ProductRanking[]> {
+  const db = getDb();
+  const rows = await db
+    .select({
+      name: products.name,
+      variant: products.variant,
+      unit: products.unit,
+      emoji: products.emoji,
+      totalQty: sql<string>`sum(${orders.quantity})`,
+      totalAmount: sql<string>`sum(${orders.lineTotal})`,
+      cyclesCount: sql<string>`count(distinct ${orders.cycleId})`,
+    })
+    .from(orders)
+    .innerJoin(products, eq(orders.productId, products.productId))
+    .innerJoin(orderCycles, eq(orders.cycleId, orderCycles.cycleId))
+    .where(eq(orderCycles.status, "closed"))
+    .groupBy(products.name, products.variant, products.unit, products.emoji)
+    .orderBy(sql`sum(${orders.quantity}) desc`)
+    .limit(limit);
+
+  return rows.map((r) => ({
+    name: r.name,
+    variant: r.variant,
+    unit: r.unit,
+    emoji: r.emoji,
+    totalQty: parseInt(r.totalQty as string) || 0,
+    totalAmount: parseFloat(r.totalAmount as string) || 0,
+    cyclesCount: parseInt(r.cyclesCount as string) || 0,
+  }));
+}
+
+export async function getCycleRevenueTrend(limit = 12): Promise<CycleRevenuePoint[]> {
+  const db = getDb();
+  const rows = await db
+    .select({
+      cycleId: orderCycles.cycleId,
+      title: orderCycles.title,
+      closedAt: orderCycles.closedAt,
+      pickupDate: orderCycles.pickupDate,
+      total: sql<string>`coalesce(sum(${orders.lineTotal}), '0')`,
+      orderCount: sql<string>`count(distinct ${orders.memberId})`,
+    })
+    .from(orderCycles)
+    .leftJoin(orders, eq(orders.cycleId, orderCycles.cycleId))
+    .where(eq(orderCycles.status, "closed"))
+    .groupBy(orderCycles.cycleId, orderCycles.title, orderCycles.closedAt, orderCycles.pickupDate)
+    .orderBy(desc(orderCycles.closedAt))
+    .limit(limit);
+
+  // Reverse so the chart reads left-to-right oldest→newest, which is what
+  // a human expects when looking at a trend.
+  return rows
+    .map((r) => ({
+      cycleId: r.cycleId,
+      title: r.title,
+      closedAt: r.closedAt?.toISOString() ?? null,
+      pickupDate: r.pickupDate?.toISOString() ?? null,
+      total: parseFloat(r.total),
+      orderCount: parseInt(r.orderCount as string) || 0,
+    }))
+    .reverse();
+}
+
+export async function getMemberParticipation(): Promise<MemberParticipation[]> {
+  const db = getDb();
+  const rows = await db
+    .select({
+      memberId: members.memberId,
+      fullName: members.fullName,
+      cyclesOrdered: sql<string>`count(distinct ${orders.cycleId})`,
+      totalSpent: sql<string>`coalesce(sum(${orders.lineTotal}), '0')`,
+      lastOrderAt: sql<Date | null>`max(${orders.updatedAt})`,
+    })
+    .from(members)
+    .leftJoin(
+      orders,
+      and(
+        eq(orders.memberId, members.memberId),
+        // Only count orders from closed cycles; an in-progress order in an
+        // open cycle is not yet "participation".
+        sql`${orders.cycleId} in (select ${orderCycles.cycleId} from ${orderCycles} where ${orderCycles.status} = 'closed')`,
+      ),
+    )
+    .where(eq(members.active, true))
+    .groupBy(members.memberId, members.fullName)
+    .orderBy(sql`count(distinct ${orders.cycleId}) desc`, asc(members.fullName));
+
+  return rows.map((r) => ({
+    memberId: r.memberId,
+    fullName: r.fullName,
+    cyclesOrdered: parseInt(r.cyclesOrdered as string) || 0,
+    totalSpent: parseFloat(r.totalSpent as string) || 0,
+    lastOrderAt: r.lastOrderAt ? new Date(r.lastOrderAt as unknown as string).toISOString() : null,
+  }));
+}
+
+export async function getSupplierStats(): Promise<SupplierStat[]> {
+  const db = getDb();
+  const rows = await db
+    .select({
+      supplierId: suppliers.supplierId,
+      name: suppliers.name,
+      cyclesCount: sql<string>`count(distinct ${orderCycles.cycleId})`,
+      totalRevenue: sql<string>`coalesce(sum(${orders.lineTotal}), '0')`,
+    })
+    .from(suppliers)
+    .leftJoin(orderCycles, eq(orderCycles.supplierId, suppliers.supplierId))
+    .leftJoin(
+      orders,
+      and(eq(orders.cycleId, orderCycles.cycleId), eq(orderCycles.status, "closed")),
+    )
+    .groupBy(suppliers.supplierId, suppliers.name)
+    .orderBy(sql`coalesce(sum(${orders.lineTotal}), 0) desc`);
+
+  const stats = rows.map((r) => ({
+    supplierId: r.supplierId,
+    name: r.name,
+    cyclesCount: parseInt(r.cyclesCount as string) || 0,
+    totalRevenue: parseFloat(r.totalRevenue as string) || 0,
+    topProductName: null as string | null,
+  }));
+
+  // Top product per supplier in a single follow-up query (small N, no
+  // need for a window function here).
+  for (const s of stats) {
+    if (s.cyclesCount === 0) continue;
+    const [top] = await db
+      .select({ name: products.name, qty: sql<string>`sum(${orders.quantity})` })
+      .from(orders)
+      .innerJoin(products, eq(orders.productId, products.productId))
+      .innerJoin(orderCycles, eq(orders.cycleId, orderCycles.cycleId))
+      .where(and(eq(orderCycles.supplierId, s.supplierId), eq(orderCycles.status, "closed")))
+      .groupBy(products.name)
+      .orderBy(sql`sum(${orders.quantity}) desc`)
+      .limit(1);
+    s.topProductName = top?.name ?? null;
+  }
+
+  return stats;
 }
