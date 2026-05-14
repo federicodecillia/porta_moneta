@@ -131,10 +131,17 @@ export function ClosedCycleDetails({
           )}
         </div>
 
-        <div className="border-t border-pm-border p-4 text-center">
+        <div className="flex gap-2 border-t border-pm-border p-4">
+          <button
+            onClick={() => downloadSupplierCsv(orderDetails, cycleTitle)}
+            disabled={orderDetails.length === 0}
+            className="flex-1 rounded-xl border border-pm-teal/30 bg-pm-teal-light py-3 text-[13px] font-bold text-pm-teal active:scale-95 disabled:opacity-50"
+          >
+            ⬇ CSV fornitore
+          </button>
           <button
             onClick={() => setIsOpen(false)}
-            className="w-full rounded-xl bg-pm-near-black py-3 text-[14px] font-bold text-white shadow-lg active:scale-95"
+            className="flex-1 rounded-xl bg-pm-near-black py-3 text-[14px] font-bold text-white shadow-lg active:scale-95"
           >
             Chiudi
           </button>
@@ -142,4 +149,120 @@ export function ClosedCycleDetails({
       </div>
     </div>
   );
+}
+
+// Aggregates the per-member order lines into a single row per product,
+// then triggers a CSV download. The output is the shopping list that
+// can be emailed straight to the supplier: each row has the product
+// identity, total quantity ordered, unit price, and total amount.
+//
+// Lines are grouped by (productName, variant, unit) so the same item
+// across multiple members consolidates into one row. Suppliers are
+// listed in separate sections inside the CSV via blank-row separators
+// so a single export covers a cycle that mixes suppliers.
+function downloadSupplierCsv(orders: OrderDetail[], cycleTitle: string) {
+  if (orders.length === 0) return;
+
+  type Aggregate = {
+    supplierName: string;
+    productName: string;
+    variant: string | null;
+    format: string | null;
+    unit: string | null;
+    unitPrice: number;
+    totalQty: number;
+    totalAmount: number;
+  };
+
+  const byKey = new Map<string, Aggregate>();
+  for (const line of orders) {
+    const supplier = line.supplierName ?? line.productSupplier ?? "—";
+    const key = [
+      supplier,
+      line.productName,
+      line.variant ?? "",
+      line.format ?? "",
+      line.unit ?? "",
+    ]
+      .join("|")
+      .toLowerCase();
+
+    const existing = byKey.get(key);
+    if (existing) {
+      existing.totalQty += line.quantity;
+      existing.totalAmount += parseFloat(line.lineTotal);
+    } else {
+      byKey.set(key, {
+        supplierName: supplier,
+        productName: line.productName,
+        variant: line.variant,
+        format: line.format,
+        unit: line.unit,
+        unitPrice: parseFloat(line.unitPrice),
+        totalQty: line.quantity,
+        totalAmount: parseFloat(line.lineTotal),
+      });
+    }
+  }
+
+  // Sort by supplier, then by product name within each supplier.
+  const rows = Array.from(byKey.values()).sort((a, b) => {
+    const s = a.supplierName.localeCompare(b.supplierName);
+    return s !== 0 ? s : a.productName.localeCompare(b.productName);
+  });
+
+  // CSV header. Italian labels because the file is meant to be emailed
+  // to Italian-speaking suppliers.
+  const header = [
+    "Fornitore",
+    "Prodotto",
+    "Varietà",
+    "Formato",
+    "Unità",
+    "Quantità totale",
+    "Prezzo unitario",
+    "Totale (€)",
+  ];
+
+  // RFC 4180-ish escaping: wrap in quotes if the value contains a quote,
+  // comma, semicolon, or newline; double any embedded quotes.
+  const escape = (v: string | number | null) => {
+    const s = v == null ? "" : String(v);
+    return /[",;\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+  };
+  const join = (cells: Array<string | number | null>) => cells.map(escape).join(";");
+
+  const lines = [join(header)];
+  let currentSupplier = "";
+  for (const r of rows) {
+    if (r.supplierName !== currentSupplier) {
+      if (currentSupplier !== "") lines.push("");
+      currentSupplier = r.supplierName;
+    }
+    lines.push(
+      join([
+        r.supplierName,
+        r.productName,
+        r.variant,
+        r.format,
+        r.unit,
+        r.totalQty,
+        r.unitPrice.toFixed(2).replace(".", ","),
+        r.totalAmount.toFixed(2).replace(".", ","),
+      ]),
+    );
+  }
+
+  const csv = "﻿" + lines.join("\n"); // BOM so Excel detects UTF-8
+  const blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  // Sanitize cycle title for the filename: only keep alnum, dash, underscore.
+  const safeTitle = cycleTitle.replace(/[^a-zA-Z0-9_\-]+/g, "_").slice(0, 60);
+  a.download = `ordine_fornitore_${safeTitle || "ciclo"}.csv`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
 }
