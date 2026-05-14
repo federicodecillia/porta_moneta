@@ -6,7 +6,7 @@ Google, place orders inside a time-boxed cycle, and track a running ledger
 balance. Admins manage cycles, products, suppliers, top-ups, and analytics.
 
 **Live:** [gas.portamoneta.org](https://gas.portamoneta.org)
-**Changelog:** [English](./CHANGELOG.md) · [Italiano](./CHANGELOG.it.md)
+**Changelog:** [English](./app_gas/CHANGELOG.md) · [Italiano](./app_gas/CHANGELOG.it.md)
 
 The UI is in Italian because that's the target audience. Code, identifiers,
 and documentation are in English.

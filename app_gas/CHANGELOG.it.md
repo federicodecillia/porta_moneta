@@ -16,8 +16,19 @@ e il versionamento è basato su [Semantic Versioning](https://semver.org/spec/v2
 
 ## [Non rilasciato]
 
+_Niente per ora._
+
+---
+
+## [1.4.1] — 14 maggio 2026
+
+### Aggiunte
+- **Pagina "Cosa è cambiato"** dentro l'app all'indirizzo `/changelog`. Linkata in fondo alla pagina Guida. Ha un selettore IT/EN, così la pagina stessa è bilingue.
+- **Sezione "Novità" nella Guida** che mostra un'anteprima dell'ultima release (le prime due sezioni, massimo quattro voci per sezione) con un link al changelog completo.
+
 ### Modificato
 - L'export CSV per il fornitore ora è dettagliato per socio: una riga per ogni combinazione (fornitore × prodotto × socio). Ordinato per fornitore → prodotto → socio così il fornitore può preparare la borsa di ogni socio direttamente dal file.
+- Rimosse le righe di subtotale dal CSV per il fornitore — ora ogni riga è una vera riga d'ordine, così il fornitore non rischia di contare due volte un prodotto sommando le righe per socio e poi il subtotale.
 
 ---
 
@@ -88,7 +99,8 @@ e il versionamento è basato su [Semantic Versioning](https://semver.org/spec/v2
 
 ---
 
-[Non rilasciato]: https://github.com/federicodecillia/porta_moneta/compare/v1.4.0...HEAD
+[Non rilasciato]: https://github.com/federicodecillia/porta_moneta/compare/v1.4.1...HEAD
+[1.4.1]: https://github.com/federicodecillia/porta_moneta/releases/tag/v1.4.1
 [1.4.0]: https://github.com/federicodecillia/porta_moneta/releases/tag/v1.4.0
 [1.3.0]: https://github.com/federicodecillia/porta_moneta/releases/tag/v1.3.0
 [1.2.0]: https://github.com/federicodecillia/porta_moneta/releases/tag/v1.2.0

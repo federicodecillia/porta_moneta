@@ -77,9 +77,11 @@ members actually read should be in Italian.
   English only.
 - **UI strings** (toasts, button labels, page copy, notification bodies):
   Italian — these reach real Italian-speaking users.
-- **Two changelogs**: [`CHANGELOG.md`](./CHANGELOG.md) (English) and
-  [`CHANGELOG.it.md`](./CHANGELOG.it.md) (Italian) follow the
+- **Two changelogs**: [`app_gas/CHANGELOG.md`](./app_gas/CHANGELOG.md) (English) and
+  [`app_gas/CHANGELOG.it.md`](./app_gas/CHANGELOG.it.md) (Italian) follow the
   [Keep a Changelog](https://keepachangelog.com/) format and loose SemVer.
+  They live inside `app_gas/` (not the repo root) so they are part of the
+  Vercel deploy artifact — the in-app `/changelog` page reads them at runtime.
 
 ### Updating the changelog
 

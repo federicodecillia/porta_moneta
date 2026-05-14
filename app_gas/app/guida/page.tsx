@@ -1,6 +1,8 @@
+import Link from "next/link";
 import { AppShell } from "@/components/app-shell";
 import { FaqAccordion } from "@/components/ui/faq-accordion";
 import { getUserRole, requireUserSession } from "@/lib/auth/session";
+import { loadChangelog, splitInlineBold } from "@/lib/changelog";
 
 const STEPS = [
   {
@@ -82,6 +84,12 @@ export default async function GuidaPage() {
   const session = await requireUserSession();
   const role = getUserRole(session);
 
+  // Pull the most recent released version (skip the [Unreleased] block) for
+  // the teaser. The full history lives on /changelog. Italian is the default
+  // for the in-app surface; users can switch language on the dedicated page.
+  const versions = await loadChangelog("it");
+  const latest = versions.find((v) => v.date !== null) ?? null;
+
   return (
     <AppShell email={session.user.email} isAdmin={role === "admin"} memberId={session.user.memberId!}>
       <h1 className="mb-5 text-[20px] font-black tracking-[-0.03em] text-pm-near-black">
@@ -106,6 +114,57 @@ export default async function GuidaPage() {
           </div>
         ))}
       </div>
+
+      {/* Novità — teaser della release più recente con link al changelog */}
+      {latest && (
+        <section className="mb-6 overflow-hidden rounded-[18px] border border-pm-orange-mid bg-pm-orange-light">
+          <div className="flex items-baseline justify-between gap-2 border-b border-pm-orange-mid/40 px-[18px] py-3">
+            <div>
+              <div className="font-mono text-[9px] uppercase tracking-[0.13em] text-pm-orange">
+                Novità · v{latest.version}
+              </div>
+              <h2 className="mt-0.5 text-[15px] font-black tracking-[-0.01em] text-pm-near-black">
+                Cosa è cambiato
+              </h2>
+            </div>
+            {latest.date && (
+              <span className="font-mono text-[10px] text-pm-gray">{latest.date}</span>
+            )}
+          </div>
+          <div className="space-y-3 px-[18px] py-4">
+            {latest.sections.slice(0, 2).map((s) => (
+              <div key={s.heading}>
+                <div className="mb-1 font-mono text-[10px] font-bold uppercase tracking-wide text-pm-orange">
+                  {s.heading}
+                </div>
+                <ul className="space-y-1.5">
+                  {s.items.slice(0, 4).map((item, idx) => (
+                    <li key={idx} className="text-[13px] leading-[1.45] text-pm-near-black">
+                      {splitInlineBold(item.text).map((p, i) =>
+                        p.bold ? (
+                          <strong key={i} className="font-bold">
+                            {p.value}
+                          </strong>
+                        ) : (
+                          <span key={i}>{p.value}</span>
+                        ),
+                      )}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ))}
+          </div>
+          <div className="border-t border-pm-orange-mid/40 px-[18px] py-3 text-center">
+            <Link
+              href="/changelog"
+              className="inline-flex items-center gap-1 text-[12px] font-bold text-pm-orange hover:underline"
+            >
+              Vedi tutte le novità →
+            </Link>
+          </div>
+        </section>
+      )}
 
       {/* FAQ */}
       <h2 className="mb-[14px] text-[18px] font-extrabold tracking-[-0.02em] text-pm-near-black">
