@@ -151,64 +151,35 @@ export function ClosedCycleDetails({
   );
 }
 
-// Aggregates the per-member order lines into a single row per product,
-// then triggers a CSV download. The output is the shopping list that
-// can be emailed straight to the supplier: each row has the product
-// identity, total quantity ordered, unit price, and total amount.
+// Emits a CSV with one row per (supplier, product, member, quantity) so the
+// supplier can prepare each member's bag separately instead of weighing the
+// full cycle total and then re-splitting it. Rows are sorted by
+// supplier → product → member name so reading the file top-to-bottom matches
+// the natural workflow of preparing the delivery.
 //
-// Lines are grouped by (productName, variant, unit) so the same item
-// across multiple members consolidates into one row. Suppliers are
-// listed in separate sections inside the CSV via blank-row separators
-// so a single export covers a cycle that mixes suppliers.
+// A "Subtotale" row is appended after each product group with the total
+// quantity across all members, and a blank row separates supplier sections
+// so the file is also easy to scan visually.
 function downloadSupplierCsv(orders: OrderDetail[], cycleTitle: string) {
   if (orders.length === 0) return;
 
-  type Aggregate = {
-    supplierName: string;
-    productName: string;
-    variant: string | null;
-    format: string | null;
-    unit: string | null;
-    unitPrice: number;
-    totalQty: number;
-    totalAmount: number;
-  };
+  // Stable supplier label even when the cycle-level supplier and the
+  // product-level supplier disagree (legacy free-text field).
+  const supplierOf = (l: OrderDetail) => l.supplierName ?? l.productSupplier ?? "—";
 
-  const byKey = new Map<string, Aggregate>();
-  for (const line of orders) {
-    const supplier = line.supplierName ?? line.productSupplier ?? "—";
-    const key = [
-      supplier,
-      line.productName,
-      line.variant ?? "",
-      line.format ?? "",
-      line.unit ?? "",
-    ]
-      .join("|")
-      .toLowerCase();
-
-    const existing = byKey.get(key);
-    if (existing) {
-      existing.totalQty += line.quantity;
-      existing.totalAmount += parseFloat(line.lineTotal);
-    } else {
-      byKey.set(key, {
-        supplierName: supplier,
-        productName: line.productName,
-        variant: line.variant,
-        format: line.format,
-        unit: line.unit,
-        unitPrice: parseFloat(line.unitPrice),
-        totalQty: line.quantity,
-        totalAmount: parseFloat(line.lineTotal),
-      });
-    }
-  }
-
-  // Sort by supplier, then by product name within each supplier.
-  const rows = Array.from(byKey.values()).sort((a, b) => {
-    const s = a.supplierName.localeCompare(b.supplierName);
-    return s !== 0 ? s : a.productName.localeCompare(b.productName);
+  // Sort by supplier → product → member, with variant/format/unit as
+  // tiebreakers so two products with the same name but different
+  // packaging stay adjacent.
+  const rows = [...orders].sort((a, b) => {
+    const s = supplierOf(a).localeCompare(supplierOf(b));
+    if (s !== 0) return s;
+    const p = a.productName.localeCompare(b.productName);
+    if (p !== 0) return p;
+    const v = (a.variant ?? "").localeCompare(b.variant ?? "");
+    if (v !== 0) return v;
+    const f = (a.format ?? "").localeCompare(b.format ?? "");
+    if (f !== 0) return f;
+    return a.memberName.localeCompare(b.memberName);
   });
 
   // CSV header. Italian labels because the file is meant to be emailed
@@ -219,7 +190,8 @@ function downloadSupplierCsv(orders: OrderDetail[], cycleTitle: string) {
     "Varietà",
     "Formato",
     "Unità",
-    "Quantità totale",
+    "Socio",
+    "Quantità",
     "Prezzo unitario",
     "Totale (€)",
   ];
@@ -232,26 +204,71 @@ function downloadSupplierCsv(orders: OrderDetail[], cycleTitle: string) {
   };
   const join = (cells: Array<string | number | null>) => cells.map(escape).join(";");
 
-  const lines = [join(header)];
+  // Group key identifies one product within one supplier; emit a subtotal
+  // row whenever the key changes.
+  const productKey = (l: OrderDetail) =>
+    [supplierOf(l), l.productName, l.variant ?? "", l.format ?? "", l.unit ?? ""].join("|");
+
+  const lines: string[] = [join(header)];
   let currentSupplier = "";
-  for (const r of rows) {
-    if (r.supplierName !== currentSupplier) {
-      if (currentSupplier !== "") lines.push("");
-      currentSupplier = r.supplierName;
+  let currentProductKey = "";
+  let productSubtotal = { qty: 0, amount: 0, label: "" };
+
+  const flushSubtotal = () => {
+    if (productSubtotal.qty > 0) {
+      lines.push(
+        join([
+          "",
+          `Subtotale ${productSubtotal.label}`,
+          "",
+          "",
+          "",
+          "",
+          productSubtotal.qty,
+          "",
+          productSubtotal.amount.toFixed(2).replace(".", ","),
+        ]),
+      );
     }
+  };
+
+  for (const r of rows) {
+    const supplier = supplierOf(r);
+    const pk = productKey(r);
+
+    if (pk !== currentProductKey) {
+      flushSubtotal();
+      currentProductKey = pk;
+      productSubtotal = {
+        qty: 0,
+        amount: 0,
+        label: [r.productName, r.variant, r.format].filter(Boolean).join(" "),
+      };
+    }
+    if (supplier !== currentSupplier) {
+      if (currentSupplier !== "") lines.push("");
+      currentSupplier = supplier;
+    }
+
+    const lineTotal = parseFloat(r.lineTotal);
+    productSubtotal.qty += r.quantity;
+    productSubtotal.amount += lineTotal;
+
     lines.push(
       join([
-        r.supplierName,
+        supplier,
         r.productName,
         r.variant,
         r.format,
         r.unit,
-        r.totalQty,
-        r.unitPrice.toFixed(2).replace(".", ","),
-        r.totalAmount.toFixed(2).replace(".", ","),
+        r.memberName,
+        r.quantity,
+        parseFloat(r.unitPrice).toFixed(2).replace(".", ","),
+        lineTotal.toFixed(2).replace(".", ","),
       ]),
     );
   }
+  flushSubtotal();
 
   const csv = "﻿" + lines.join("\n"); // BOM so Excel detects UTF-8
   const blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
