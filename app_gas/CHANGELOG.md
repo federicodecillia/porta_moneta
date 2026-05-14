@@ -16,8 +16,19 @@ and this project loosely follows [Semantic Versioning](https://semver.org/spec/v
 
 ## [Unreleased]
 
+_Nothing yet._
+
+---
+
+## [1.4.1] — 2026-05-14
+
+### Added
+- **"Cosa è cambiato" page** inside the app at `/changelog`. Linked from the bottom of the Guide page. Has an IT/EN toggle so the page itself is bilingual.
+- **"Novità" section in the Guide** showing a teaser of the most recent release (latest two sections, up to four bullets each) plus a link to the full changelog.
+
 ### Changed
 - Supplier CSV export is now itemized per member (one row per supplier × product × member). Sorted by supplier → product → member name so the file can be used directly to prepare each member's bag.
+- Subtotal rows removed from the supplier CSV — every row is now a real order line, so suppliers can't accidentally double-count by summing both per-member rows and a subtotal.
 
 ---
 
@@ -88,7 +99,8 @@ and this project loosely follows [Semantic Versioning](https://semver.org/spec/v
 
 ---
 
-[Unreleased]: https://github.com/federicodecillia/porta_moneta/compare/v1.4.0...HEAD
+[Unreleased]: https://github.com/federicodecillia/porta_moneta/compare/v1.4.1...HEAD
+[1.4.1]: https://github.com/federicodecillia/porta_moneta/releases/tag/v1.4.1
 [1.4.0]: https://github.com/federicodecillia/porta_moneta/releases/tag/v1.4.0
 [1.3.0]: https://github.com/federicodecillia/porta_moneta/releases/tag/v1.3.0
 [1.2.0]: https://github.com/federicodecillia/porta_moneta/releases/tag/v1.2.0
