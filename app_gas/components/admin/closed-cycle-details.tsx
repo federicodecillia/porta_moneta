@@ -157,9 +157,10 @@ export function ClosedCycleDetails({
 // supplier → product → member name so reading the file top-to-bottom matches
 // the natural workflow of preparing the delivery.
 //
-// A "Subtotale" row is appended after each product group with the total
-// quantity across all members, and a blank row separates supplier sections
-// so the file is also easy to scan visually.
+// A blank row separates supplier sections so the file is also easy to scan
+// visually. No aggregated subtotal rows: keeping the file uniform (every row
+// is a real order line) avoids the risk that a supplier double-counts a
+// product by reading both the per-member rows and a subtotal row.
 function downloadSupplierCsv(orders: OrderDetail[], cycleTitle: string) {
   if (orders.length === 0) return;
 
@@ -204,55 +205,15 @@ function downloadSupplierCsv(orders: OrderDetail[], cycleTitle: string) {
   };
   const join = (cells: Array<string | number | null>) => cells.map(escape).join(";");
 
-  // Group key identifies one product within one supplier; emit a subtotal
-  // row whenever the key changes.
-  const productKey = (l: OrderDetail) =>
-    [supplierOf(l), l.productName, l.variant ?? "", l.format ?? "", l.unit ?? ""].join("|");
-
   const lines: string[] = [join(header)];
   let currentSupplier = "";
-  let currentProductKey = "";
-  let productSubtotal = { qty: 0, amount: 0, label: "" };
-
-  const flushSubtotal = () => {
-    if (productSubtotal.qty > 0) {
-      lines.push(
-        join([
-          "",
-          `Subtotale ${productSubtotal.label}`,
-          "",
-          "",
-          "",
-          "",
-          productSubtotal.qty,
-          "",
-          productSubtotal.amount.toFixed(2).replace(".", ","),
-        ]),
-      );
-    }
-  };
 
   for (const r of rows) {
     const supplier = supplierOf(r);
-    const pk = productKey(r);
-
-    if (pk !== currentProductKey) {
-      flushSubtotal();
-      currentProductKey = pk;
-      productSubtotal = {
-        qty: 0,
-        amount: 0,
-        label: [r.productName, r.variant, r.format].filter(Boolean).join(" "),
-      };
-    }
     if (supplier !== currentSupplier) {
       if (currentSupplier !== "") lines.push("");
       currentSupplier = supplier;
     }
-
-    const lineTotal = parseFloat(r.lineTotal);
-    productSubtotal.qty += r.quantity;
-    productSubtotal.amount += lineTotal;
 
     lines.push(
       join([
@@ -264,11 +225,10 @@ function downloadSupplierCsv(orders: OrderDetail[], cycleTitle: string) {
         r.memberName,
         r.quantity,
         parseFloat(r.unitPrice).toFixed(2).replace(".", ","),
-        lineTotal.toFixed(2).replace(".", ","),
+        parseFloat(r.lineTotal).toFixed(2).replace(".", ","),
       ]),
     );
   }
-  flushSubtotal();
 
   const csv = "﻿" + lines.join("\n"); // BOM so Excel detects UTF-8
   const blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
