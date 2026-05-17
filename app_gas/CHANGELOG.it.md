@@ -20,6 +20,13 @@ _Niente per ora._
 
 ---
 
+## [1.4.5] — 17 maggio 2026
+
+### Risolto
+- **I pulsanti del ciclo aperto in admin non escono più dalla card su mobile**. La fila "Gestisci Prodotti / Modifica / Chiudi con rettifiche / Chiudi ciclo" prima sforava sui telefoni e l'ultimo ("Chiudi ciclo") veniva tagliato. Sotto i 640px ora i pulsanti vanno a capo sotto il titolo del ciclo e si dispongono su più righe se serve; su tablet/desktop il layout resta uguale a prima.
+
+---
+
 ## [1.4.4] — 17 maggio 2026
 
 ### Risolto
@@ -129,7 +136,8 @@ _Niente per ora._
 
 ---
 
-[Non rilasciato]: https://github.com/federicodecillia/porta_moneta/compare/v1.4.4...HEAD
+[Non rilasciato]: https://github.com/federicodecillia/porta_moneta/compare/v1.4.5...HEAD
+[1.4.5]: https://github.com/federicodecillia/porta_moneta/releases/tag/v1.4.5
 [1.4.4]: https://github.com/federicodecillia/porta_moneta/releases/tag/v1.4.4
 [1.4.3]: https://github.com/federicodecillia/porta_moneta/releases/tag/v1.4.3
 [1.4.2]: https://github.com/federicodecillia/porta_moneta/releases/tag/v1.4.2
