@@ -20,6 +20,13 @@ _Nothing yet._
 
 ---
 
+## [1.4.5] — 2026-05-17
+
+### Fixed
+- **Admin open-cycle action buttons no longer overflow on mobile**. The row "Gestisci Prodotti / Modifica / Chiudi con rettifiche / Chiudi ciclo" used to spill outside the card on iPhone-sized screens — the last action ("Chiudi ciclo") was clipped off. On screens narrower than 640px the buttons now stack under the title and wrap onto a new line as needed; on tablet/desktop they keep the previous side-by-side layout.
+
+---
+
 ## [1.4.4] — 2026-05-17
 
 ### Fixed
@@ -129,7 +136,8 @@ _Nothing yet._
 
 ---
 
-[Unreleased]: https://github.com/federicodecillia/porta_moneta/compare/v1.4.4...HEAD
+[Unreleased]: https://github.com/federicodecillia/porta_moneta/compare/v1.4.5...HEAD
+[1.4.5]: https://github.com/federicodecillia/porta_moneta/releases/tag/v1.4.5
 [1.4.4]: https://github.com/federicodecillia/porta_moneta/releases/tag/v1.4.4
 [1.4.3]: https://github.com/federicodecillia/porta_moneta/releases/tag/v1.4.3
 [1.4.2]: https://github.com/federicodecillia/porta_moneta/releases/tag/v1.4.2

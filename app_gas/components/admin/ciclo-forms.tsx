@@ -49,7 +49,10 @@ export function OpenCycleCard({
 
   return (
     <Card className="mb-4 border-l-4 border-l-pm-teal">
-      <CardHeader className="flex items-start justify-between gap-3">
+      {/* On mobile (< sm) the title stacks above a wrapping button row so all
+          four actions stay inside the card. On ≥sm we keep the previous
+          side-by-side layout. */}
+      <CardHeader className="flex flex-col items-start gap-3 sm:flex-row sm:justify-between">
         <div>
           <span className="mb-1 inline-flex items-center gap-1.5 rounded-full bg-pm-teal-light px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-pm-teal">
             <span className="h-1.5 w-1.5 rounded-full bg-pm-teal" />
@@ -57,7 +60,7 @@ export function OpenCycleCard({
           </span>
           <h3 className="mt-1 text-[15px] font-bold text-pm-near-black">{cycle.title}</h3>
         </div>
-        <div className="flex shrink-0 gap-2">
+        <div className="flex w-full flex-wrap gap-2 sm:w-auto sm:shrink-0 sm:justify-end">
           <button
             onClick={() => setManagingProducts((v) => !v)}
             className="rounded-xl border border-pm-teal/30 bg-pm-teal-light px-3 py-1.5 text-[11px] font-bold text-pm-teal"
