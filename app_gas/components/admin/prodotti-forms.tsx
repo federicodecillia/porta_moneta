@@ -2,8 +2,9 @@
 
 import { useState, useTransition } from "react";
 import { toast } from "@/components/ui/toast";
-import { 
-  adminUpsertCatalogProduct, 
+import { EmojiPicker } from "@/components/ui/emoji-picker";
+import {
+  adminUpsertCatalogProduct,
   adminLoadFromCatalog,
   adminArchiveCatalogProduct
 } from "@/lib/actions/admin";
@@ -22,7 +23,12 @@ export function CatalogProductForm({
   onClose: () => void;
 }) {
   const [isPending, startTransition] = useTransition();
-  const [tempEmoji, setTempEmoji] = useState(product?.emoji ?? getProductEmoji(product?.name ?? ""));
+  const [currentEmoji, setCurrentEmoji] = useState(
+    product?.emoji ?? getProductEmoji(product?.name ?? ""),
+  );
+  // Admins who type the name first expect the icon to auto-suggest. We only
+  // auto-update while the user has not explicitly picked an emoji yet.
+  const [emojiTouched, setEmojiTouched] = useState(Boolean(product?.emoji));
 
   function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -71,24 +77,28 @@ export function CatalogProductForm({
       </div>
 
       <div className="grid grid-cols-2 gap-3">
-        <div className="col-span-2 flex gap-3">
+        <div className="col-span-2 flex items-end gap-3">
           <div className="flex-1">
             <label className={labelCls}>Nome *</label>
-            <input 
-              name="name" 
-              required 
-              defaultValue={product?.name} 
-              className={inputCls} 
-              onChange={(e) => setTempEmoji(getProductEmoji(e.target.value))}
+            <input
+              name="name"
+              required
+              defaultValue={product?.name}
+              className={inputCls}
+              onChange={(e) => {
+                if (!emojiTouched) setCurrentEmoji(getProductEmoji(e.target.value));
+              }}
             />
           </div>
-          <div className="w-16">
+          <div className="w-[64px]">
             <label className={labelCls}>Icona</label>
-            <input 
-              name="emoji" 
-              defaultValue={product?.emoji ?? tempEmoji} 
-              className={`${inputCls} text-center text-lg`} 
-              maxLength={2}
+            <EmojiPicker
+              name="emoji"
+              value={currentEmoji}
+              onChange={(emoji) => {
+                setCurrentEmoji(emoji);
+                setEmojiTouched(true);
+              }}
             />
           </div>
         </div>
