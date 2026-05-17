@@ -20,6 +20,15 @@ _Nothing yet._
 
 ---
 
+## [1.5.0] — 2026-05-17
+
+### Added
+- **Edit a member's order after the cycle is closed.** Inside the "Recap ordini" modal each member row now has a ✎ Modifica button that opens a full stepper UI: change quantities, add products from the cycle catalog, remove lines, or even create an order from scratch for a member who didn't originally participate ("+ Aggiungi ordine per un socio" at the bottom of the modal). Designed for the common "I forgot to put the eggs in your bag" scenario.
+- **Correction ledger entries.** Edits never touch the original `order_charge` row. Instead, the delta between the old and new order total is posted as a separate `correction` entry (negative = additional charge, positive = refund), so the audit trail stays intact and any change is fully reversible by posting an opposite correction.
+- **Member notification on edit.** The member gets an `order_corrected` notification with the human-readable diff and their new balance, deep-linking back to the cycle in `/storico`.
+
+---
+
 ## [1.4.5] — 2026-05-17
 
 ### Fixed
@@ -136,7 +145,8 @@ _Nothing yet._
 
 ---
 
-[Unreleased]: https://github.com/federicodecillia/porta_moneta/compare/v1.4.5...HEAD
+[Unreleased]: https://github.com/federicodecillia/porta_moneta/compare/v1.5.0...HEAD
+[1.5.0]: https://github.com/federicodecillia/porta_moneta/releases/tag/v1.5.0
 [1.4.5]: https://github.com/federicodecillia/porta_moneta/releases/tag/v1.4.5
 [1.4.4]: https://github.com/federicodecillia/porta_moneta/releases/tag/v1.4.4
 [1.4.3]: https://github.com/federicodecillia/porta_moneta/releases/tag/v1.4.3

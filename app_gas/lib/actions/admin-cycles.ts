@@ -1,6 +1,6 @@
 "use server";
 
-import { eq, asc } from "drizzle-orm";
+import { eq, and, asc } from "drizzle-orm";
 import { auth } from "@/auth";
 import { getDb } from "@/lib/db/client";
 import { orders, members, products, suppliers } from "@/lib/db/schema";
@@ -42,6 +42,90 @@ export async function adminGetCycleOrderDetails(cycleId: string) {
       .orderBy(asc(members.fullName), asc(products.name));
 
     return { success: true, orders: rows };
+  } catch (e) {
+    return { error: e instanceof Error ? e.message : "Errore" };
+  }
+}
+
+// Returns everything the "Modifica ordine chiuso" editor needs in one call:
+// the cycle's active product catalogue, the current order lines for the
+// target member, and a flat list of active members so the admin can also
+// add an order for someone who didn't originally order.
+export type EditClosedOrderBootstrap = {
+  products: Array<{
+    productId: string;
+    name: string;
+    variant: string | null;
+    format: string | null;
+    unit: string | null;
+    category: string | null;
+    emoji: string | null;
+    unitPrice: string;
+    pricePerKg: string | null;
+  }>;
+  memberLines: Array<{
+    productId: string;
+    quantity: number;
+    unitPriceSnapshot: string;
+    lineTotal: string;
+  }>;
+  members: Array<{ memberId: string; fullName: string }>;
+};
+
+export async function adminGetEditClosedOrderBootstrap(
+  cycleId: string,
+  memberId: string | null,
+): Promise<{ data?: EditClosedOrderBootstrap; error?: string }> {
+  try {
+    await requireAdmin();
+    const db = getDb();
+
+    const [productRows, lineRows, memberRows] = await Promise.all([
+      db
+        .select({
+          productId: products.productId,
+          name: products.name,
+          variant: products.variant,
+          format: products.format,
+          unit: products.unit,
+          category: products.category,
+          emoji: products.emoji,
+          unitPrice: products.unitPrice,
+          pricePerKg: products.pricePerKg,
+        })
+        .from(products)
+        .where(and(eq(products.cycleId, cycleId), eq(products.active, true)))
+        .orderBy(asc(products.sortOrder), asc(products.name)),
+      memberId
+        ? db
+            .select({
+              productId: orders.productId,
+              quantity: orders.quantity,
+              unitPriceSnapshot: orders.unitPriceSnapshot,
+              lineTotal: orders.lineTotal,
+            })
+            .from(orders)
+            .where(and(eq(orders.cycleId, cycleId), eq(orders.memberId, memberId)))
+        : Promise.resolve([] as Array<{
+            productId: string;
+            quantity: number;
+            unitPriceSnapshot: string;
+            lineTotal: string;
+          }>),
+      db
+        .select({ memberId: members.memberId, fullName: members.fullName })
+        .from(members)
+        .where(eq(members.active, true))
+        .orderBy(asc(members.fullName)),
+    ]);
+
+    return {
+      data: {
+        products: productRows,
+        memberLines: lineRows,
+        members: memberRows,
+      },
+    };
   } catch (e) {
     return { error: e instanceof Error ? e.message : "Errore" };
   }
