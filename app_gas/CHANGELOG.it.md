@@ -20,6 +20,15 @@ _Niente per ora._
 
 ---
 
+## [1.5.0] — 17 maggio 2026
+
+### Aggiunte
+- **Modifica ordine di un socio anche a ciclo chiuso.** Dentro al modale "Recap ordini" ogni socio ha un pulsante ✎ Modifica che apre lo stesso stepper del form ordine: si possono cambiare quantità, aggiungere prodotti del catalogo del ciclo, rimuovere righe, o creare un ordine da zero per un socio che non aveva ordinato (pulsante "+ Aggiungi ordine per un socio" in fondo al modale). Pensato per il classico caso "ah, dimenticato di mettere le uova nella sua borsa".
+- **Voci di correzione nel saldo.** Le modifiche non toccano mai l'addebito originale: la differenza fra il totale vecchio e il totale nuovo viene scritta come voce `correction` separata (negativa = addebito aggiuntivo, positiva = rimborso). Lo storico resta tracciabile e ogni modifica è reversibile pubblicando una correzione opposta.
+- **Notifica al socio in automatico.** Il socio riceve una notifica `order_corrected` con il dettaglio del cambiamento e il nuovo saldo, con link diretto al ciclo dentro `/storico`.
+
+---
+
 ## [1.4.5] — 17 maggio 2026
 
 ### Risolto
@@ -136,7 +145,8 @@ _Niente per ora._
 
 ---
 
-[Non rilasciato]: https://github.com/federicodecillia/porta_moneta/compare/v1.4.5...HEAD
+[Non rilasciato]: https://github.com/federicodecillia/porta_moneta/compare/v1.5.0...HEAD
+[1.5.0]: https://github.com/federicodecillia/porta_moneta/releases/tag/v1.5.0
 [1.4.5]: https://github.com/federicodecillia/porta_moneta/releases/tag/v1.4.5
 [1.4.4]: https://github.com/federicodecillia/porta_moneta/releases/tag/v1.4.4
 [1.4.3]: https://github.com/federicodecillia/porta_moneta/releases/tag/v1.4.3

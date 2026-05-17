@@ -1,9 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useCallback, useState } from "react";
 import { adminGetCycleOrderDetails } from "@/lib/actions/admin-cycles";
 import { formatEur, getProductEmoji } from "@/lib/utils";
 import { toast } from "@/components/ui/toast";
+import { EditClosedOrderModal } from "./edit-closed-order-modal";
 
 type OrderDetail = {
   memberId: string;
@@ -33,9 +34,11 @@ export function ClosedCycleDetails({
   const [isOpen, setIsOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [orderDetails, setOrderDetails] = useState<OrderDetail[]>([]);
+  const [editTarget, setEditTarget] = useState<
+    { kind: "edit"; memberId: string; memberName: string } | { kind: "create" } | null
+  >(null);
 
-  async function handleOpen() {
-    setIsOpen(true);
+  const refetch = useCallback(async () => {
     setLoading(true);
     try {
       const result = await adminGetCycleOrderDetails(cycleId);
@@ -49,6 +52,11 @@ export function ClosedCycleDetails({
     } finally {
       setLoading(false);
     }
+  }, [cycleId]);
+
+  async function handleOpen() {
+    setIsOpen(true);
+    await refetch();
   }
 
   if (!isOpen) {
@@ -97,11 +105,24 @@ export function ClosedCycleDetails({
             <div className="space-y-8">
               {Object.entries(grouped).map(([memberName, lines]) => {
                 const total = lines.reduce((s, l) => s + parseFloat(l.lineTotal), 0);
+                const memberId = lines[0]?.memberId;
                 return (
                   <div key={memberName} className="space-y-2">
-                    <div className="flex items-center justify-between border-b border-pm-teal/20 pb-1">
+                    <div className="flex flex-wrap items-center justify-between gap-2 border-b border-pm-teal/20 pb-1">
                       <span className="text-[14px] font-bold text-pm-near-black">{memberName}</span>
-                      <span className="text-[13px] font-black text-pm-teal">{formatEur(total)}</span>
+                      <div className="flex items-center gap-3">
+                        <span className="text-[13px] font-black text-pm-teal">{formatEur(total)}</span>
+                        {memberId && (
+                          <button
+                            onClick={() =>
+                              setEditTarget({ kind: "edit", memberId, memberName })
+                            }
+                            className="rounded-full bg-pm-orange/10 px-2.5 py-0.5 text-[10px] font-bold text-pm-orange hover:bg-pm-orange/20"
+                          >
+                            ✎ Modifica
+                          </button>
+                        )}
+                      </div>
                     </div>
                     <div className="space-y-1 pl-2">
                       {lines.map((l, i) => (
@@ -130,22 +151,40 @@ export function ClosedCycleDetails({
           )}
         </div>
 
-        <div className="flex gap-2 border-t border-pm-border p-4">
+        <div className="space-y-2 border-t border-pm-border p-4">
           <button
-            onClick={() => downloadSupplierCsv(orderDetails, cycleTitle)}
-            disabled={orderDetails.length === 0}
-            className="flex-1 rounded-xl border border-pm-teal/30 bg-pm-teal-light py-3 text-[13px] font-bold text-pm-teal active:scale-95 disabled:opacity-50"
+            onClick={() => setEditTarget({ kind: "create" })}
+            className="w-full rounded-xl border border-dashed border-pm-orange/40 bg-pm-orange-light py-2 text-[12px] font-bold text-pm-orange hover:bg-pm-orange/15"
           >
-            ⬇ CSV fornitore
+            + Aggiungi ordine per un socio
           </button>
-          <button
-            onClick={() => setIsOpen(false)}
-            className="flex-1 rounded-xl bg-pm-near-black py-3 text-[14px] font-bold text-white shadow-lg active:scale-95"
-          >
-            Chiudi
-          </button>
+          <div className="flex gap-2">
+            <button
+              onClick={() => downloadSupplierCsv(orderDetails, cycleTitle)}
+              disabled={orderDetails.length === 0}
+              className="flex-1 rounded-xl border border-pm-teal/30 bg-pm-teal-light py-3 text-[13px] font-bold text-pm-teal active:scale-95 disabled:opacity-50"
+            >
+              ⬇ CSV fornitore
+            </button>
+            <button
+              onClick={() => setIsOpen(false)}
+              className="flex-1 rounded-xl bg-pm-near-black py-3 text-[14px] font-bold text-white shadow-lg active:scale-95"
+            >
+              Chiudi
+            </button>
+          </div>
         </div>
       </div>
+
+      {editTarget && (
+        <EditClosedOrderModal
+          cycleId={cycleId}
+          cycleTitle={cycleTitle}
+          mode={editTarget}
+          onClose={() => setEditTarget(null)}
+          onSaved={() => refetch()}
+        />
+      )}
     </div>
   );
 }

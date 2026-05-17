@@ -720,6 +720,198 @@ export async function adminRecordTopup(
   revalidatePath("/storico");
 }
 
+// ── Post-close order editing ─────────────────────────────────────────────────
+//
+// Lets an admin tweak a member's order *after* the cycle has been closed
+// (e.g. someone forgets to include eggs, or a product turned out to be
+// unavailable). The original `order_charge` ledger entry is left intact;
+// the delta vs the new total is posted as a separate `correction` row so
+// the audit trail is preserved and the change is fully reversible by
+// posting an inverse correction.
+//
+// Empty new-line lists also delete every order row for that member in the
+// cycle, which makes "rimuovi l'intero ordine" work too.
+
+export type EditClosedOrderInput = {
+  cycleId: string;
+  memberId: string;
+  // Final desired state of the member's order. Lines with quantity ≤ 0 are
+  // ignored.
+  lines: Array<{ productId: string; quantity: number }>;
+  // Free-form motivation that ends up on the ledger entry and notification.
+  note?: string;
+};
+
+export async function adminEditClosedOrder(input: EditClosedOrderInput) {
+  const admin = await requireAdmin();
+  const db = getDb();
+  const now = new Date();
+
+  const [cycle] = await db
+    .select({ status: orderCycles.status, title: orderCycles.title })
+    .from(orderCycles)
+    .where(eq(orderCycles.cycleId, input.cycleId))
+    .limit(1);
+  if (!cycle) throw new Error("Ciclo non trovato");
+  if (cycle.status !== "closed") {
+    throw new Error("L'ordine si può modificare in questo modo solo dopo la chiusura del ciclo");
+  }
+
+  const [member] = await db
+    .select({ memberId: members.memberId, fullName: members.fullName })
+    .from(members)
+    .where(eq(members.memberId, input.memberId))
+    .limit(1);
+  if (!member) throw new Error("Socio non trovato");
+
+  // Pull the current order rows so we can compute the delta.
+  const previousLines = await db
+    .select({
+      orderLineId: orders.orderLineId,
+      productId: orders.productId,
+      quantity: orders.quantity,
+      lineTotal: orders.lineTotal,
+    })
+    .from(orders)
+    .where(and(eq(orders.cycleId, input.cycleId), eq(orders.memberId, input.memberId)));
+
+  const oldTotal = previousLines.reduce((sum, l) => sum + parseFloat(l.lineTotal), 0);
+
+  // Resolve the new lines against the cycle's active products. We use the
+  // current `products.unitPrice` (which already reflects any close-time
+  // adjustments) as the snapshot.
+  const cleanLines = input.lines
+    .map((l) => ({ productId: l.productId, quantity: Math.floor(l.quantity) }))
+    .filter((l) => l.productId && l.quantity > 0);
+
+  const productIds = Array.from(new Set(cleanLines.map((l) => l.productId)));
+  const cycleProducts = productIds.length
+    ? await db
+        .select({
+          productId: products.productId,
+          unitPrice: products.unitPrice,
+          name: products.name,
+        })
+        .from(products)
+        .where(and(eq(products.cycleId, input.cycleId), inArray(products.productId, productIds)))
+    : [];
+  const productMap = new Map(cycleProducts.map((p) => [p.productId, p]));
+
+  // Reject any line that points at a product not in this cycle — guards
+  // against client-side tampering and stale UI state.
+  for (const line of cleanLines) {
+    if (!productMap.has(line.productId)) {
+      throw new Error("Prodotto non valido per questo ciclo");
+    }
+  }
+
+  const newTotal = cleanLines.reduce((sum, l) => {
+    const unitPrice = parseFloat(productMap.get(l.productId)!.unitPrice);
+    return sum + unitPrice * l.quantity;
+  }, 0);
+
+  const delta = newTotal - oldTotal;
+  const epsilon = 0.005;
+
+  // Replace the order rows: simplest correct semantics for "final desired
+  // state". neon-http has no transactions, so we delete then bulk-insert in
+  // sequence — a partial failure would leave us with an empty/partial order
+  // (visible to the member as "0 prodotti"), recoverable by re-running the
+  // edit, never producing duplicate or orphan ledger entries.
+  await db
+    .delete(orders)
+    .where(and(eq(orders.cycleId, input.cycleId), eq(orders.memberId, input.memberId)));
+
+  if (cleanLines.length > 0) {
+    await db.insert(orders).values(
+      cleanLines.map((l) => {
+        const p = productMap.get(l.productId)!;
+        const lineTotal = (parseFloat(p.unitPrice) * l.quantity).toFixed(2);
+        return {
+          orderLineId: genId("ord"),
+          cycleId: input.cycleId,
+          memberId: input.memberId,
+          productId: l.productId,
+          quantity: l.quantity,
+          unitPriceSnapshot: p.unitPrice,
+          lineTotal,
+          updatedAt: now,
+        };
+      }),
+    );
+  }
+
+  // Post a correction entry only if the total actually changed. Same-total
+  // edits (e.g. swap one product for another at identical price) are
+  // legitimate too and need no ledger movement.
+  let correctionEntryId: string | null = null;
+  if (Math.abs(delta) > epsilon) {
+    correctionEntryId = genId("led");
+    const trimmedNote = (input.note ?? "").trim();
+    const reason = trimmedNote || `Correzione ordine "${cycle.title}"`;
+    await db.insert(ledgerEntries).values({
+      entryId: correctionEntryId,
+      memberId: input.memberId,
+      entryDate: now,
+      type: "correction",
+      // delta > 0 → member ordered more → additional charge (negative ledger amount).
+      // delta < 0 → member ordered less → refund (positive ledger amount).
+      amount: (-delta).toFixed(2),
+      cycleId: input.cycleId,
+      note: reason,
+      createdBy: admin.email,
+      createdAt: now,
+    });
+  }
+
+  // Member-facing notification with the human-readable diff.
+  const [balanceRow] = await db
+    .select({ total: sql<string>`coalesce(sum(${ledgerEntries.amount}), '0')` })
+    .from(ledgerEntries)
+    .where(eq(ledgerEntries.memberId, input.memberId));
+  const newBalance = parseFloat(balanceRow?.total ?? "0");
+
+  const fmt = (n: number) => `${n.toFixed(2).replace(".", ",")} euro`;
+  const dirSentence =
+    Math.abs(delta) <= epsilon
+      ? `Il tuo ordine in "${cycle.title}" e' stato aggiornato, il saldo non cambia.`
+      : delta > 0
+        ? `Il tuo ordine in "${cycle.title}" e' stato modificato dall'admin: addebito aggiuntivo di ${fmt(delta)}.`
+        : `Il tuo ordine in "${cycle.title}" e' stato modificato dall'admin: rimborso di ${fmt(-delta)}.`;
+
+  await createNotification(db, {
+    memberId: input.memberId,
+    type: "order_corrected",
+    title: "Ordine modificato",
+    body: `${dirSentence} Nuovo saldo: ${fmt(newBalance)}.`,
+    href: `/storico?cycleId=${input.cycleId}`,
+    createdAt: now,
+  });
+
+  await writeAudit(db, admin.email, "edit_closed_order", "order", input.cycleId, {
+    cycleId: input.cycleId,
+    memberId: input.memberId,
+    oldTotal: oldTotal.toFixed(2),
+    newTotal: newTotal.toFixed(2),
+    delta: delta.toFixed(2),
+    correctionEntryId,
+    lineCount: cleanLines.length,
+    note: input.note ?? null,
+  });
+
+  revalidatePath("/admin");
+  revalidatePath("/");
+  revalidatePath("/storico");
+
+  return {
+    oldTotal: Number(oldTotal.toFixed(2)),
+    newTotal: Number(newTotal.toFixed(2)),
+    delta: Number(delta.toFixed(2)),
+    newBalance: Number(newBalance.toFixed(2)),
+    correctionEntryId,
+  };
+}
+
 export async function adminUpdateLedgerEntry(
   entryId: string,
   data: { amount: number; note: string },
