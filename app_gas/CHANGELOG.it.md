@@ -20,6 +20,16 @@ _Niente per ora._
 
 ---
 
+## [1.4.2] — 17 maggio 2026
+
+### Aggiunte
+- **Selettore emoji con ricerca** nel campo "Icona" dei prodotti. Cliccando sull'icona si apre un menù con circa 80 emoji legate al cibo: basta scrivere "pomodoro", "miele", "carciofo" per filtrare. Niente più digitazione manuale dell'emoji.
+
+### Modificato
+- **Saldi soci allineati al foglio CASSA** in vista del lancio ufficiale. Tutte le vecchie voci ledger (dati di test) sono state cancellate e sostituite con una voce iniziale di tipo `adjustment` per ciascun socio, con il saldo finale del foglio "FRUTTA E VERDURA 2025-2026 → CASSA". I soci non presenti nel foglio partono da zero.
+
+---
+
 ## [1.4.1] — 14 maggio 2026
 
 ### Aggiunte
@@ -99,7 +109,8 @@ _Niente per ora._
 
 ---
 
-[Non rilasciato]: https://github.com/federicodecillia/porta_moneta/compare/v1.4.1...HEAD
+[Non rilasciato]: https://github.com/federicodecillia/porta_moneta/compare/v1.4.2...HEAD
+[1.4.2]: https://github.com/federicodecillia/porta_moneta/releases/tag/v1.4.2
 [1.4.1]: https://github.com/federicodecillia/porta_moneta/releases/tag/v1.4.1
 [1.4.0]: https://github.com/federicodecillia/porta_moneta/releases/tag/v1.4.0
 [1.3.0]: https://github.com/federicodecillia/porta_moneta/releases/tag/v1.3.0

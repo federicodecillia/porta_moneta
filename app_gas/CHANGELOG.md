@@ -20,6 +20,16 @@ _Nothing yet._
 
 ---
 
+## [1.4.2] — 2026-05-17
+
+### Added
+- **Searchable emoji picker** for the product icon field. Click the icon to open a popover with ~80 food-relevant emojis, type to filter by Italian keywords (e.g. "pomodoro", "miele", "carciofo"). The previous free-text input is gone — admins no longer have to remember the system shortcut for the emoji keyboard.
+
+### Changed
+- **Member balances reset to match the legacy CASSA spreadsheet** in preparation for going live. Every existing ledger entry (test data) was removed and replaced with one seed `adjustment` entry per member carrying the closing balance from the "FRUTTA E VERDURA 2025-2026 → CASSA" sheet. Members not listed in the sheet start at zero.
+
+---
+
 ## [1.4.1] — 2026-05-14
 
 ### Added
@@ -99,7 +109,8 @@ _Nothing yet._
 
 ---
 
-[Unreleased]: https://github.com/federicodecillia/porta_moneta/compare/v1.4.1...HEAD
+[Unreleased]: https://github.com/federicodecillia/porta_moneta/compare/v1.4.2...HEAD
+[1.4.2]: https://github.com/federicodecillia/porta_moneta/releases/tag/v1.4.2
 [1.4.1]: https://github.com/federicodecillia/porta_moneta/releases/tag/v1.4.1
 [1.4.0]: https://github.com/federicodecillia/porta_moneta/releases/tag/v1.4.0
 [1.3.0]: https://github.com/federicodecillia/porta_moneta/releases/tag/v1.3.0
