@@ -849,16 +849,16 @@ export function SupplierEmailButton({
       ? "Fornitore senza email"
       : null;
 
-  function handleClick() {
+  async function handleClick() {
     if (disabledReason) return;
+    const ok = await confirm({
+      title: `Invia ordine a ${supplierName}?`,
+      message: `Destinatario: ${supplierEmail}\nOggetto: Ordine GAS Porta Moneta — ${cycleTitle}\n\nRiceverai una copia in CC.`,
+      confirmLabel: "Invia ora",
+      cancelLabel: "Annulla",
+    });
+    if (!ok) return;
     startTransition(async () => {
-      const ok = await confirm({
-        title: `Invia ordine a ${supplierName}?`,
-        message: `Destinatario: ${supplierEmail}\nOggetto: Ordine GAS Porta Moneta — ${cycleTitle}\n\nRiceverai una copia in CC.`,
-        confirmLabel: "Invia ora",
-        cancelLabel: "Annulla",
-      });
-      if (!ok) return;
       const result = await adminSendSupplierEmail(cycleId);
       if ("error" in result) {
         toast.error(result.error);

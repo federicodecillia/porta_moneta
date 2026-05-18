@@ -21,13 +21,25 @@ const eur = (n: number): string => n.toFixed(2).replace(".", ",");
 const qty = (n: number): string =>
   Number.isInteger(n) ? String(n) : n.toFixed(3).replace(".", ",").replace(/,?0+$/, "");
 
+const slug = (s: string): string =>
+  s
+    .normalize("NFD")
+    .replace(/[̀-ͯ]/g, "")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "_")
+    .replace(/^_+|_+$/g, "")
+    .slice(0, 60) || "ciclo";
+
 // Builds an aggregated-per-product CSV for a supplier order. One row per
 // product with the SUM of ordered quantities across all members. Includes a
 // BOM + Excel-friendly `sep=;` hint so it opens correctly with comma decimals
 // on Italian locales.
-export async function buildSupplierAggregateCsv(cycleId: string): Promise<{
+export async function buildSupplierAggregateCsv(
+  cycleId: string,
+  cycleTitle: string,
+): Promise<{
   filename: string;
-  content: string;
+  content: Buffer;
   rowCount: number;
   grandTotal: number;
 }> {
@@ -71,11 +83,16 @@ export async function buildSupplierAggregateCsv(cycleId: string): Promise<{
   const grandTotal = rows.reduce((s, r) => s + parseFloat(r.totalEur), 0);
   const totalLine = `TOTALE;;;;;;${eur(grandTotal)}`;
 
-  const content = ["sep=;", header, ...lines, totalLine].join("\n");
+  // BOM prefix keeps Excel happy with the accented characters and the `sep=;`
+  // hint forces it to use the Italian-friendly decimal-comma layout. We return
+  // a Buffer (not a string) because the Resend SDK base64-decodes string
+  // attachments, which corrupts UTF-8 payloads.
+  const text = ["sep=;", header, ...lines, totalLine].join("\n");
+  const content = Buffer.from("﻿" + text, "utf-8");
+
   return {
-    // BOM keeps Excel happy with the accented characters in column headers.
-    filename: `ordine_ciclo_${cycleId}.csv`,
-    content: "﻿" + content,
+    filename: `ordine_${slug(cycleTitle)}.csv`,
+    content,
     rowCount: rows.length,
     grandTotal,
   };

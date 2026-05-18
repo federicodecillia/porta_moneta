@@ -898,7 +898,7 @@ export async function adminSendSupplierEmail(
       return { error: "Il fornitore non ha un indirizzo email" };
 
     const { buildSupplierAggregateCsv } = await import("@/lib/csv/supplier-export");
-    const csv = await buildSupplierAggregateCsv(cycleId);
+    const csv = await buildSupplierAggregateCsv(cycleId, cycle.title);
     if (csv.rowCount === 0) return { error: "Nessun ordine in questo ciclo" };
 
     const { supplierOrderEmail } = await import("@/lib/email/templates");
