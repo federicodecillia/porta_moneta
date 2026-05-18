@@ -16,7 +16,10 @@ and this project loosely follows [Semantic Versioning](https://semver.org/spec/v
 
 ## [Unreleased]
 
-_Nothing yet._
+### Added
+- **Edit a cycle after it's been closed.** Closed cycles in the "Ultimi cicli" list now have a ✎ Modifica button alongside "Recap ordini". Admins can fix the title, notes, pickup dates, and shipping costs without reopening the cycle. The form clearly disables what doesn't make sense to change post-closure (order close time, supplier, access level).
+- **Automatic shipping recompute on closed cycles.** When an admin changes the shipping mode or amount on a closed cycle, the `shipping_charge` ledger entries are updated in place for every member with an order. Each affected member receives an `order_adjusted` notification showing the old and new share, and a `cycle_shipping_recomputed` audit log entry records the before/after.
+- **Send the order to the supplier by email.** New 📧 Fornitore button on each closed cycle. It sends a Resend-powered email to the cycle's supplier with the acting admin in CC and a CSV attached, aggregated per product (one row per SKU with summed quantities and totals). Disabled with an explanatory tooltip when the cycle has no supplier or the supplier has no email on file. Resend setup is documented in `SETUP.md`.
 
 ---
 

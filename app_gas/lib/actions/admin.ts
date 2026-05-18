@@ -402,6 +402,101 @@ export async function adminCloseCycleWithAdjustments(
   return { ...result, productsAdjusted: cleaned.length };
 }
 
+// Recomputes shipping_charge ledger entries for a closed cycle after its
+// shipping configuration changed. Updates existing entries in place (we never
+// delete to keep the audit trail), inserts new entries for members who had
+// no previous share, and emits an `order_adjusted` notification per affected
+// member. Returns the list of memberIds whose shipping share actually moved.
+async function recomputeShippingForClosedCycle(
+  db: ReturnType<typeof getDb>,
+  cycleId: string,
+  adminEmail: string,
+): Promise<{ adjustedMembers: string[] }> {
+  const [cycle] = await db
+    .select({
+      cycleId: orderCycles.cycleId,
+      title: orderCycles.title,
+      shippingMode: orderCycles.shippingMode,
+      shippingCostPerMember: orderCycles.shippingCostPerMember,
+      shippingTotal: orderCycles.shippingTotal,
+    })
+    .from(orderCycles)
+    .where(eq(orderCycles.cycleId, cycleId))
+    .limit(1);
+  if (!cycle) return { adjustedMembers: [] };
+
+  const memberTotals = await db
+    .select({
+      memberId: orders.memberId,
+      total: sql<string>`sum(${orders.lineTotal})`,
+    })
+    .from(orders)
+    .where(eq(orders.cycleId, cycleId))
+    .groupBy(orders.memberId);
+  const eligible = memberTotals.filter((r) => parseFloat(r.total) > 0);
+
+  const newShares = computeShippingShares(eligible, cycle);
+
+  const existing = await db
+    .select({
+      entryId: ledgerEntries.entryId,
+      memberId: ledgerEntries.memberId,
+      amount: ledgerEntries.amount,
+    })
+    .from(ledgerEntries)
+    .where(
+      and(eq(ledgerEntries.cycleId, cycleId), eq(ledgerEntries.type, "shipping_charge")),
+    );
+  const existingByMember = new Map(existing.map((e) => [e.memberId, e]));
+
+  const now = new Date();
+  const adjusted: string[] = [];
+
+  for (const r of eligible) {
+    const newShare = newShares.get(r.memberId) ?? 0;
+    const prev = existingByMember.get(r.memberId);
+    const oldShare = prev ? -parseFloat(prev.amount) : 0;
+    if (Math.abs(newShare - oldShare) < 0.005) continue;
+
+    if (prev) {
+      await db
+        .update(ledgerEntries)
+        .set({
+          amount: (-newShare).toFixed(2),
+          note: "Spedizione rettificata",
+          updatedAt: now,
+          updatedBy: adminEmail,
+        })
+        .where(eq(ledgerEntries.entryId, prev.entryId));
+    } else if (newShare > 0) {
+      await db.insert(ledgerEntries).values({
+        entryId: genId("led"),
+        memberId: r.memberId,
+        entryDate: now,
+        type: "shipping_charge",
+        amount: (-newShare).toFixed(2),
+        cycleId,
+        note: "Spedizione rettificata",
+        createdBy: adminEmail,
+        createdAt: now,
+      });
+    }
+
+    const fmt = (n: number) => n.toFixed(2).replace(".", ",");
+    await createNotification(db, {
+      memberId: r.memberId,
+      type: "order_adjusted",
+      title: `Spedizione "${cycle.title}" aggiornata`,
+      body: `Le spese di spedizione del ciclo "${cycle.title}" sono state aggiornate: la tua quota e' passata da ${fmt(oldShare)} a ${fmt(newShare)} euro.`,
+      href: "/storico",
+    });
+
+    adjusted.push(r.memberId);
+  }
+
+  return { adjustedMembers: adjusted };
+}
+
 export async function adminUpdateCycle(
   cycleId: string,
   data: {
@@ -418,10 +513,30 @@ export async function adminUpdateCycle(
     shippingCostPerMember?: string;
     shippingTotal?: string;
   },
-): Promise<{error?: string}> {
+): Promise<{ error?: string; adjustedMembers?: number }> {
   try {
     const admin = await requireAdmin();
     const db = getDb();
+
+    // Load current state so we can decide afterwards whether the cycle is
+    // closed and whether shipping-related fields were touched.
+    const [before] = await db
+      .select({
+        status: orderCycles.status,
+        shippingMode: orderCycles.shippingMode,
+        shippingCostPerMember: orderCycles.shippingCostPerMember,
+        shippingTotal: orderCycles.shippingTotal,
+      })
+      .from(orderCycles)
+      .where(eq(orderCycles.cycleId, cycleId))
+      .limit(1);
+    if (!before) return { error: "Ciclo non trovato" };
+
+    const isClosed = before.status === "closed";
+    const shippingTouched =
+      data.shippingMode !== undefined ||
+      data.shippingCostPerMember !== undefined ||
+      data.shippingTotal !== undefined;
 
     // When shippingMode is provided we treat it as authoritative: also clear
     // the field belonging to the other mode so we never end up with stale
@@ -465,10 +580,36 @@ export async function adminUpdateCycle(
         ...shippingPatch,
       })
       .where(eq(orderCycles.cycleId, cycleId));
+
+    let adjustedMembers = 0;
+    if (isClosed && shippingTouched) {
+      const { adjustedMembers: m } = await recomputeShippingForClosedCycle(
+        db,
+        cycleId,
+        admin.email,
+      );
+      adjustedMembers = m.length;
+      await writeAudit(db, admin.email, "cycle_shipping_recomputed", "cycle", cycleId, {
+        before: {
+          shippingMode: before.shippingMode,
+          shippingCostPerMember: before.shippingCostPerMember,
+          shippingTotal: before.shippingTotal,
+        },
+        after: {
+          shippingMode: data.shippingMode,
+          shippingCostPerMember: data.shippingCostPerMember,
+          shippingTotal: data.shippingTotal,
+        },
+        affectedMembers: m,
+      });
+      revalidatePath("/storico");
+      revalidatePath("/notifiche");
+    }
+
     await writeAudit(db, admin.email, "update_cycle", "cycle", cycleId, data);
     revalidatePath("/admin");
     revalidatePath("/");
-    return {};
+    return { adjustedMembers };
   } catch (e) {
     return { error: e instanceof Error ? e.message : "Errore nell'aggiornamento del ciclo" };
   }
@@ -718,6 +859,80 @@ export async function adminRecordTopup(
   revalidatePath("/admin");
   revalidatePath("/");
   revalidatePath("/storico");
+}
+
+// ── Supplier email ───────────────────────────────────────────────────────────
+
+// Sends the closed cycle's order summary as a CSV attachment to the
+// configured supplier. The acting admin is CC'd so they always have a copy
+// in their own mailbox. The CSV is aggregated per product (one row per SKU,
+// summing quantities and amounts across every member's order). Fails fast if
+// the cycle isn't closed, has no supplier, or the supplier has no email on
+// file — Resend errors are surfaced verbatim.
+export async function adminSendSupplierEmail(
+  cycleId: string,
+): Promise<{ ok: true; recipient: string; rowCount: number } | { error: string }> {
+  try {
+    const admin = await requireAdmin();
+    const db = getDb();
+
+    const [cycle] = await db
+      .select({
+        cycleId: orderCycles.cycleId,
+        title: orderCycles.title,
+        status: orderCycles.status,
+        pickupDate: orderCycles.pickupDate,
+        supplierId: orderCycles.supplierId,
+        supplierEmail: suppliers.email,
+        supplierName: suppliers.name,
+      })
+      .from(orderCycles)
+      .leftJoin(suppliers, eq(orderCycles.supplierId, suppliers.supplierId))
+      .where(eq(orderCycles.cycleId, cycleId))
+      .limit(1);
+    if (!cycle) return { error: "Ciclo non trovato" };
+    if (cycle.status !== "closed") return { error: "Il ciclo non e' chiuso" };
+    if (!cycle.supplierId || !cycle.supplierName)
+      return { error: "Il ciclo non ha un fornitore associato" };
+    if (!cycle.supplierEmail)
+      return { error: "Il fornitore non ha un indirizzo email" };
+
+    const { buildSupplierAggregateCsv } = await import("@/lib/csv/supplier-export");
+    const csv = await buildSupplierAggregateCsv(cycleId);
+    if (csv.rowCount === 0) return { error: "Nessun ordine in questo ciclo" };
+
+    const { supplierOrderEmail } = await import("@/lib/email/templates");
+    const { subject, text } = supplierOrderEmail({
+      cycleTitle: cycle.title,
+      pickupDate: cycle.pickupDate,
+      grandTotal: csv.grandTotal,
+      itemCount: csv.rowCount,
+    });
+
+    const { sendMail } = await import("@/lib/email/resend");
+    const result = await sendMail({
+      to: cycle.supplierEmail,
+      cc: admin.email,
+      subject,
+      text,
+      attachments: [{ filename: csv.filename, content: csv.content }],
+    });
+    if ("error" in result) return { error: result.error };
+
+    await writeAudit(db, admin.email, "supplier_email_sent", "cycle", cycleId, {
+      supplierId: cycle.supplierId,
+      recipient: cycle.supplierEmail,
+      cc: admin.email,
+      filename: csv.filename,
+      rowCount: csv.rowCount,
+      grandTotal: csv.grandTotal,
+      messageId: result.id ?? null,
+    });
+
+    return { ok: true, recipient: cycle.supplierEmail, rowCount: csv.rowCount };
+  } catch (e) {
+    return { error: e instanceof Error ? e.message : "Errore nell'invio email" };
+  }
 }
 
 // ── Post-close order editing ─────────────────────────────────────────────────

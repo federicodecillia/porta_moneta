@@ -16,7 +16,10 @@ e il versionamento è basato su [Semantic Versioning](https://semver.org/spec/v2
 
 ## [Non rilasciato]
 
-_Niente per ora._
+### Aggiunte
+- **Modifica di un ciclo anche dopo la chiusura.** I cicli chiusi nella lista "Ultimi cicli" hanno ora un pulsante ✎ Modifica accanto a "Recap ordini". L'admin può correggere titolo, note, date di ritiro e spese di spedizione senza riaprire il ciclo. Il form disabilita esplicitamente i campi che non ha senso toccare a ciclo chiuso (chiusura ordini, fornitore, livello di accesso).
+- **Ricalcolo automatico della spedizione sui cicli chiusi.** Quando l'admin cambia modalità o importo della spedizione su un ciclo chiuso, le voci `shipping_charge` nel saldo dei soci vengono aggiornate in posto per ogni socio con ordine. Ogni socio coinvolto riceve una notifica `order_adjusted` con la vecchia e la nuova quota, e una voce `cycle_shipping_recomputed` viene scritta nell'audit log con il prima/dopo.
+- **Invio dell'ordine al fornitore via email.** Nuovo pulsante 📧 Fornitore su ogni ciclo chiuso. Manda una mail (via Resend) al fornitore del ciclo, con l'admin che ha cliccato in CC e in allegato un CSV aggregato per prodotto (una riga per articolo con quantità e totale sommati). Disabilitato con tooltip esplicativo se il ciclo non ha un fornitore o se il fornitore non ha un'email. La configurazione di Resend è documentata in `SETUP.md`.
 
 ---
 

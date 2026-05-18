@@ -369,12 +369,20 @@ export async function getAllCycles(limit = 30) {
       status: orderCycles.status,
       accessLevel: orderCycles.accessLevel,
       pickupDate: orderCycles.pickupDate,
+      pickupEndTime: orderCycles.pickupEndTime,
+      pickup2Date: orderCycles.pickup2Date,
+      pickup2EndTime: orderCycles.pickup2EndTime,
       orderCloseAt: orderCycles.orderCloseAt,
       orderOpenAt: orderCycles.orderOpenAt,
       createdAt: orderCycles.createdAt,
       closedAt: orderCycles.closedAt,
       supplierId: orderCycles.supplierId,
       supplierName: suppliers.name,
+      supplierEmail: suppliers.email,
+      notes: orderCycles.notes,
+      shippingMode: orderCycles.shippingMode,
+      shippingCostPerMember: orderCycles.shippingCostPerMember,
+      shippingTotal: orderCycles.shippingTotal,
     })
     .from(orderCycles)
     .leftJoin(suppliers, eq(orderCycles.supplierId, suppliers.supplierId))

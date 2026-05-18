@@ -1,8 +1,19 @@
 # Closed-Cycle Edits, Per-Member Quantity Adjustments, and Supplier Email
 
 **Date**: 2026-05-18
-**Status**: Approved
+**Status**: Approved — Feature 2 superseded by PR #34 (v1.5.0, merged 2026-05-17)
 **Scope**: `app_gas/`
+
+> **Note 2026-05-18**: Feature 2 ("rettifica quantità ricevuta") has already
+> shipped as v1.5.0 (PR #34) using a different design than the one originally
+> agreed here: instead of `actualQuantity`/`actualLineTotal` columns, the new
+> `adminEditClosedOrder` action lets admins fully restructure a closed order
+> (change quantities, add/remove products, or create an order from scratch
+> for a member who didn't originally participate) and posts a single
+> `correction` ledger entry with the delta — leaving the original
+> `order_charge` untouched. This branch therefore only implements **Feature 1**
+> and **Feature 3**. The Feature 2 sections below are kept as-is for
+> historical context.
 
 ## Goal
 
