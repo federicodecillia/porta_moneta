@@ -12,5 +12,8 @@ app_gas_v3/tmp/
 .idea/
 .vscode/
 
+# Claude Code local config
+.claude/
+
 # Old clasp config backup
 .clasp.json.old
