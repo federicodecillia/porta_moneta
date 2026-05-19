@@ -189,6 +189,33 @@ All three emit `order_adjusted` or `order_corrected` notifications and `audit_lo
 - Modules: `lib/email/resend.ts` (thin SDK wrapper, lazy env read), `lib/email/templates.ts` (Italian body), `lib/csv/supplier-export.ts` (aggregated-per-product CSV, BOM + `sep=;` for Excel IT).
 - Resend SDK detail: the `content` field on attachments base64-decodes strings — always pass a `Buffer`.
 
+### Backup & Restore
+
+Neon free tier only retains 7 hours of point-in-time history, so we ship a weekly off-site backup to Google Drive.
+
+**Workflow**: [`.github/workflows/backup.yml`](.github/workflows/backup.yml) runs every Sunday at 03:00 UTC (also via `workflow_dispatch`). It `pg_dump`s the Neon production DB, gzips the result, and `rclone copy`s it to `gdrive:PortaMoneta/GAS-Backups/`.
+
+**Required GitHub Secrets** (Settings → Secrets and variables → Actions):
+
+| Secret | Value |
+|---|---|
+| `DATABASE_URL` | Neon production connection string (same as Vercel) |
+| `RCLONE_CONFIG` | Full contents of local `~/.config/rclone/rclone.conf` after running `rclone config` (remote named `gdrive`) |
+| `GDRIVE_BACKUP_PATH` | `gdrive:PortaMoneta/GAS-Backups` |
+
+**Restore procedure** (use a Neon branch, never restore directly into production):
+
+```bash
+# 1. Download gas-backup-YYYY-MM-DD.sql.gz from Drive
+# 2. In the Neon console, create a new branch from production
+# 3. Copy that branch's connection string into $RESTORE_URL
+gunzip gas-backup-2026-05-19.sql.gz
+psql "$RESTORE_URL" < gas-backup-2026-05-19.sql
+# 4. Verify, then promote the branch or selectively re-import rows
+```
+
+`pg_dump` runs with `--no-owner --no-privileges --format=plain` so the dump is portable across Neon branches without role mismatch.
+
 ### Design System — Orange/Teal
 
 CSS variables in `app/globals.css` as Tailwind v4 `@theme`:

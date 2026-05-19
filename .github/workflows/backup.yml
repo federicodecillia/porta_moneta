@@ -1,0 +1,86 @@
+name: Weekly Neon Backup
+
+# Runs every Sunday at 03:00 UTC (≈ 04:00–05:00 Europe/Rome).
+# Dumps the production Neon database with pg_dump, gzips the result,
+# and uploads it to Google Drive via rclone. Also runnable on demand
+# from the Actions tab via "Run workflow".
+#
+# Required GitHub repository secrets:
+#   - DATABASE_URL        Neon production connection string (postgresql://...)
+#   - RCLONE_CONFIG       Full contents of ~/.config/rclone/rclone.conf
+#                         (must define a remote named exactly `gdrive`)
+#   - GDRIVE_BACKUP_PATH  Destination, e.g. `gdrive:PortaMoneta/GAS-Backups`
+#
+# Restore: see app_gas/CLAUDE.md → "Backup & Restore" section.
+
+on:
+  schedule:
+    - cron: '0 3 * * 0'
+  workflow_dispatch:
+
+jobs:
+  backup:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Install PostgreSQL 17 client (matches Neon)
+        run: |
+          set -euo pipefail
+          sudo install -d /usr/share/postgresql-common/pgdg
+          sudo curl -fsSL https://www.postgresql.org/media/keys/ACCC4CF8.asc \
+            -o /usr/share/postgresql-common/pgdg/apt.postgresql.org.asc
+          echo "deb [signed-by=/usr/share/postgresql-common/pgdg/apt.postgresql.org.asc] \
+            https://apt.postgresql.org/pub/repos/apt $(lsb_release -cs)-pgdg main" \
+            | sudo tee /etc/apt/sources.list.d/pgdg.list > /dev/null
+          sudo apt-get update -qq
+          sudo apt-get install -y --no-install-recommends postgresql-client-17
+          pg_dump --version
+
+      - name: Install rclone
+        run: |
+          set -euo pipefail
+          curl -fsSL https://rclone.org/install.sh | sudo bash
+          rclone version
+
+      - name: Write rclone config from secret
+        env:
+          RCLONE_CONFIG_CONTENT: ${{ secrets.RCLONE_CONFIG }}
+        run: |
+          set -euo pipefail
+          mkdir -p "$HOME/.config/rclone"
+          printf '%s' "$RCLONE_CONFIG_CONTENT" > "$HOME/.config/rclone/rclone.conf"
+          chmod 600 "$HOME/.config/rclone/rclone.conf"
+          rclone listremotes
+
+      - name: Dump database
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+        run: |
+          set -euo pipefail
+          DATE=$(date -u +%Y-%m-%d)
+          FILE="gas-backup-${DATE}.sql.gz"
+          echo "Dumping to ${FILE}…"
+          pg_dump \
+            --no-owner \
+            --no-privileges \
+            --format=plain \
+            "$DATABASE_URL" \
+            | gzip -9 > "$FILE"
+          ls -lh "$FILE"
+          echo "BACKUP_FILE=$FILE" >> "$GITHUB_ENV"
+
+      - name: Upload to Google Drive
+        run: |
+          set -euo pipefail
+          rclone copy "$BACKUP_FILE" "${{ secrets.GDRIVE_BACKUP_PATH }}" \
+            --s3-no-check-bucket \
+            --stats=0 \
+            -v
+          echo "Uploaded $BACKUP_FILE to ${{ secrets.GDRIVE_BACKUP_PATH }}"
+
+      - name: Cleanup local files
+        if: always()
+        run: |
+          rm -f gas-backup-*.sql.gz
+          rm -f "$HOME/.config/rclone/rclone.conf"
