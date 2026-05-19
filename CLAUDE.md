@@ -39,15 +39,19 @@ app_gas/
 │   │   ├── queries.ts          # All read queries + getUnreadNotificationCount
 │   │   └── client.ts           # Neon connection (DATABASE_URL)
 │   ├── actions/
-│   │   ├── admin.ts            # Admin Server Actions: cycles, ledger, topup, members, suppliers
+│   │   ├── admin.ts            # Admin Server Actions: cycles, ledger, topup, members, suppliers,
+│   │   │                       #   adminSendSupplierEmail, adminUpdateOrderLineActuals,
+│   │   │                       #   adminEditClosedOrder
 │   │   ├── admin-cycles.ts     # Cycle-specific actions
 │   │   ├── admin-products.ts   # Product/catalog actions
 │   │   ├── notifications.ts    # markNotificationRead, markAllNotificationsRead
 │   │   └── order.ts            # saveOrder (member)
+│   ├── email/                  # Resend wrapper + supplier-email templates
+│   ├── csv/                    # Server-side CSV builders (e.g. supplier aggregated export)
 │   └── auth/session.ts         # requireUserSession(), requireAdmin(), getUserRole()
 ├── middleware.ts                # Redirect unauthenticated to /login
 ├── auth.ts                     # Auth.js config (Google provider, member whitelist callback)
-├── drizzle/                    # SQL migrations (0000–0003)
+├── drizzle/                    # SQL migrations (0000–0007)
 └── public/logo.png
 ```
 
@@ -127,7 +131,11 @@ User interaction → Server Action ("use server") → auth check → DB mutation
 ### Notifications
 
 - Table `notifications`: `member_id | role | type | title | body | href | read_at | created_at`
-- Emitted by `admin.ts`: on cycle close (`order_closed`) and topup (`topup_received`)
+- Notification types emitted by `admin.ts`:
+  - `order_closed` — cycle closure
+  - `topup_received` — admin records a topup
+  - `order_corrected` — admin edits a member's order via `adminEditClosedOrder`
+  - `order_adjusted` — closed-cycle shipping recompute OR per-line "actual delivered" rectification
 - `AppShell` fetches `getUnreadNotificationCount(memberId)` and passes it to `NotificationBell`
 - Bell in header → `/notifiche` page → `markNotificationRead` / `markAllNotificationsRead` Server Actions
 
@@ -147,7 +155,8 @@ Cycle `access_level` controls who can order: `'attivi'` (default) or broader.
 | `order_cycles` | Weekly order windows; one `open` at a time |
 | `products` | Per-cycle product list |
 | `orders` | Order lines per member per cycle |
-| `ledger_entries` | Balance: `topup` (+), `order_charge` (−), `adjustment` |
+| `ledger_entries` | Balance: `topup` (+), `order_charge` (−), `shipping_charge` (−), `correction` (±), `adjustment` |
+| `orders.actual_quantity` / `actual_line_total` | Recorded after delivery when the supplier weighed something different from what was ordered (e.g. 1 kg → 800 g). NULL = delivered as ordered. |
 | `notifications` | Per-member or per-role messages with `read_at` |
 | `audit_log` | Append-only admin action log |
 | `suppliers` | Supplier registry |
@@ -162,6 +171,23 @@ ID prefix convention: `cyc_*`, `mem_*`, `prd_*`, `ord_*`, `led_*`, `not_*`, `aud
 - Negative balance is allowed — UI warns but does not block ordering.
 - Products loaded from semicolon-delimited text: `Name;Variant;Format;Price;Supplier;Notes`.
 - Email is the unique member identifier (login key). Alias email supported for non-Google accounts.
+
+### Post-closure adjustments
+
+The admin has three independent ways to correct a closed cycle:
+
+1. **Edit cycle metadata** (`adminUpdateCycle` on a `status='closed'` cycle) — change title/notes/pickup dates freely; changing shipping mode or amount **recomputes `shipping_charge` ledger entries in place** for every member with orders and emits `order_adjusted` notifications. `orderCloseAt`, `supplierId`, `accessLevel` are locked. UI: ✎ Modifica button in admin → Ultimi cicli.
+2. **Edit a member's whole order** (`adminEditClosedOrder`) — change integer quantities, add or remove products, or create an order from scratch for a member who didn't originally participate. Posts a single `correction` ledger entry with the delta vs the original total. Original `order_charge` row is left intact. UI: ✎ Modifica button on each member row inside Recap ordini.
+3. **Record actual delivered weight/cost per line** (`adminUpdateOrderLineActuals`) — for the case where 1 kg of beetroot weighed 800 g. Writes the actuals to `orders.actual_quantity` / `orders.actual_line_total` and posts a `correction` ledger entry with the delta. Composes with #2 because both use the same correction-ledger model. UI: click any order line inside Recap ordini.
+
+All three emit `order_adjusted` or `order_corrected` notifications and `audit_log` entries.
+
+### Email (Resend)
+
+- Sending the closed-cycle order to the supplier (`adminSendSupplierEmail`) uses Resend. The acting admin **and `gas@portamoneta.org`** (shared GAS archive) are always in CC.
+- Env vars: `RESEND_API_KEY`, `MAIL_FROM`. Without them the button toasts the missing-config error and the rest of the app keeps working.
+- Modules: `lib/email/resend.ts` (thin SDK wrapper, lazy env read), `lib/email/templates.ts` (Italian body), `lib/csv/supplier-export.ts` (aggregated-per-product CSV, BOM + `sep=;` for Excel IT).
+- Resend SDK detail: the `content` field on attachments base64-decodes strings — always pass a `Buffer`.
 
 ### Design System — Orange/Teal
 
