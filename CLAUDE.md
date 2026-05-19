@@ -203,18 +203,39 @@ Neon free tier only retains 7 hours of point-in-time history, so we ship a weekl
 | `RCLONE_CONFIG` | Full contents of local `~/.config/rclone/rclone.conf` after running `rclone config` (remote named `gdrive`) |
 | `GDRIVE_BACKUP_PATH` | `gdrive:PortaMoneta/GAS-Backups` |
 
-**Restore procedure** (use a Neon branch, never restore directly into production):
+**Restore procedure.** **Never restore directly into production** — always do it on a throwaway Neon branch first, verify, then promote or selectively copy rows back.
 
 ```bash
-# 1. Download gas-backup-YYYY-MM-DD.sql.gz from Drive
-# 2. In the Neon console, create a new branch from production
-# 3. Copy that branch's connection string into $RESTORE_URL
-gunzip gas-backup-2026-05-19.sql.gz
-psql "$RESTORE_URL" < gas-backup-2026-05-19.sql
-# 4. Verify, then promote the branch or selectively re-import rows
+# 1. Download gas-backup-YYYY-MM-DD.sql.gz from
+#    Google Drive → IT & Processi → Porta Moneta App GAS → Backup_DB
+gunzip gas-backup-YYYY-MM-DD.sql.gz   # produces gas-backup-YYYY-MM-DD.sql
+
+# 2. In the Neon console (console.neon.tech):
+#    Branches → "Create branch" → from main → name e.g. "restore-test"
+#    → copy the new branch's "Connection string" (pooled is fine).
+export RESTORE_URL='postgresql://…neon.tech/neondb?sslmode=require'
+
+# 3. Wipe the branch's schema (it inherits prod data — we need a clean slate)
+#    and load the dump:
+psql "$RESTORE_URL" -c "DROP SCHEMA IF EXISTS public CASCADE; CREATE SCHEMA public;"
+psql "$RESTORE_URL" -f gas-backup-YYYY-MM-DD.sql
+
+# 4. Sanity check the restore:
+psql "$RESTORE_URL" -c "
+  SELECT 'members' AS t, count(*) FROM members
+  UNION ALL SELECT 'order_cycles', count(*) FROM order_cycles
+  UNION ALL SELECT 'orders', count(*) FROM orders
+  UNION ALL SELECT 'ledger_entries', count(*) FROM ledger_entries;
+"
 ```
 
-`pg_dump` runs with `--no-owner --no-privileges --format=plain` so the dump is portable across Neon branches without role mismatch.
+Then choose your path:
+
+- **Inspect only / look up a value** — query the branch, then delete it from the Neon console when done. Production is untouched.
+- **Recover a few specific rows** — `pg_dump --data-only --table=public.<table> "$RESTORE_URL"` filtered by `--where`, then `psql "$PROD_URL"` to apply. Keeps production live.
+- **Full production restore (catastrophic loss)** — in the Neon console, **Reset main from this branch** (or: rename main → main-broken, promote restore-test → main). Then update `DATABASE_URL` in Vercel only if the connection string changed. Stop Vercel traffic during the swap with a maintenance flag in `vercel.json` or by pausing the project.
+
+`pg_dump` runs with `--no-owner --no-privileges --format=plain` so the dump is portable across Neon branches without role-name conflicts. The `\restrict` / `\unrestrict` directives at the top and bottom are PG 17 metadata — `psql` handles them transparently.
 
 ### Design System — Orange/Teal
 
