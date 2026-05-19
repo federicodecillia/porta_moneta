@@ -5,9 +5,11 @@ import { toast } from "@/components/ui/toast";
 import {
   adminCloseCycle,
   adminCreateCycle,
+  adminSendSupplierEmail,
   adminUpdateCycle,
   type CreateCycleInput,
 } from "@/lib/actions/admin";
+import { confirm } from "@/components/ui/confirm-dialog";
 import { formatEur } from "@/lib/utils";
 import { Card, CardBody, CardHeader } from "@/components/ui/card";
 import type { CatalogProductItem } from "@/lib/db/queries";
@@ -31,6 +33,7 @@ type SerializedCycle = {
   shippingMode: string;
   shippingCostPerMember: string | null;
   shippingTotal: string | null;
+  status?: string;
 };
 
 // ── Open Cycle Card ───────────────────────────────────────────────────────────
@@ -267,7 +270,17 @@ function ShippingModeFields({
   );
 }
 
-function EditCycleForm({ cycle, suppliers, onClose }: { cycle: SerializedCycle; suppliers: Supplier[]; onClose: () => void }) {
+export function EditCycleForm({
+  cycle,
+  suppliers,
+  onClose,
+  isClosed = false,
+}: {
+  cycle: SerializedCycle;
+  suppliers: Supplier[];
+  onClose: () => void;
+  isClosed?: boolean;
+}) {
   const [isPending, startTransition] = useTransition();
   const [shippingMode, setShippingMode] = useState<"fixed_per_member" | "proportional">(
     cycle.shippingMode === "proportional" ? "proportional" : "fixed_per_member",
@@ -276,32 +289,57 @@ function EditCycleForm({ cycle, suppliers, onClose }: { cycle: SerializedCycle; 
   function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     const fd = new FormData(e.currentTarget);
+    // On a closed cycle we deliberately skip fields that don't make sense to
+    // change post-closure (orderCloseAt, supplierId, accessLevel). Those inputs
+    // are also disabled visually so the user doesn't expect them to apply.
+    const basePatch = {
+      title: fd.get("title") as string,
+      pickupDate: buildDateTime(fd.get("pickupDateOnly") as string, fd.get("pickupStartTime") as string),
+      pickupEndTime: fd.get("pickupEndTime") as string,
+      pickup2Date: buildDateTime(fd.get("pickup2DateOnly") as string, fd.get("pickup2StartTime") as string),
+      pickup2EndTime: fd.get("pickup2EndTime") as string,
+      notes: fd.get("notes") as string,
+      shippingMode,
+      shippingCostPerMember: fd.get("shippingCostPerMember") as string,
+      shippingTotal: fd.get("shippingTotal") as string,
+    };
+    const openOnlyPatch = isClosed
+      ? {}
+      : {
+          orderCloseAt: fd.get("orderCloseAt") as string,
+          supplierId: fd.get("supplierId") as string,
+          accessLevel: fd.get("accessLevel") as string,
+        };
     startTransition(async () => {
       const result = await adminUpdateCycle(cycle.cycleId, {
-        title: fd.get("title") as string,
-        pickupDate: buildDateTime(fd.get("pickupDateOnly") as string, fd.get("pickupStartTime") as string),
-        pickupEndTime: fd.get("pickupEndTime") as string,
-        pickup2Date: buildDateTime(fd.get("pickup2DateOnly") as string, fd.get("pickup2StartTime") as string),
-        pickup2EndTime: fd.get("pickup2EndTime") as string,
-        orderCloseAt: fd.get("orderCloseAt") as string,
-        notes: fd.get("notes") as string,
-        supplierId: fd.get("supplierId") as string,
-        accessLevel: fd.get("accessLevel") as string,
-        shippingMode,
-        shippingCostPerMember: fd.get("shippingCostPerMember") as string,
-        shippingTotal: fd.get("shippingTotal") as string,
+        ...basePatch,
+        ...openOnlyPatch,
       });
       if (result.error) {
         toast.error(result.error);
         return;
       }
-      toast.success("Ciclo aggiornato");
+      if (isClosed && result.adjustedMembers && result.adjustedMembers > 0) {
+        toast.success(
+          `Ciclo aggiornato — ricalcolata spedizione per ${result.adjustedMembers} soci`,
+        );
+      } else {
+        toast.success("Ciclo aggiornato");
+      }
       onClose();
     });
   }
 
   return (
     <form onSubmit={handleSubmit} className="space-y-3">
+      {isClosed && (
+        <div className="rounded-lg border border-pm-orange/30 bg-pm-orange-light px-3 py-2 text-[12px] leading-snug text-pm-near-black">
+          <strong>Stai modificando un ciclo gia&apos; chiuso.</strong> Le modifiche
+          alle spese di spedizione ricalcoleranno gli addebiti dei soci e
+          invieranno una notifica di rettifica. Chiusura ordini, fornitore e
+          livello di accesso non sono modificabili a ciclo chiuso.
+        </div>
+      )}
       <div>
         <label className={labelCls}>Titolo *</label>
         <input
@@ -312,16 +350,18 @@ function EditCycleForm({ cycle, suppliers, onClose }: { cycle: SerializedCycle; 
         />
       </div>
 
-      <div>
-        <label className={labelCls}>Chiusura ordini *</label>
-        <input
-          name="orderCloseAt"
-          type="datetime-local"
-          required
-          defaultValue={cycle.orderCloseAt?.slice(0, 16) ?? ""}
-          className={`w-full ${inputCls}`}
-        />
-      </div>
+      {!isClosed && (
+        <div>
+          <label className={labelCls}>Chiusura ordini *</label>
+          <input
+            name="orderCloseAt"
+            type="datetime-local"
+            required
+            defaultValue={cycle.orderCloseAt?.slice(0, 16) ?? ""}
+            className={`w-full ${inputCls}`}
+          />
+        </div>
+      )}
 
       <ShippingModeFields
         mode={shippingMode}
@@ -384,35 +424,37 @@ function EditCycleForm({ cycle, suppliers, onClose }: { cycle: SerializedCycle; 
         </div>
       </div>
 
-      <div className="grid grid-cols-2 gap-3">
-        <div>
-          <label className={labelCls}>Fornitore</label>
-          <select
-            name="supplierId"
-            defaultValue={cycle.supplierId ?? ""}
-            className={`w-full ${inputCls}`}
-          >
-            <option value="">— nessuno —</option>
-            {suppliers.map((s) => (
-              <option key={s.supplierId} value={s.supplierId}>
-                {s.name}
-              </option>
-            ))}
-          </select>
+      {!isClosed && (
+        <div className="grid grid-cols-2 gap-3">
+          <div>
+            <label className={labelCls}>Fornitore</label>
+            <select
+              name="supplierId"
+              defaultValue={cycle.supplierId ?? ""}
+              className={`w-full ${inputCls}`}
+            >
+              <option value="">— nessuno —</option>
+              {suppliers.map((s) => (
+                <option key={s.supplierId} value={s.supplierId}>
+                  {s.name}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div>
+            <label className={labelCls}>Accesso</label>
+            <select
+              name="accessLevel"
+              defaultValue={cycle.accessLevel}
+              className={`w-full ${inputCls}`}
+            >
+              <option value="admin">Solo Admin</option>
+              <option value="soci">Soci Attivi</option>
+              <option value="utenti">Tutti gli utenti</option>
+            </select>
+          </div>
         </div>
-        <div>
-          <label className={labelCls}>Accesso</label>
-          <select
-            name="accessLevel"
-            defaultValue={cycle.accessLevel}
-            className={`w-full ${inputCls}`}
-          >
-            <option value="admin">Solo Admin</option>
-            <option value="soci">Soci Attivi</option>
-            <option value="utenti">Tutti gli utenti</option>
-          </select>
-        </div>
-      </div>
+      )}
       <div>
         <label className={labelCls}>Note</label>
         <textarea
@@ -779,6 +821,114 @@ export function CycleProductPicker({
             )}
           </div>
         )}
+      </div>
+    </div>
+  );
+}
+
+// ── Supplier Email Button ────────────────────────────────────────────────────
+
+// Sends the cycle's aggregated CSV to the supplier's email with the acting
+// admin in CC. Disabled (and tooltipped) when the cycle has no supplier or
+// the supplier has no email on file.
+export function SupplierEmailButton({
+  cycleId,
+  cycleTitle,
+  supplierName,
+  supplierEmail,
+}: {
+  cycleId: string;
+  cycleTitle: string;
+  supplierName: string | null;
+  supplierEmail: string | null;
+}) {
+  const [isPending, startTransition] = useTransition();
+  const disabledReason = !supplierName
+    ? "Ciclo senza fornitore"
+    : !supplierEmail
+      ? "Fornitore senza email"
+      : null;
+
+  async function handleClick() {
+    if (disabledReason) return;
+    const ok = await confirm({
+      title: `Invia ordine a ${supplierName}?`,
+      message: `Destinatario: ${supplierEmail}\nOggetto: Ordine GAS Porta Moneta — ${cycleTitle}\n\nIn CC: tu + gas@portamoneta.org.`,
+      confirmLabel: "Invia ora",
+      cancelLabel: "Annulla",
+    });
+    if (!ok) return;
+    startTransition(async () => {
+      const result = await adminSendSupplierEmail(cycleId);
+      if ("error" in result) {
+        toast.error(result.error);
+        return;
+      }
+      toast.success(`Mail inviata a ${result.recipient}`);
+    });
+  }
+
+  return (
+    <button
+      onClick={handleClick}
+      disabled={!!disabledReason || isPending}
+      title={disabledReason ?? undefined}
+      className="rounded-lg bg-pm-teal/10 px-3 py-1 text-[11px] font-bold text-pm-teal hover:bg-pm-teal/20 disabled:cursor-not-allowed disabled:opacity-50"
+    >
+      {isPending ? "Invio…" : "📧 Fornitore"}
+    </button>
+  );
+}
+
+// ── Closed Cycle Edit Button ─────────────────────────────────────────────────
+
+// Lightweight wrapper that opens EditCycleForm in a modal for a closed cycle.
+// Reuses the same form to avoid drift; the form itself adapts via the
+// `isClosed` flag (warning banner + locked fields + ledger recompute).
+export function ClosedCycleEditButton({
+  cycle,
+  suppliers,
+}: {
+  cycle: SerializedCycle;
+  suppliers: Supplier[];
+}) {
+  const [open, setOpen] = useState(false);
+  if (!open) {
+    return (
+      <button
+        onClick={() => setOpen(true)}
+        className="rounded-lg bg-pm-orange/10 px-3 py-1 text-[11px] font-bold text-pm-orange hover:bg-pm-orange/20"
+      >
+        Modifica
+      </button>
+    );
+  }
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
+      <div className="flex max-h-[92vh] w-full max-w-[600px] flex-col rounded-2xl bg-pm-warm-white shadow-2xl">
+        <div className="flex items-center justify-between border-b border-pm-border p-5">
+          <div>
+            <div className="font-mono text-[10px] uppercase tracking-[0.13em] text-pm-orange">
+              Ciclo chiuso
+            </div>
+            <h3 className="mt-1 text-[16px] font-black text-pm-near-black">{cycle.title}</h3>
+          </div>
+          <button
+            onClick={() => setOpen(false)}
+            className="rounded-full bg-pm-border p-2 text-pm-gray hover:bg-pm-gray-light"
+            aria-label="Chiudi"
+          >
+            ✕
+          </button>
+        </div>
+        <div className="flex-1 overflow-y-auto p-5">
+          <EditCycleForm
+            cycle={cycle}
+            suppliers={suppliers}
+            onClose={() => setOpen(false)}
+            isClosed
+          />
+        </div>
       </div>
     </div>
   );

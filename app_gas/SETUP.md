@@ -66,6 +66,24 @@ echo "AUTH_SECRET=\"$(openssl rand -base64 32)\"" >> .env.local
 > Auth.js: le sessioni dei due ambienti restano separate, niente leak fra
 > contesti.
 
+### 2c-bis. Variabili per l'invio mail al fornitore (opzionale)
+
+L'azione "📧 Fornitore" nella tab Ciclo manda l'ordine al fornitore via
+[Resend](https://resend.com). Se non configuri queste variabili il pulsante
+risponde con un toast d'errore — il resto dell'app funziona normalmente.
+
+```
+RESEND_API_KEY="re_..."              # da resend.com → API keys
+MAIL_FROM="GAS Porta Moneta <gas@portamoneta.org>"
+```
+
+Prerequisiti su Resend:
+
+- Aggiungi `portamoneta.org` in **Domains** e segui i record DNS che ti
+  indica (TXT/CNAME su Squarespace). La verifica può richiedere qualche
+  minuto.
+- L'indirizzo `MAIL_FROM` deve essere su un dominio verificato.
+
 ### 2d. Verifica
 
 ```bash

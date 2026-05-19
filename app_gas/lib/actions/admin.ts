@@ -402,6 +402,101 @@ export async function adminCloseCycleWithAdjustments(
   return { ...result, productsAdjusted: cleaned.length };
 }
 
+// Recomputes shipping_charge ledger entries for a closed cycle after its
+// shipping configuration changed. Updates existing entries in place (we never
+// delete to keep the audit trail), inserts new entries for members who had
+// no previous share, and emits an `order_adjusted` notification per affected
+// member. Returns the list of memberIds whose shipping share actually moved.
+async function recomputeShippingForClosedCycle(
+  db: ReturnType<typeof getDb>,
+  cycleId: string,
+  adminEmail: string,
+): Promise<{ adjustedMembers: string[] }> {
+  const [cycle] = await db
+    .select({
+      cycleId: orderCycles.cycleId,
+      title: orderCycles.title,
+      shippingMode: orderCycles.shippingMode,
+      shippingCostPerMember: orderCycles.shippingCostPerMember,
+      shippingTotal: orderCycles.shippingTotal,
+    })
+    .from(orderCycles)
+    .where(eq(orderCycles.cycleId, cycleId))
+    .limit(1);
+  if (!cycle) return { adjustedMembers: [] };
+
+  const memberTotals = await db
+    .select({
+      memberId: orders.memberId,
+      total: sql<string>`sum(${orders.lineTotal})`,
+    })
+    .from(orders)
+    .where(eq(orders.cycleId, cycleId))
+    .groupBy(orders.memberId);
+  const eligible = memberTotals.filter((r) => parseFloat(r.total) > 0);
+
+  const newShares = computeShippingShares(eligible, cycle);
+
+  const existing = await db
+    .select({
+      entryId: ledgerEntries.entryId,
+      memberId: ledgerEntries.memberId,
+      amount: ledgerEntries.amount,
+    })
+    .from(ledgerEntries)
+    .where(
+      and(eq(ledgerEntries.cycleId, cycleId), eq(ledgerEntries.type, "shipping_charge")),
+    );
+  const existingByMember = new Map(existing.map((e) => [e.memberId, e]));
+
+  const now = new Date();
+  const adjusted: string[] = [];
+
+  for (const r of eligible) {
+    const newShare = newShares.get(r.memberId) ?? 0;
+    const prev = existingByMember.get(r.memberId);
+    const oldShare = prev ? -parseFloat(prev.amount) : 0;
+    if (Math.abs(newShare - oldShare) < 0.005) continue;
+
+    if (prev) {
+      await db
+        .update(ledgerEntries)
+        .set({
+          amount: (-newShare).toFixed(2),
+          note: "Spedizione rettificata",
+          updatedAt: now,
+          updatedBy: adminEmail,
+        })
+        .where(eq(ledgerEntries.entryId, prev.entryId));
+    } else if (newShare > 0) {
+      await db.insert(ledgerEntries).values({
+        entryId: genId("led"),
+        memberId: r.memberId,
+        entryDate: now,
+        type: "shipping_charge",
+        amount: (-newShare).toFixed(2),
+        cycleId,
+        note: "Spedizione rettificata",
+        createdBy: adminEmail,
+        createdAt: now,
+      });
+    }
+
+    const fmt = (n: number) => n.toFixed(2).replace(".", ",");
+    await createNotification(db, {
+      memberId: r.memberId,
+      type: "order_adjusted",
+      title: `Spedizione "${cycle.title}" aggiornata`,
+      body: `Le spese di spedizione del ciclo "${cycle.title}" sono state aggiornate: la tua quota e' passata da ${fmt(oldShare)} a ${fmt(newShare)} euro.`,
+      href: "/storico",
+    });
+
+    adjusted.push(r.memberId);
+  }
+
+  return { adjustedMembers: adjusted };
+}
+
 export async function adminUpdateCycle(
   cycleId: string,
   data: {
@@ -418,10 +513,30 @@ export async function adminUpdateCycle(
     shippingCostPerMember?: string;
     shippingTotal?: string;
   },
-): Promise<{error?: string}> {
+): Promise<{ error?: string; adjustedMembers?: number }> {
   try {
     const admin = await requireAdmin();
     const db = getDb();
+
+    // Load current state so we can decide afterwards whether the cycle is
+    // closed and whether shipping-related fields were touched.
+    const [before] = await db
+      .select({
+        status: orderCycles.status,
+        shippingMode: orderCycles.shippingMode,
+        shippingCostPerMember: orderCycles.shippingCostPerMember,
+        shippingTotal: orderCycles.shippingTotal,
+      })
+      .from(orderCycles)
+      .where(eq(orderCycles.cycleId, cycleId))
+      .limit(1);
+    if (!before) return { error: "Ciclo non trovato" };
+
+    const isClosed = before.status === "closed";
+    const shippingTouched =
+      data.shippingMode !== undefined ||
+      data.shippingCostPerMember !== undefined ||
+      data.shippingTotal !== undefined;
 
     // When shippingMode is provided we treat it as authoritative: also clear
     // the field belonging to the other mode so we never end up with stale
@@ -465,10 +580,36 @@ export async function adminUpdateCycle(
         ...shippingPatch,
       })
       .where(eq(orderCycles.cycleId, cycleId));
+
+    let adjustedMembers = 0;
+    if (isClosed && shippingTouched) {
+      const { adjustedMembers: m } = await recomputeShippingForClosedCycle(
+        db,
+        cycleId,
+        admin.email,
+      );
+      adjustedMembers = m.length;
+      await writeAudit(db, admin.email, "cycle_shipping_recomputed", "cycle", cycleId, {
+        before: {
+          shippingMode: before.shippingMode,
+          shippingCostPerMember: before.shippingCostPerMember,
+          shippingTotal: before.shippingTotal,
+        },
+        after: {
+          shippingMode: data.shippingMode,
+          shippingCostPerMember: data.shippingCostPerMember,
+          shippingTotal: data.shippingTotal,
+        },
+        affectedMembers: m,
+      });
+      revalidatePath("/storico");
+      revalidatePath("/notifiche");
+    }
+
     await writeAudit(db, admin.email, "update_cycle", "cycle", cycleId, data);
     revalidatePath("/admin");
     revalidatePath("/");
-    return {};
+    return { adjustedMembers };
   } catch (e) {
     return { error: e instanceof Error ? e.message : "Errore nell'aggiornamento del ciclo" };
   }
@@ -718,6 +859,255 @@ export async function adminRecordTopup(
   revalidatePath("/admin");
   revalidatePath("/");
   revalidatePath("/storico");
+}
+
+// ── Supplier email ───────────────────────────────────────────────────────────
+
+// Sends the closed cycle's order summary as a CSV attachment to the
+// configured supplier. The acting admin is CC'd so they always have a copy
+// in their own mailbox. The CSV is aggregated per product (one row per SKU,
+// summing quantities and amounts across every member's order). Fails fast if
+// the cycle isn't closed, has no supplier, or the supplier has no email on
+// file — Resend errors are surfaced verbatim.
+export async function adminSendSupplierEmail(
+  cycleId: string,
+): Promise<{ ok: true; recipient: string; rowCount: number } | { error: string }> {
+  try {
+    const admin = await requireAdmin();
+    const db = getDb();
+
+    const [cycle] = await db
+      .select({
+        cycleId: orderCycles.cycleId,
+        title: orderCycles.title,
+        status: orderCycles.status,
+        pickupDate: orderCycles.pickupDate,
+        supplierId: orderCycles.supplierId,
+        supplierEmail: suppliers.email,
+        supplierName: suppliers.name,
+      })
+      .from(orderCycles)
+      .leftJoin(suppliers, eq(orderCycles.supplierId, suppliers.supplierId))
+      .where(eq(orderCycles.cycleId, cycleId))
+      .limit(1);
+    if (!cycle) return { error: "Ciclo non trovato" };
+    if (cycle.status !== "closed") return { error: "Il ciclo non e' chiuso" };
+    if (!cycle.supplierId || !cycle.supplierName)
+      return { error: "Il ciclo non ha un fornitore associato" };
+    if (!cycle.supplierEmail)
+      return { error: "Il fornitore non ha un indirizzo email" };
+
+    const { buildSupplierAggregateCsv } = await import("@/lib/csv/supplier-export");
+    const csv = await buildSupplierAggregateCsv(cycleId, cycle.title);
+    if (csv.rowCount === 0) return { error: "Nessun ordine in questo ciclo" };
+
+    const { supplierOrderEmail } = await import("@/lib/email/templates");
+    const { subject, text } = supplierOrderEmail({
+      cycleTitle: cycle.title,
+      pickupDate: cycle.pickupDate,
+      grandTotal: csv.grandTotal,
+      itemCount: csv.rowCount,
+    });
+
+    // Always keep the GAS shared archive in CC so the cooperative has a
+    // long-term record of every outbound supplier email, independent of
+    // which admin clicked the button. De-duplicate in case the acting
+    // admin's email is the archive itself.
+    const ARCHIVE_CC = "gas@portamoneta.org";
+    const cc = Array.from(new Set([admin.email, ARCHIVE_CC]));
+
+    const { sendMail } = await import("@/lib/email/resend");
+    const result = await sendMail({
+      to: cycle.supplierEmail,
+      cc,
+      subject,
+      text,
+      attachments: [{ filename: csv.filename, content: csv.content }],
+    });
+    if ("error" in result) return { error: result.error };
+
+    await writeAudit(db, admin.email, "supplier_email_sent", "cycle", cycleId, {
+      supplierId: cycle.supplierId,
+      recipient: cycle.supplierEmail,
+      cc,
+      filename: csv.filename,
+      rowCount: csv.rowCount,
+      grandTotal: csv.grandTotal,
+      messageId: result.id ?? null,
+    });
+
+    return { ok: true, recipient: cycle.supplierEmail, rowCount: csv.rowCount };
+  } catch (e) {
+    return { error: e instanceof Error ? e.message : "Errore nell'invio email" };
+  }
+}
+
+// ── Post-close per-line actuals ──────────────────────────────────────────────
+
+// Records the *actually delivered* quantity and cost for a single order line
+// of a closed cycle (e.g. ordered 1 kg of beetroot, received 800 g → effective
+// €1.60 instead of €2.00). The original `quantity`/`lineTotal` columns stay
+// frozen for history; the delta between the previous effective total and the
+// new one is posted as a `correction` ledger entry, matching the model used
+// by adminEditClosedOrder so the two flows compose cleanly.
+//
+// Passing both args as `null` resets the line back to "delivered as ordered"
+// and reverses any previous correction by posting a fresh delta in the
+// opposite direction.
+export async function adminUpdateOrderLineActuals(input: {
+  orderLineId: string;
+  actualQuantity: string | null;
+  actualLineTotal: string | null;
+}): Promise<
+  | { ok: true; newOrderTotal: number; correctionAmount: number }
+  | { error: string }
+> {
+  try {
+    const admin = await requireAdmin();
+    const db = getDb();
+
+    const [line] = await db
+      .select({
+        orderLineId: orders.orderLineId,
+        cycleId: orders.cycleId,
+        memberId: orders.memberId,
+        quantity: orders.quantity,
+        unitPriceSnapshot: orders.unitPriceSnapshot,
+        lineTotal: orders.lineTotal,
+        actualQuantity: orders.actualQuantity,
+        actualLineTotal: orders.actualLineTotal,
+        productName: products.name,
+        productUnit: products.unit,
+        cycleTitle: orderCycles.title,
+        cycleStatus: orderCycles.status,
+      })
+      .from(orders)
+      .innerJoin(products, eq(orders.productId, products.productId))
+      .innerJoin(orderCycles, eq(orders.cycleId, orderCycles.cycleId))
+      .where(eq(orders.orderLineId, input.orderLineId))
+      .limit(1);
+    if (!line) return { error: "Riga ordine non trovata" };
+    if (line.cycleStatus !== "closed")
+      return { error: "Il ciclo non e' chiuso: usa la modifica ordine normale" };
+
+    // Parse + validate inputs.
+    const parseNum = (s: string | null): number | null => {
+      if (s == null || s.trim() === "") return null;
+      const n = parseFloat(s.replace(",", "."));
+      return Number.isFinite(n) && n >= 0 ? n : NaN;
+    };
+    const newActualQty = parseNum(input.actualQuantity);
+    const newActualTotal = parseNum(input.actualLineTotal);
+    if (newActualQty !== null && Number.isNaN(newActualQty))
+      return { error: "Quantita effettiva non valida" };
+    if (newActualTotal !== null && Number.isNaN(newActualTotal))
+      return { error: "Totale effettivo non valido" };
+
+    const unitPrice = parseFloat(line.unitPriceSnapshot);
+    const originalTotal = parseFloat(line.lineTotal);
+    const prevEffective =
+      line.actualLineTotal != null ? parseFloat(line.actualLineTotal) : originalTotal;
+
+    // Compute the new effective total. Priority:
+    //   1. explicit actualLineTotal if provided
+    //   2. actualQuantity * unitPrice
+    //   3. fall back to the original lineTotal (reset case)
+    let newEffective: number;
+    if (newActualTotal !== null) {
+      newEffective = newActualTotal;
+    } else if (newActualQty !== null) {
+      newEffective = Math.round(newActualQty * unitPrice * 100) / 100;
+    } else {
+      newEffective = originalTotal;
+    }
+
+    const delta = Math.round((prevEffective - newEffective) * 100) / 100;
+
+    await db
+      .update(orders)
+      .set({
+        actualQuantity: newActualQty != null ? newActualQty.toFixed(3) : null,
+        actualLineTotal:
+          newActualTotal != null
+            ? newActualTotal.toFixed(2)
+            : newActualQty != null
+              ? newEffective.toFixed(2)
+              : null,
+        updatedAt: new Date(),
+      })
+      .where(eq(orders.orderLineId, line.orderLineId));
+
+    let correctionAmount = 0;
+    if (Math.abs(delta) >= 0.005) {
+      // Sign convention: positive `delta` means the member overpaid (refund)
+      // — same as adminEditClosedOrder so /storico renders consistently.
+      const now = new Date();
+      const fmt = (n: number) => n.toFixed(2).replace(".", ",");
+      const noteParts: string[] = [];
+      if (newActualQty !== null) {
+        const qtyText = Number.isInteger(newActualQty)
+          ? `${newActualQty}`
+          : newActualQty.toFixed(3).replace(/0+$/, "").replace(/\.$/, "");
+        const unit = line.productUnit ?? "";
+        noteParts.push(
+          `${line.productName}: ${line.quantity}${unit ? ` ${unit}` : ""} ordinati, ${qtyText}${unit ? ` ${unit}` : ""} ricevuti`,
+        );
+      } else if (newActualTotal !== null) {
+        noteParts.push(`${line.productName}: costo aggiornato a ${fmt(newEffective)} EUR`);
+      } else {
+        noteParts.push(`${line.productName}: rettifica annullata`);
+      }
+
+      await db.insert(ledgerEntries).values({
+        entryId: genId("led"),
+        memberId: line.memberId,
+        entryDate: now,
+        type: "correction",
+        amount: delta.toFixed(2),
+        cycleId: line.cycleId,
+        note: noteParts.join(" · "),
+        createdBy: admin.email,
+        createdAt: now,
+      });
+      correctionAmount = delta;
+
+      const direction = delta > 0 ? "rimborso" : "addebito aggiuntivo";
+      await createNotification(db, {
+        memberId: line.memberId,
+        type: "order_adjusted",
+        title: `Ordine "${line.cycleTitle}" rettificato`,
+        body: `${noteParts.join(" · ")} · ${direction} di ${fmt(Math.abs(delta))} EUR sul tuo saldo.`,
+        href: "/storico",
+      });
+    }
+
+    // Recompute the member's effective order total purely for the response.
+    const [agg] = await db
+      .select({
+        total: sql<string>`sum(coalesce(${orders.actualLineTotal}, ${orders.lineTotal}))`,
+      })
+      .from(orders)
+      .where(and(eq(orders.cycleId, line.cycleId), eq(orders.memberId, line.memberId)));
+    const newOrderTotal = parseFloat(agg?.total ?? "0");
+
+    await writeAudit(db, admin.email, "order_line_actuals_updated", "order", line.orderLineId, {
+      cycleId: line.cycleId,
+      memberId: line.memberId,
+      prevEffective,
+      newEffective,
+      delta,
+      actualQuantity: newActualQty,
+      actualLineTotal: newActualTotal,
+    });
+
+    revalidatePath("/admin");
+    revalidatePath("/storico");
+    revalidatePath("/notifiche");
+    revalidatePath("/");
+    return { ok: true, newOrderTotal, correctionAmount };
+  } catch (e) {
+    return { error: e instanceof Error ? e.message : "Errore nella rettifica" };
+  }
 }
 
 // ── Post-close order editing ─────────────────────────────────────────────────

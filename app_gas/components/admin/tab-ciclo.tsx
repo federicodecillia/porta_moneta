@@ -2,7 +2,12 @@ import { getAllCycles, getAllSuppliers, getOpenCycles, getOpenCycleStats } from 
 import { formatDate } from "@/lib/utils";
 import { Card, CardHeader } from "@/components/ui/card";
 import { AdminInsights } from "./admin-insights";
-import { CreateCycleForm, OpenCycleCard } from "./ciclo-forms";
+import {
+  ClosedCycleEditButton,
+  CreateCycleForm,
+  OpenCycleCard,
+  SupplierEmailButton,
+} from "./ciclo-forms";
 import { ClosedCycleDetails } from "./closed-cycle-details";
 
 export async function TabCiclo() {
@@ -86,7 +91,33 @@ export async function TabCiclo() {
                   {c.status === "open" ? "Aperto" : "Chiuso"}
                 </span>
                 {c.status !== "open" && (
-                  <div className="ml-3">
+                  <div className="ml-3 flex items-center gap-1.5">
+                    <SupplierEmailButton
+                      cycleId={c.cycleId}
+                      cycleTitle={c.title}
+                      supplierName={c.supplierName ?? null}
+                      supplierEmail={c.supplierEmail ?? null}
+                    />
+                    <ClosedCycleEditButton
+                      cycle={{
+                        cycleId: c.cycleId,
+                        title: c.title,
+                        orderCloseAt: c.orderCloseAt?.toISOString() ?? null,
+                        pickupDate: c.pickupDate?.toISOString() ?? null,
+                        pickupEndTime: c.pickupEndTime ?? null,
+                        pickup2Date: c.pickup2Date?.toISOString() ?? null,
+                        pickup2EndTime: c.pickup2EndTime ?? null,
+                        notes: c.notes ?? null,
+                        supplierId: c.supplierId ?? null,
+                        accessLevel: c.accessLevel,
+                        isOverdue: false,
+                        shippingMode: c.shippingMode ?? "fixed_per_member",
+                        shippingCostPerMember: c.shippingCostPerMember ?? null,
+                        shippingTotal: c.shippingTotal ?? null,
+                        status: c.status,
+                      }}
+                      suppliers={suppliers}
+                    />
                     <ClosedCycleDetails cycleId={c.cycleId} cycleTitle={c.title} />
                   </div>
                 )}
