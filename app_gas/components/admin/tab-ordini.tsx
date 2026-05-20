@@ -151,7 +151,7 @@ export async function TabOrdini({ cycleId, memberId }: Props) {
           <Card>
             <CardHeader className="flex items-center justify-between">
               <h3 className="text-[13px] font-bold text-pm-near-black">Per socio</h3>
-              <CsvExportButton summary={summary} cycleTitle={selectedCycle?.title ?? selectedId} />
+              <CsvExportButton cycleId={selectedId} cycleTitle={selectedCycle?.title ?? selectedId} />
             </CardHeader>
             <OrdiniByMember byMember={summary.byMember} />
             <CardBody className="border-t border-pm-border py-2.5">

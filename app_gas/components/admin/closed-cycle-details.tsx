@@ -3,6 +3,7 @@
 import { useCallback, useState, useTransition } from "react";
 import { adminGetCycleOrderDetails } from "@/lib/actions/admin-cycles";
 import { adminUpdateOrderLineActuals } from "@/lib/actions/admin";
+import { downloadSupplierCsv } from "@/lib/csv/supplier-csv-client";
 import { formatEur, getProductEmoji } from "@/lib/utils";
 import { toast } from "@/components/ui/toast";
 import { EditClosedOrderModal } from "./edit-closed-order-modal";
@@ -409,103 +410,3 @@ function OrderLineEditForm({
   );
 }
 
-// Emits a CSV with one row per (supplier, product, member, quantity) so the
-// supplier can prepare each member's bag separately instead of weighing the
-// full cycle total and then re-splitting it. Rows are sorted by
-// supplier → product → member name so reading the file top-to-bottom matches
-// the natural workflow of preparing the delivery.
-//
-// A blank row separates supplier sections so the file is also easy to scan
-// visually. No aggregated subtotal rows: keeping the file uniform (every row
-// is a real order line) avoids the risk that a supplier double-counts a
-// product by reading both the per-member rows and a subtotal row.
-function downloadSupplierCsv(orders: OrderDetail[], cycleTitle: string) {
-  if (orders.length === 0) return;
-
-  // Stable supplier label even when the cycle-level supplier and the
-  // product-level supplier disagree (legacy free-text field).
-  const supplierOf = (l: OrderDetail) => l.supplierName ?? l.productSupplier ?? "—";
-
-  // Sort by supplier → product → member, with variant/format/unit as
-  // tiebreakers so two products with the same name but different
-  // packaging stay adjacent.
-  const rows = [...orders].sort((a, b) => {
-    const s = supplierOf(a).localeCompare(supplierOf(b));
-    if (s !== 0) return s;
-    const p = a.productName.localeCompare(b.productName);
-    if (p !== 0) return p;
-    const v = (a.variant ?? "").localeCompare(b.variant ?? "");
-    if (v !== 0) return v;
-    const f = (a.format ?? "").localeCompare(b.format ?? "");
-    if (f !== 0) return f;
-    return a.memberName.localeCompare(b.memberName);
-  });
-
-  // CSV header. Italian labels because the file is meant to be emailed
-  // to Italian-speaking suppliers.
-  const header = [
-    "Fornitore",
-    "Prodotto",
-    "Varietà",
-    "Formato",
-    "Unità",
-    "Socio",
-    "Quantità",
-    "Prezzo unitario",
-    "Totale (€)",
-  ];
-
-  // RFC 4180-ish escaping: wrap in quotes if the value contains a quote,
-  // comma, semicolon, or newline; double any embedded quotes.
-  const escape = (v: string | number | null) => {
-    const s = v == null ? "" : String(v);
-    return /[",;\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
-  };
-  const join = (cells: Array<string | number | null>) => cells.map(escape).join(";");
-
-  const lines: string[] = [join(header)];
-  let currentSupplier = "";
-
-  for (const r of rows) {
-    const supplier = supplierOf(r);
-    if (supplier !== currentSupplier) {
-      if (currentSupplier !== "") lines.push("");
-      currentSupplier = supplier;
-    }
-
-    const effectiveQty =
-      r.actualQuantity != null
-        ? parseFloat(r.actualQuantity).toString().replace(".", ",")
-        : String(r.quantity);
-    const effectiveTotalEur =
-      r.actualLineTotal != null
-        ? parseFloat(r.actualLineTotal).toFixed(2).replace(".", ",")
-        : parseFloat(r.lineTotal).toFixed(2).replace(".", ",");
-    lines.push(
-      join([
-        supplier,
-        r.productName,
-        r.variant,
-        r.format,
-        r.unit,
-        r.memberName,
-        effectiveQty,
-        parseFloat(r.unitPrice).toFixed(2).replace(".", ","),
-        effectiveTotalEur,
-      ]),
-    );
-  }
-
-  const csv = "﻿" + lines.join("\n"); // BOM so Excel detects UTF-8
-  const blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url;
-  // Sanitize cycle title for the filename: only keep alnum, dash, underscore.
-  const safeTitle = cycleTitle.replace(/[^a-zA-Z0-9_\-]+/g, "_").slice(0, 60);
-  a.download = `ordine_fornitore_${safeTitle || "ciclo"}.csv`;
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
-  URL.revokeObjectURL(url);
-}

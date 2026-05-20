@@ -1,7 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useTransition } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import { adminGetCycleOrderDetails } from "@/lib/actions/admin-cycles";
+import { downloadSupplierCsv } from "@/lib/csv/supplier-csv-client";
+import { toast } from "@/components/ui/toast";
 import { formatEur, getProductEmoji } from "@/lib/utils";
 import type { CycleSummary } from "@/lib/db/queries";
 
@@ -135,45 +138,42 @@ export function OrdiniByMember({ byMember }: { byMember: CycleSummary["byMember"
 
 // ── CSV Export ────────────────────────────────────────────────────────────────
 
+// Exports the same itemized supplier CSV as the "Vedi ordini" modal so the
+// two surfaces produce an identical file. We fetch the full per-line detail
+// (supplier, format, unit, unit price, rectified quantity/total) lazily on
+// click instead of carrying it through the Server Component summary.
 export function CsvExportButton({
-  summary,
+  cycleId,
   cycleTitle,
 }: {
-  summary: CycleSummary;
+  cycleId: string;
   cycleTitle: string;
 }) {
+  const [isPending, startTransition] = useTransition();
+
   function handleExport() {
-    const rows: string[][] = [["Socio", "Prodotto", "Varietà", "Quantità", "Totale €"]];
-    for (const m of summary.byMember) {
-      for (const line of m.lines) {
-        rows.push([
-          m.fullName,
-          line.productName,
-          line.variant ?? "",
-          String(line.quantity),
-          line.lineTotal.toFixed(2),
-        ]);
+    startTransition(async () => {
+      const result = await adminGetCycleOrderDetails(cycleId);
+      if (result.error) {
+        toast.error(result.error);
+        return;
       }
-      if (m.shipping > 0) {
-        rows.push([m.fullName, "Spedizione", "", "1", m.shipping.toFixed(2)]);
+      const rows = result.orders ?? [];
+      if (rows.length === 0) {
+        toast.error("Nessun ordine da esportare");
+        return;
       }
-    }
-    const csv = rows.map((r) => r.map((c) => `"${c.replace(/"/g, '""')}"`).join(",")).join("\n");
-    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `ordini_${cycleTitle.replace(/\s+/g, "_")}.csv`;
-    a.click();
-    URL.revokeObjectURL(url);
+      downloadSupplierCsv(rows, cycleTitle);
+    });
   }
 
   return (
     <button
       onClick={handleExport}
-      className="rounded-xl border border-pm-border px-4 py-2 text-[12px] font-semibold text-pm-gray"
+      disabled={isPending}
+      className="rounded-xl border border-pm-border px-4 py-2 text-[12px] font-semibold text-pm-gray disabled:opacity-60"
     >
-      Esporta CSV
+      {isPending ? "Esportazione…" : "Esporta CSV"}
     </button>
   );
 }
