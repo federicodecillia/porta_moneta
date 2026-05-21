@@ -30,6 +30,9 @@ and this project loosely follows [Semantic Versioning](https://semver.org/spec/v
 - **"Fatturato" renamed to "Spesa"** throughout Admin → Statistiche — top card label, trend chart title, supplier ranking heading. "Spesa totale" now also folds in shipping so it matches what the soci actually paid, not just the product subtotals.
 - **Admin → Ordini CSV export now matches the "CSV fornitore" file** produced inside the "Vedi ordini" modal: same header (`Fornitore;Prodotto;Varietà;Formato;Unità;Socio;Quantità;Prezzo unitario;Totale (€)`), same supplier-grouped layout, same Italian decimal-comma + UTF-8 BOM for Excel. Single shared client-side builder so the two surfaces can't drift again.
 
+### Fixed
+- **Cleaner order-line display in the "Vedi ordini" modal.** Lines used to read like `1 1 × €2,00 = €2,00` because the legacy "Unità" field was stored as the literal string `"1"` on many products and got concatenated next to the quantity. The bogus `"1"` is now treated as "no unit" everywhere it surfaces in the modal (rectification view included), so the line reads `1 × €2,00 = €2,00`. When the product has a reference price-per-kg, it's now shown under the unit price (e.g. `€5,00/kg`).
+
 ---
 
 ## [1.5.0] — 2026-05-17

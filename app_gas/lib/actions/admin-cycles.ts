@@ -40,6 +40,7 @@ export async function adminGetCycleOrderDetails(cycleId: string) {
           productSupplier: products.supplier,
           quantity: orders.quantity,
           unitPrice: orders.unitPriceSnapshot,
+          pricePerKg: products.pricePerKg,
           lineTotal: orders.lineTotal,
           actualQuantity: orders.actualQuantity,
           actualLineTotal: orders.actualLineTotal,
