@@ -1,4 +1,4 @@
-import { and, asc, eq } from "drizzle-orm";
+import { and, eq, sql } from "drizzle-orm";
 import ExcelJS from "exceljs";
 import { getDb } from "@/lib/db/client";
 import {
@@ -132,7 +132,15 @@ export async function buildSupplierDistinta(cycleId: string): Promise<DistintaBu
     .innerJoin(members, eq(orders.memberId, members.memberId))
     .innerJoin(products, eq(orders.productId, products.productId))
     .where(eq(orders.cycleId, cycleId))
-    .orderBy(asc(products.name), asc(products.variant), asc(members.fullName))) as Row[];
+    // LOWER(...) makes the sort case-insensitive — without it Postgres'
+    // default collation sorts all uppercase letters before all lowercase
+    // ones, so "aglio" and "asparago" would land at the bottom while
+    // "Barbabietola", "Bieta", … appear on top.
+    .orderBy(
+      sql`lower(${products.name})`,
+      sql`lower(coalesce(${products.variant}, ''))`,
+      sql`lower(${members.fullName})`,
+    )) as Row[];
 
   if (rows.length === 0) {
     throw new Error("Nessun ordine in questo ciclo");
@@ -165,7 +173,11 @@ export async function buildSupplierDistinta(cycleId: string): Promise<DistintaBu
       memberName.set(r.memberId, r.memberName);
     }
   }
-  memberOrder.sort((a, b) => (memberName.get(a) ?? "").localeCompare(memberName.get(b) ?? ""));
+  memberOrder.sort((a, b) =>
+    (memberName.get(a) ?? "").localeCompare(memberName.get(b) ?? "", "it", {
+      sensitivity: "base",
+    }),
+  );
   // Include members who only have shipping but no orders (rare, but possible
   // after an admin edit). Append them at the end so the column order stays
   // stable for ones that did order.
@@ -435,12 +447,17 @@ export async function buildSupplierDistinta(cycleId: string): Promise<DistintaBu
   riep.getColumn(5).width = 12;
   riep.getColumn(6).width = 16;
   riep.getColumn(7).width = 18;
+  // `sensitivity: "base"` makes localeCompare case-insensitive so a row
+  // for "aglio" doesn't sort after "Zucchina". Same reasoning as the
+  // LOWER() in the SQL ORDER BY that drives the Distinta sheet.
+  const ci = (a: string, b: string) =>
+    a.localeCompare(b, "it", { sensitivity: "base" });
   const riepRows = [...rows].sort((a, b) => {
-    const m = a.memberName.localeCompare(b.memberName);
+    const m = ci(a.memberName, b.memberName);
     if (m !== 0) return m;
-    const p = a.productName.localeCompare(b.productName);
+    const p = ci(a.productName, b.productName);
     if (p !== 0) return p;
-    return (a.variant ?? "").localeCompare(b.variant ?? "");
+    return ci(a.variant ?? "", b.variant ?? "");
   });
   let riepR = 2;
   for (const row of riepRows) {
