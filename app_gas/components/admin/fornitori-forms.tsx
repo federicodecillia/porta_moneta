@@ -393,12 +393,24 @@ export function FornitoriList({
                 </div>
               ) : (
                 <>
-                  {/* Supplier row */}
-                  <button
+                  {/* Supplier row — div+role rather than <button> so the
+                      per-action buttons inside (Modifica/Archivia/✕) don't
+                      end up as nested <button> descendants, which is invalid
+                      HTML and trips a React hydration warning. */}
+                  <div
+                    role="button"
+                    tabIndex={0}
                     onClick={() =>
                       setExpandedId(expandedId === s.supplierId ? null : s.supplierId)
                     }
-                    className="flex w-full items-center justify-between border-b border-pm-border px-4 py-3 text-left"
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" || e.key === " ") {
+                        e.preventDefault();
+                        setExpandedId(expandedId === s.supplierId ? null : s.supplierId);
+                      }
+                    }}
+                    aria-expanded={expandedId === s.supplierId}
+                    className="flex w-full cursor-pointer items-center justify-between border-b border-pm-border px-4 py-3 text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-pm-orange/40"
                   >
                     <div className="min-w-0 flex-1">
                       <div className="flex items-center gap-2">
@@ -440,7 +452,7 @@ export function FornitoriList({
                         {expandedId === s.supplierId ? "▲" : "▼"}
                       </span>
                     </div>
-                  </button>
+                  </div>
 
                   {/* Contact details + products */}
                   {expandedId === s.supplierId && (
