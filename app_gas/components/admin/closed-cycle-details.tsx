@@ -22,10 +22,20 @@ type OrderDetail = {
   productSupplier: string | null;
   quantity: number;
   unitPrice: string;
+  pricePerKg: string | null;
   lineTotal: string;
   actualQuantity: string | null;
   actualLineTotal: string | null;
 };
+
+// The legacy "Unità" field is often the literal string "1" — a leftover
+// from the import format that has nothing to do with a measurement unit.
+// Treat anything that's just "1" (or empty) as no unit so we don't render
+// noise like "1 1 × €2,00".
+function realUnit(unit: string | null | undefined): string {
+  const u = (unit ?? "").trim();
+  return u === "" || u === "1" ? "" : u;
+}
 
 type MemberShipping = { memberId: string; memberName: string; amount: number };
 
@@ -218,7 +228,9 @@ function OrderLineRow({ line, onSaved }: { line: OrderDetail; onSaved: () => voi
   const effective = parseFloat(line.actualLineTotal ?? line.lineTotal);
   const adjusted =
     line.actualQuantity != null || line.actualLineTotal != null;
-  const unit = line.unit ?? "";
+  const unit = realUnit(line.unit);
+  const unitSuffix = unit ? ` ${unit}` : "";
+  const pricePerKg = line.pricePerKg != null ? parseFloat(line.pricePerKg) : null;
 
   if (!editing) {
     return (
@@ -249,7 +261,7 @@ function OrderLineRow({ line, onSaved }: { line: OrderDetail; onSaved: () => voi
             <>
               <span className="block text-pm-gray-light line-through">
                 {line.quantity}
-                {unit ? ` ${unit}` : ""} = {formatEur(orderedTotal)}
+                {unitSuffix} = {formatEur(orderedTotal)}
               </span>
               <span className="block font-bold text-pm-near-black">
                 {line.actualQuantity != null
@@ -257,15 +269,22 @@ function OrderLineRow({ line, onSaved }: { line: OrderDetail; onSaved: () => voi
                       .toFixed(3)
                       .replace(/0+$/, "")
                       .replace(/\.$/, "")
-                      .replace(".", ",")}${unit ? ` ${unit}` : ""}`
-                  : `${line.quantity}${unit ? ` ${unit}` : ""}`}{" "}
+                      .replace(".", ",")}${unitSuffix}`
+                  : `${line.quantity}${unitSuffix}`}{" "}
                 = {formatEur(effective)}
               </span>
             </>
           ) : (
             <>
-              {line.quantity}
-              {unit ? ` ${unit}` : ""} × {formatEur(parseFloat(line.unitPrice))} = {formatEur(orderedTotal)}
+              <span className="block">
+                {line.quantity}
+                {unitSuffix} × {formatEur(parseFloat(line.unitPrice))} = {formatEur(orderedTotal)}
+              </span>
+              {pricePerKg != null && (
+                <span className="block text-pm-gray-light">
+                  {formatEur(pricePerKg)}/kg
+                </span>
+              )}
             </>
           )}
         </span>
@@ -350,7 +369,8 @@ function OrderLineEditForm({
     );
   }
 
-  const unit = line.unit ?? "";
+  const unit = realUnit(line.unit);
+  const unitSuffix = unit ? ` ${unit}` : "";
 
   return (
     <div className="space-y-2 rounded-lg border border-pm-orange/30 bg-pm-orange-light px-2.5 py-2">
@@ -358,7 +378,7 @@ function OrderLineEditForm({
         <span className="text-[14px]">{line.emoji || getProductEmoji(line.productName)}</span>
         <span className="font-bold">{line.productName}</span>
         <span className="font-mono text-pm-gray">
-          ordinato: {line.quantity}{unit ? ` ${unit}` : ""} = {formatEur(parseFloat(line.lineTotal))}
+          ordinato: {line.quantity}{unitSuffix} = {formatEur(parseFloat(line.lineTotal))}
         </span>
       </div>
       <div className="grid grid-cols-2 gap-2">

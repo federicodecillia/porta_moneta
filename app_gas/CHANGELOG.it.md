@@ -30,6 +30,9 @@ e il versionamento è basato su [Semantic Versioning](https://semver.org/spec/v2
 - **"Fatturato" rinominato in "Spesa"** in tutta Admin → Statistiche — etichetta della card in alto, titolo del grafico trend, intestazione del ranking fornitori. "Spesa totale" include ora anche la spedizione, così corrisponde a quanto i soci hanno effettivamente pagato, non solo ai subtotali prodotti.
 - **Il CSV esportato da Admin → Ordini è ora identico al "CSV fornitore"** che si scarica dal modale "Vedi ordini": stessa intestazione (`Fornitore;Prodotto;Varietà;Formato;Unità;Socio;Quantità;Prezzo unitario;Totale (€)`), stesso raggruppamento per fornitore, stessa virgola decimale italiana e BOM UTF-8 per Excel. Un unico builder client condiviso, così i due punti di export non possono più divergere.
 
+### Risolto
+- **Righe d'ordine più chiare nel modale "Vedi ordini".** Le righe apparivano come `1 1 × €2,00 = €2,00` perché il vecchio campo "Unità" era salvato come la stringa letterale `"1"` su molti prodotti e finiva accodato alla quantità. La `"1"` ora viene trattata come "nessuna unità" in tutto il modale (anche nella vista rettifica), quindi si legge `1 × €2,00 = €2,00`. Quando il prodotto ha un prezzo al kg di riferimento, viene mostrato sotto al prezzo unitario (es. `€5,00/kg`).
+
 ---
 
 ## [1.5.0] — 17 maggio 2026
