@@ -867,14 +867,73 @@ export async function adminRecordTopup(
 
 // ── Supplier email ───────────────────────────────────────────────────────────
 
+const ARCHIVE_CC = "gas@portamoneta.org";
+
+// Returns the defaults the supplier-email dialog needs to pre-fill its
+// fields (To / From / CC / Subject). Used by the client before the admin
+// hits "Invia ora" so they can review and tweak any field.
+export async function adminGetSupplierEmailDefaults(cycleId: string): Promise<
+  | {
+      ok: true;
+      to: string;
+      from: string;
+      cc: string[];
+      subject: string;
+      supplierName: string;
+    }
+  | { error: string }
+> {
+  try {
+    const admin = await requireAdmin();
+    const db = getDb();
+    const [cycle] = await db
+      .select({
+        cycleId: orderCycles.cycleId,
+        title: orderCycles.title,
+        status: orderCycles.status,
+        supplierId: orderCycles.supplierId,
+        supplierEmail: suppliers.email,
+        supplierName: suppliers.name,
+      })
+      .from(orderCycles)
+      .leftJoin(suppliers, eq(orderCycles.supplierId, suppliers.supplierId))
+      .where(eq(orderCycles.cycleId, cycleId))
+      .limit(1);
+    if (!cycle) return { error: "Ciclo non trovato" };
+    if (cycle.status !== "closed") return { error: "Il ciclo non e' chiuso" };
+    if (!cycle.supplierId || !cycle.supplierName)
+      return { error: "Il ciclo non ha un fornitore associato" };
+    if (!cycle.supplierEmail) return { error: "Il fornitore non ha un indirizzo email" };
+
+    const { getMailFromDefault } = await import("@/lib/email/resend");
+    const from = getMailFromDefault() ?? "";
+
+    return {
+      ok: true,
+      to: cycle.supplierEmail,
+      from,
+      cc: Array.from(new Set([admin.email, ARCHIVE_CC])),
+      subject: `Ordine GAS Porta Moneta — ${cycle.title}`,
+      supplierName: cycle.supplierName,
+    };
+  } catch (e) {
+    return { error: e instanceof Error ? e.message : "Errore" };
+  }
+}
+
 // Sends the closed cycle's order summary as a CSV attachment to the
 // configured supplier. The acting admin is CC'd so they always have a copy
 // in their own mailbox. The CSV is aggregated per product (one row per SKU,
 // summing quantities and amounts across every member's order). Fails fast if
 // the cycle isn't closed, has no supplier, or the supplier has no email on
 // file — Resend errors are surfaced verbatim.
+//
+// Each header field is independently overridable from the dialog. Missing
+// overrides fall back to the same defaults exposed by
+// adminGetSupplierEmailDefaults so the two stay in sync.
 export async function adminSendSupplierEmail(
   cycleId: string,
+  overrides?: { to?: string; from?: string; cc?: string[]; subject?: string },
 ): Promise<{ ok: true; recipient: string; rowCount: number } | { error: string }> {
   try {
     const admin = await requireAdmin();
@@ -898,8 +957,9 @@ export async function adminSendSupplierEmail(
     if (cycle.status !== "closed") return { error: "Il ciclo non e' chiuso" };
     if (!cycle.supplierId || !cycle.supplierName)
       return { error: "Il ciclo non ha un fornitore associato" };
-    if (!cycle.supplierEmail)
-      return { error: "Il fornitore non ha un indirizzo email" };
+
+    const to = overrides?.to?.trim() || cycle.supplierEmail || "";
+    if (!to) return { error: "Indirizzo destinatario mancante" };
 
     const { buildSupplierDistinta } = await import("@/lib/csv/distinta-builder");
     let distinta: Awaited<ReturnType<typeof buildSupplierDistinta>>;
@@ -910,35 +970,40 @@ export async function adminSendSupplierEmail(
     }
 
     const { supplierOrderEmail } = await import("@/lib/email/templates");
-    const { subject, text } = supplierOrderEmail({
+    const defaults = supplierOrderEmail({
       cycleTitle: cycle.title,
       pickupDate: cycle.pickupDate,
       grandTotal: distinta.grandTotal,
       productCount: distinta.productCount,
       memberCount: distinta.memberCount,
     });
+    const subject = overrides?.subject?.trim() || defaults.subject;
 
     // Always keep the GAS shared archive in CC so the cooperative has a
     // long-term record of every outbound supplier email, independent of
     // which admin clicked the button. De-duplicate in case the acting
     // admin's email is the archive itself.
-    const ARCHIVE_CC = "gas@portamoneta.org";
-    const cc = Array.from(new Set([admin.email, ARCHIVE_CC]));
+    const cc = overrides?.cc
+      ? Array.from(new Set(overrides.cc.map((e) => e.trim()).filter(Boolean)))
+      : Array.from(new Set([admin.email, ARCHIVE_CC]));
 
     const { sendMail } = await import("@/lib/email/resend");
     const result = await sendMail({
-      to: cycle.supplierEmail,
+      to,
       cc,
+      from: overrides?.from?.trim() || undefined,
       subject,
-      text,
+      text: defaults.text,
       attachments: [{ filename: distinta.filename, content: distinta.content }],
     });
     if ("error" in result) return { error: result.error };
 
     await writeAudit(db, admin.email, "supplier_email_sent", "cycle", cycleId, {
       supplierId: cycle.supplierId,
-      recipient: cycle.supplierEmail,
+      recipient: to,
       cc,
+      from: overrides?.from?.trim() || null,
+      subject,
       filename: distinta.filename,
       productCount: distinta.productCount,
       memberCount: distinta.memberCount,
@@ -946,7 +1011,7 @@ export async function adminSendSupplierEmail(
       messageId: result.id ?? null,
     });
 
-    return { ok: true, recipient: cycle.supplierEmail, rowCount: distinta.productCount };
+    return { ok: true, recipient: to, rowCount: distinta.productCount };
   } catch (e) {
     return { error: e instanceof Error ? e.message : "Errore nell'invio email" };
   }
