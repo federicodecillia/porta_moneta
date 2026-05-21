@@ -13,7 +13,7 @@ import { Card, CardBody, CardHeader } from "@/components/ui/card";
 import type { CatalogProductItem } from "@/lib/db/queries";
 import { ClosedCycleDetails } from "./closed-cycle-details";
 import { CycleReviewCloseButton } from "./cycle-review-modal";
-import { SupplierEmailDialog } from "./supplier-email-dialog";
+import { SupplierActionsDialog } from "./supplier-actions-dialog";
 
 type Supplier = { supplierId: string; name: string };
 
@@ -169,7 +169,7 @@ export function OpenCycleCard({
             <ClosedCycleDetails
               cycleId={cycle.cycleId}
               cycleTitle={cycle.title}
-              buttonLabel="Recap ordini"
+              buttonLabel="✎ Recap ordini"
             />
           </div>
           {managingProducts && (
@@ -850,12 +850,13 @@ export function CycleProductPicker({
   );
 }
 
-// ── Supplier Email Button ────────────────────────────────────────────────────
+// ── Supplier Actions Button ──────────────────────────────────────────────────
 
-// Opens the SupplierEmailDialog where the admin can review and edit the
-// To / From / CC / Subject before sending. Disabled (and tooltipped) when
-// the cycle has no supplier or the supplier has no email on file.
-export function SupplierEmailButton({
+// Opens the SupplierActionsDialog hub with three sections: scarica xlsx,
+// invia mail, carica distinta compilata. Disabled (with explanatory
+// tooltip) when the cycle has no supplier or no supplier email on file —
+// download still works without an email but the mail section needs both.
+export function SupplierActionsButton({
   cycleId,
   cycleTitle,
   supplierName,
@@ -881,10 +882,10 @@ export function SupplierEmailButton({
         title={disabledReason ?? undefined}
         className="rounded-lg bg-pm-teal/10 px-3 py-1 text-[11px] font-bold text-pm-teal hover:bg-pm-teal/20 disabled:cursor-not-allowed disabled:opacity-50"
       >
-        📧 Fornitore
+        🤝 Fornitore
       </button>
       {open && (
-        <SupplierEmailDialog
+        <SupplierActionsDialog
           open={open}
           onOpenChange={setOpen}
           cycleId={cycleId}
@@ -914,7 +915,7 @@ export function ClosedCycleEditButton({
         onClick={() => setOpen(true)}
         className="rounded-lg bg-pm-orange/10 px-3 py-1 text-[11px] font-bold text-pm-orange hover:bg-pm-orange/20"
       >
-        Modifica
+        ✎ Modifica ciclo
       </button>
     );
   }

@@ -3,10 +3,8 @@
 import { useCallback, useState, useTransition } from "react";
 import { adminGetCycleOrderDetails } from "@/lib/actions/admin-cycles";
 import { adminUpdateOrderLineActuals } from "@/lib/actions/admin";
-import { downloadSupplierCsv } from "@/lib/csv/supplier-csv-client";
 import { formatEur, getProductEmoji } from "@/lib/utils";
 import { toast } from "@/components/ui/toast";
-import { DistintaModal } from "./distinta-modal";
 import { EditClosedOrderModal } from "./edit-closed-order-modal";
 
 type OrderDetail = {
@@ -43,7 +41,7 @@ type MemberShipping = { memberId: string; memberName: string; amount: number };
 export function ClosedCycleDetails({
   cycleId,
   cycleTitle,
-  buttonLabel = "Vedi ordini",
+  buttonLabel = "✎ Ordini",
 }: {
   cycleId: string;
   cycleTitle: string;
@@ -56,7 +54,6 @@ export function ClosedCycleDetails({
   const [editTarget, setEditTarget] = useState<
     { kind: "edit"; memberId: string; memberName: string } | { kind: "create" } | null
   >(null);
-  const [distintaOpen, setDistintaOpen] = useState(false);
 
   const refetch = useCallback(async () => {
     setLoading(true);
@@ -188,27 +185,11 @@ export function ClosedCycleDetails({
             + Aggiungi ordine per un socio
           </button>
           <button
-            onClick={() => setDistintaOpen(true)}
-            disabled={orderDetails.length === 0}
-            className="w-full rounded-xl border border-pm-orange/30 bg-pm-orange-light py-2 text-[12px] font-bold text-pm-orange hover:bg-pm-orange/15 disabled:opacity-50"
+            onClick={() => setIsOpen(false)}
+            className="w-full rounded-xl bg-pm-near-black py-3 text-[14px] font-bold text-white shadow-lg active:scale-95"
           >
-            📤 Carica distinta fornitore
+            Chiudi
           </button>
-          <div className="flex gap-2">
-            <button
-              onClick={() => downloadSupplierCsv(orderDetails, cycleTitle)}
-              disabled={orderDetails.length === 0}
-              className="flex-1 rounded-xl border border-pm-teal/30 bg-pm-teal-light py-3 text-[13px] font-bold text-pm-teal active:scale-95 disabled:opacity-50"
-            >
-              ⬇ CSV fornitore
-            </button>
-            <button
-              onClick={() => setIsOpen(false)}
-              className="flex-1 rounded-xl bg-pm-near-black py-3 text-[14px] font-bold text-white shadow-lg active:scale-95"
-            >
-              Chiudi
-            </button>
-          </div>
         </div>
       </div>
 
@@ -219,18 +200,6 @@ export function ClosedCycleDetails({
           mode={editTarget}
           onClose={() => setEditTarget(null)}
           onSaved={() => refetch()}
-        />
-      )}
-
-      {distintaOpen && (
-        <DistintaModal
-          cycleId={cycleId}
-          cycleTitle={cycleTitle}
-          onClose={() => setDistintaOpen(false)}
-          onApplied={() => {
-            setDistintaOpen(false);
-            void refetch();
-          }}
         />
       )}
     </div>
@@ -280,20 +249,44 @@ function OrderLineRow({ line, onSaved }: { line: OrderDetail; onSaved: () => voi
         <span className="shrink-0 text-right font-mono text-[11px] text-pm-gray">
           {adjusted ? (
             <>
+              {/* Original (struck): same `qty × unit_price = total` format
+                  as non-rectified rows so the two are visually consistent. */}
               <span className="block text-pm-gray-light line-through">
                 {line.quantity}
-                {unitSuffix} = {formatEur(orderedTotal)}
+                {unitSuffix} × {formatEur(parseFloat(line.unitPrice))} = {formatEur(orderedTotal)}
               </span>
-              <span className="block font-bold text-pm-near-black">
-                {line.actualQuantity != null
-                  ? `${parseFloat(line.actualQuantity)
-                      .toFixed(3)
-                      .replace(/0+$/, "")
-                      .replace(/\.$/, "")
-                      .replace(".", ",")}${unitSuffix}`
-                  : `${line.quantity}${unitSuffix}`}{" "}
-                = {formatEur(effective)}
-              </span>
+              {/* Effective: derive the actual unit price from
+                  effective_total / effective_qty so the breakdown reads
+                  cleanly even when actualQuantity differs (e.g. 1 kg
+                  ordered → 0,8 kg delivered → 0,800 × €2,00 = €1,60). */}
+              {(() => {
+                const effQty =
+                  line.actualQuantity != null
+                    ? parseFloat(line.actualQuantity)
+                    : line.quantity;
+                const qtyLabel =
+                  line.actualQuantity != null
+                    ? parseFloat(line.actualQuantity)
+                        .toFixed(3)
+                        .replace(/0+$/, "")
+                        .replace(/\.$/, "")
+                        .replace(".", ",")
+                    : String(line.quantity);
+                const showBreakdown = effQty > 0;
+                const effUnit = showBreakdown ? effective / effQty : null;
+                return (
+                  <span className="block font-bold text-pm-near-black">
+                    {qtyLabel}
+                    {unitSuffix}
+                    {effUnit != null && (
+                      <>
+                        {" "}× {formatEur(effUnit)}
+                      </>
+                    )}{" "}
+                    = {formatEur(effective)}
+                  </span>
+                );
+              })()}
             </>
           ) : (
             <>

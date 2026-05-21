@@ -2,11 +2,17 @@
 
 import { useState, useTransition } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { adminGetCycleOrderDetails } from "@/lib/actions/admin-cycles";
-import { downloadSupplierCsv } from "@/lib/csv/supplier-csv-client";
+import { adminBuildSupplierDistinta } from "@/lib/actions/admin";
 import { toast } from "@/components/ui/toast";
 import { formatEur, getProductEmoji } from "@/lib/utils";
 import type { CycleSummary } from "@/lib/db/queries";
+
+function decodeBase64ToBlob(base64: string, mimeType: string): Blob {
+  const binary = atob(base64);
+  const bytes = new Uint8Array(binary.length);
+  for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+  return new Blob([bytes], { type: mimeType });
+}
 
 // ── Ordini Filters ────────────────────────────────────────────────────────────
 
@@ -138,32 +144,38 @@ export function OrdiniByMember({ byMember }: { byMember: CycleSummary["byMember"
 
 // ── CSV Export ────────────────────────────────────────────────────────────────
 
-// Exports the same itemized supplier CSV as the "Vedi ordini" modal so the
-// two surfaces produce an identical file. We fetch the full per-line detail
-// (supplier, format, unit, unit price, rectified quantity/total) lazily on
-// click instead of carrying it through the Server Component summary.
+// Downloads the same canonical xlsx workbook that the Supplier actions
+// dialog ships (Distinta + Riepilogo + Totali per prodotto). One file,
+// one source of truth — no more divergent CSVs.
 export function CsvExportButton({
   cycleId,
-  cycleTitle,
 }: {
   cycleId: string;
-  cycleTitle: string;
+  // Kept on the call-site (tab-ordini) for parity with the previous API,
+  // but the filename now comes from the server so we ignore it here.
+  cycleTitle?: string;
 }) {
   const [isPending, startTransition] = useTransition();
 
   function handleExport() {
     startTransition(async () => {
-      const result = await adminGetCycleOrderDetails(cycleId);
-      if (result.error) {
-        toast.error(result.error);
+      const r = await adminBuildSupplierDistinta(cycleId);
+      if ("error" in r) {
+        toast.error(r.error);
         return;
       }
-      const rows = result.orders ?? [];
-      if (rows.length === 0) {
-        toast.error("Nessun ordine da esportare");
-        return;
-      }
-      downloadSupplierCsv(rows, cycleTitle);
+      const blob = decodeBase64ToBlob(
+        r.base64,
+        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+      );
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = r.filename;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
     });
   }
 
@@ -173,7 +185,7 @@ export function CsvExportButton({
       disabled={isPending}
       className="rounded-xl border border-pm-border px-4 py-2 text-[12px] font-semibold text-pm-gray disabled:opacity-60"
     >
-      {isPending ? "Esportazione…" : "Esporta CSV"}
+      {isPending ? "Generazione…" : "📥 Scarica .xlsx"}
     </button>
   );
 }
