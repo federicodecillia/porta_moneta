@@ -5,16 +5,15 @@ import { toast } from "@/components/ui/toast";
 import {
   adminCloseCycle,
   adminCreateCycle,
-  adminSendSupplierEmail,
   adminUpdateCycle,
   type CreateCycleInput,
 } from "@/lib/actions/admin";
-import { confirm } from "@/components/ui/confirm-dialog";
 import { formatEur } from "@/lib/utils";
 import { Card, CardBody, CardHeader } from "@/components/ui/card";
 import type { CatalogProductItem } from "@/lib/db/queries";
 import { ClosedCycleDetails } from "./closed-cycle-details";
 import { CycleReviewCloseButton } from "./cycle-review-modal";
+import { SupplierEmailDialog } from "./supplier-email-dialog";
 
 type Supplier = { supplierId: string; name: string };
 
@@ -853,9 +852,9 @@ export function CycleProductPicker({
 
 // ── Supplier Email Button ────────────────────────────────────────────────────
 
-// Sends the cycle's aggregated CSV to the supplier's email with the acting
-// admin in CC. Disabled (and tooltipped) when the cycle has no supplier or
-// the supplier has no email on file.
+// Opens the SupplierEmailDialog where the admin can review and edit the
+// To / From / CC / Subject before sending. Disabled (and tooltipped) when
+// the cycle has no supplier or the supplier has no email on file.
 export function SupplierEmailButton({
   cycleId,
   cycleTitle,
@@ -867,41 +866,32 @@ export function SupplierEmailButton({
   supplierName: string | null;
   supplierEmail: string | null;
 }) {
-  const [isPending, startTransition] = useTransition();
+  const [open, setOpen] = useState(false);
   const disabledReason = !supplierName
     ? "Ciclo senza fornitore"
     : !supplierEmail
       ? "Fornitore senza email"
       : null;
 
-  async function handleClick() {
-    if (disabledReason) return;
-    const ok = await confirm({
-      title: `Invia ordine a ${supplierName}?`,
-      message: `Destinatario: ${supplierEmail}\nOggetto: Ordine GAS Porta Moneta — ${cycleTitle}\n\nIn CC: tu + gas@portamoneta.org.`,
-      confirmLabel: "Invia ora",
-      cancelLabel: "Annulla",
-    });
-    if (!ok) return;
-    startTransition(async () => {
-      const result = await adminSendSupplierEmail(cycleId);
-      if ("error" in result) {
-        toast.error(result.error);
-        return;
-      }
-      toast.success(`Mail inviata a ${result.recipient}`);
-    });
-  }
-
   return (
-    <button
-      onClick={handleClick}
-      disabled={!!disabledReason || isPending}
-      title={disabledReason ?? undefined}
-      className="rounded-lg bg-pm-teal/10 px-3 py-1 text-[11px] font-bold text-pm-teal hover:bg-pm-teal/20 disabled:cursor-not-allowed disabled:opacity-50"
-    >
-      {isPending ? "Invio…" : "📧 Fornitore"}
-    </button>
+    <>
+      <button
+        onClick={() => setOpen(true)}
+        disabled={!!disabledReason}
+        title={disabledReason ?? undefined}
+        className="rounded-lg bg-pm-teal/10 px-3 py-1 text-[11px] font-bold text-pm-teal hover:bg-pm-teal/20 disabled:cursor-not-allowed disabled:opacity-50"
+      >
+        📧 Fornitore
+      </button>
+      {open && (
+        <SupplierEmailDialog
+          open={open}
+          onOpenChange={setOpen}
+          cycleId={cycleId}
+          cycleTitle={cycleTitle}
+        />
+      )}
+    </>
   );
 }
 
