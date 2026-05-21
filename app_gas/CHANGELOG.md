@@ -28,6 +28,7 @@ and this project loosely follows [Semantic Versioning](https://semver.org/spec/v
 ### Changed
 - **Admin → Ordini totals now include rectifications and shipping.** The per-socio figure used to show the original product subtotal even after the admin had rectified delivered weights or added a shipping charge — Chiara's row read €3,75 when she had actually been charged more. The "Per socio" section is now first (it's the more useful view), and totals reflect the effective amount: `actual_line_total` where set, plus the member's `shipping_charge` ledger entries. The "Per prodotto" section follows underneath, showing product subtotals at the post-rectification price (shipping is excluded there because it isn't tied to a product).
 - **"Fatturato" renamed to "Spesa"** throughout Admin → Statistiche — top card label, trend chart title, supplier ranking heading. "Spesa totale" now also folds in shipping so it matches what the soci actually paid, not just the product subtotals.
+- **Admin → Ordini CSV export now matches the "CSV fornitore" file** produced inside the "Vedi ordini" modal: same header (`Fornitore;Prodotto;Varietà;Formato;Unità;Socio;Quantità;Prezzo unitario;Totale (€)`), same supplier-grouped layout, same Italian decimal-comma + UTF-8 BOM for Excel. Single shared client-side builder so the two surfaces can't drift again.
 
 ---
 

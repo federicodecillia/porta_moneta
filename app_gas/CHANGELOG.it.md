@@ -28,6 +28,7 @@ e il versionamento è basato su [Semantic Versioning](https://semver.org/spec/v2
 ### Modificato
 - **I totali in Admin → Ordini ora includono rettifiche e spedizione.** La cifra per socio mostrava il subtotale prodotti originale anche dopo che l'admin aveva rettificato i pesi o aggiunto la spedizione — la riga di Chiara segnava €3,75 quando in realtà le era stato addebitato di più. La sezione "Per socio" è ora la prima (è la vista più utile) e i totali riflettono l'importo effettivo: `actual_line_total` dove presente, più le voci `shipping_charge` del socio. Sotto c'è "Per prodotto" con i subtotali a prezzo post-rettifica (la spedizione è esclusa lì, perché non è legata a un prodotto).
 - **"Fatturato" rinominato in "Spesa"** in tutta Admin → Statistiche — etichetta della card in alto, titolo del grafico trend, intestazione del ranking fornitori. "Spesa totale" include ora anche la spedizione, così corrisponde a quanto i soci hanno effettivamente pagato, non solo ai subtotali prodotti.
+- **Il CSV esportato da Admin → Ordini è ora identico al "CSV fornitore"** che si scarica dal modale "Vedi ordini": stessa intestazione (`Fornitore;Prodotto;Varietà;Formato;Unità;Socio;Quantità;Prezzo unitario;Totale (€)`), stesso raggruppamento per fornitore, stessa virgola decimale italiana e BOM UTF-8 per Excel. Un unico builder client condiviso, così i due punti di export non possono più divergere.
 
 ---
 
