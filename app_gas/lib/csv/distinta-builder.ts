@@ -55,9 +55,17 @@ type Row = {
   unitPrice: string;
   pricePerKg: string | null;
   notes: string | null;
+  quantity: number;
   lineTotal: string;
   actualLineTotal: string | null;
 };
+
+// Legacy "Unità" field was often saved as the literal "1" (placeholder).
+// Treat it as no unit so we can show "Ordinato: 2" instead of "Ordinato: 2 1".
+function realUnit(unit: string | null | undefined): string {
+  const u = (unit ?? "").trim();
+  return u === "" || u === "1" ? "" : u;
+}
 
 export type DistintaBuildResult = {
   filename: string;
@@ -115,6 +123,7 @@ export async function buildSupplierDistinta(cycleId: string): Promise<DistintaBu
       unitPrice: orders.unitPriceSnapshot,
       pricePerKg: products.pricePerKg,
       notes: products.notes,
+      quantity: orders.quantity,
       lineTotal: orders.lineTotal,
       actualLineTotal: orders.actualLineTotal,
     })
@@ -261,6 +270,10 @@ export async function buildSupplierDistinta(cycleId: string): Promise<DistintaBu
 
     // Member cells — yellow + editable. Pre-fill with original line total
     // (or the existing actualLineTotal if a rectification was already made).
+    // Attach a cell note with the ordered quantity so the supplier sees
+    // the reference on hover ("Ordinato: 2 kg") without polluting the
+    // editable numeric cell value.
+    const unit = realUnit(meta.unit);
     for (let i = 0; i < memberOrder.length; i++) {
       const mid = memberOrder[i];
       const cell = ws.getCell(r, memberColStart + i);
@@ -273,6 +286,8 @@ export async function buildSupplierDistinta(cycleId: string): Promise<DistintaBu
         cell.numFmt = "0.00";
         cell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: FILL_EDITABLE } };
         cell.protection = { locked: false };
+        const qtyLabel = unit ? `${line.quantity} ${unit}` : `${line.quantity} pz`;
+        cell.note = `Ordinato: ${qtyLabel}`;
       } else {
         // No order from this member for this product: leave blank, lock it
         // so the supplier can't accidentally type into it (any value goes
@@ -390,6 +405,97 @@ export async function buildSupplierDistinta(cycleId: string): Promise<DistintaBu
     autoFilter: false,
     pivotTables: false,
   });
+
+  // ── Riepilogo ordini sheet ──
+  // Read-only itemized list — one row per (socio, prodotto). Same rows we
+  // built the matrix from, sorted Socio → Prodotto for human reading.
+  const riep = wb.addWorksheet("Riepilogo ordini");
+  const riepHeaders = [
+    "Socio",
+    "Prodotto",
+    "Varietà",
+    "Formato",
+    "Qta ordinata",
+    "Prezzo unitario (€)",
+    "Totale ordinato (€)",
+  ];
+  for (let i = 0; i < riepHeaders.length; i++) {
+    const c = riep.getCell(1, i + 1);
+    c.value = riepHeaders[i];
+    c.font = { name: "Calibri", size: 10, bold: true, color: { argb: "FFFFFFFF" } };
+    c.fill = { type: "pattern", pattern: "solid", fgColor: { argb: FILL_HEADER } };
+    c.alignment = { vertical: "middle", horizontal: "center" };
+  }
+  riep.getColumn(1).width = 22;
+  riep.getColumn(2).width = 22;
+  riep.getColumn(3).width = 14;
+  riep.getColumn(4).width = 10;
+  riep.getColumn(5).width = 12;
+  riep.getColumn(6).width = 16;
+  riep.getColumn(7).width = 18;
+  const riepRows = [...rows].sort((a, b) => {
+    const m = a.memberName.localeCompare(b.memberName);
+    if (m !== 0) return m;
+    return a.productName.localeCompare(b.productName);
+  });
+  let riepR = 2;
+  for (const row of riepRows) {
+    riep.getCell(riepR, 1).value = row.memberName;
+    riep.getCell(riepR, 2).value = row.productName;
+    riep.getCell(riepR, 3).value = row.variant ?? "";
+    riep.getCell(riepR, 4).value = row.format ?? "";
+    riep.getCell(riepR, 5).value = row.quantity;
+    riep.getCell(riepR, 6).value = parseFloat(row.unitPrice);
+    riep.getCell(riepR, 6).numFmt = "0.00";
+    riep.getCell(riepR, 7).value = parseFloat(row.lineTotal);
+    riep.getCell(riepR, 7).numFmt = "0.00";
+    riepR++;
+  }
+  riep.views = [{ state: "frozen", ySplit: 1 }];
+
+  // ── Totali per prodotto sheet ──
+  // Aggregated qty + amount per product, sorted by the same sortOrder/name
+  // the matrix uses, so reading top-to-bottom matches what the supplier
+  // sees in Distinta.
+  const totp = wb.addWorksheet("Totali per prodotto");
+  const totpHeaders = [
+    "Prodotto",
+    "Varietà",
+    "Formato",
+    "Qta totale ordinata",
+    "Importo totale (€)",
+  ];
+  for (let i = 0; i < totpHeaders.length; i++) {
+    const c = totp.getCell(1, i + 1);
+    c.value = totpHeaders[i];
+    c.font = { name: "Calibri", size: 10, bold: true, color: { argb: "FFFFFFFF" } };
+    c.fill = { type: "pattern", pattern: "solid", fgColor: { argb: FILL_HEADER } };
+    c.alignment = { vertical: "middle", horizontal: "center" };
+  }
+  totp.getColumn(1).width = 22;
+  totp.getColumn(2).width = 14;
+  totp.getColumn(3).width = 10;
+  totp.getColumn(4).width = 18;
+  totp.getColumn(5).width = 16;
+  let totpR = 2;
+  for (const pid of productOrder) {
+    const meta = productMeta.get(pid)!;
+    let qtySum = 0;
+    let amtSum = 0;
+    for (const row of rows) {
+      if (row.productId !== pid) continue;
+      qtySum += row.quantity;
+      amtSum += parseFloat(row.lineTotal);
+    }
+    totp.getCell(totpR, 1).value = meta.productName;
+    totp.getCell(totpR, 2).value = meta.variant ?? "";
+    totp.getCell(totpR, 3).value = meta.format ?? "";
+    totp.getCell(totpR, 4).value = qtySum;
+    totp.getCell(totpR, 5).value = amtSum;
+    totp.getCell(totpR, 5).numFmt = "0.00";
+    totpR++;
+  }
+  totp.views = [{ state: "frozen", ySplit: 1 }];
 
   // ── _meta sheet (hidden) ──
   const meta = wb.addWorksheet("_meta", { state: "hidden" });

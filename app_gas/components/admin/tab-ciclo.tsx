@@ -6,7 +6,7 @@ import {
   ClosedCycleEditButton,
   CreateCycleForm,
   OpenCycleCard,
-  SupplierEmailButton,
+  SupplierActionsButton,
 } from "./ciclo-forms";
 import { ClosedCycleDetails } from "./closed-cycle-details";
 
@@ -92,12 +92,6 @@ export async function TabCiclo() {
                 </span>
                 {c.status !== "open" && (
                   <div className="ml-3 flex items-center gap-1.5">
-                    <SupplierEmailButton
-                      cycleId={c.cycleId}
-                      cycleTitle={c.title}
-                      supplierName={c.supplierName ?? null}
-                      supplierEmail={c.supplierEmail ?? null}
-                    />
                     <ClosedCycleEditButton
                       cycle={{
                         cycleId: c.cycleId,
@@ -117,6 +111,12 @@ export async function TabCiclo() {
                         status: c.status,
                       }}
                       suppliers={suppliers}
+                    />
+                    <SupplierActionsButton
+                      cycleId={c.cycleId}
+                      cycleTitle={c.title}
+                      supplierName={c.supplierName ?? null}
+                      supplierEmail={c.supplierEmail ?? null}
                     />
                     <ClosedCycleDetails cycleId={c.cycleId} cycleTitle={c.title} />
                   </div>
