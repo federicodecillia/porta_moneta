@@ -16,6 +16,9 @@ e il versionamento è basato su [Semantic Versioning](https://semver.org/spec/v2
 
 ## [Non rilasciato]
 
+### Aggiunte
+- **Import guidato del listino fornitore dentro un ciclo.** Nuovo pulsante **📥 Importa listino** su ogni ciclo aperto: apre una procedura a tre passi che accetta direttamente il file `.xlsx` o `.csv` del fornitore (formato libero, una riga per prodotto). La procedura rileva la riga di intestazione, propone il fornitore (cercando match nel nome del file o in una cella tipo "Fornitore:", oppure offrendo di crearne uno nuovo al volo), poi chiede di mappare a mano solo le colonne non riconosciute (Nome e Prezzo sono obbligatori, il resto opzionale). All'ultimo passo si vede l'anteprima riga per riga: si possono deselezionare prodotti, sostituire l'icona suggerita (le righe senza match automatico sono evidenziate in rosso), decidere se aggiornare il prezzo dei prodotti già a catalogo e se mettere gli stessi prodotti anche dentro il ciclo aperto. Lo stesso wizard è raggiungibile anche da Admin → Fornitori → Catalogo, dove però importa solo nel catalogo del fornitore.
+
 ---
 
 ## [1.6.0] — 2026-05-21

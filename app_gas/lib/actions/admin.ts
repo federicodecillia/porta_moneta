@@ -5,6 +5,7 @@ import { eq, and, sql, inArray } from "drizzle-orm";
 import { auth } from "@/auth";
 import { getDb } from "@/lib/db/client";
 import { auditLog, ledgerEntries, members, notifications, orderCycles, orders, products, suppliers, supplierProducts } from "@/lib/db/schema";
+import { upsertCycleProducts } from "@/lib/db/cycle-products";
 
 async function requireAdmin(): Promise<{ email: string }> {
   const session = await auth();
@@ -644,92 +645,6 @@ function parseProductsText(text: string) {
         unit: parts[7] ?? "",
       };
     });
-}
-
-async function upsertCycleProducts(
-  db: ReturnType<typeof getDb>,
-  cycleId: string,
-  newProducts: Array<{
-    name: string;
-    variant: string | null;
-    format: string | null;
-    unitPrice: string | number;
-    pricePerKg?: string | number | null;
-    unit: string | null;
-    supplier: string | null;
-    notes: string | null;
-    category: string | null;
-    supplierId?: string | null;
-    emoji?: string | null;
-  }>
-) {
-  const existingProducts = await db
-    .select()
-    .from(products)
-    .where(eq(products.cycleId, cycleId));
-
-  const [maxSortRow] = await db
-    .select({ max: sql<number>`max(${products.sortOrder})` })
-    .from(products)
-    .where(eq(products.cycleId, cycleId));
-  let currentSort = maxSortRow?.max || 0;
-
-  const existingMap = new Map();
-  for (const p of existingProducts) {
-    const key = `${p.name.toLowerCase().trim()}|${p.variant?.toLowerCase().trim() || ""}|${p.format?.toLowerCase().trim() || ""}|${p.unit?.toLowerCase().trim() || ""}`;
-    existingMap.set(key, p);
-  }
-
-  const inserts = [];
-  for (const np of newProducts) {
-    const key = `${np.name.toLowerCase().trim()}|${np.variant?.toLowerCase().trim() || ""}|${np.format?.toLowerCase().trim() || ""}|${np.unit?.toLowerCase().trim() || ""}`;
-    const existing = existingMap.get(key);
-    const unitPriceStr = typeof np.unitPrice === "number" ? np.unitPrice.toFixed(2) : np.unitPrice;
-    const pricePerKgStr =
-      np.pricePerKg == null
-        ? null
-        : typeof np.pricePerKg === "number"
-          ? np.pricePerKg.toFixed(2)
-          : np.pricePerKg;
-
-    if (existing) {
-      await db.update(products).set({
-        unitPrice: unitPriceStr,
-        pricePerKg: pricePerKgStr ?? existing.pricePerKg,
-        notes: np.notes || existing.notes,
-        category: np.category || existing.category,
-        supplier: np.supplier || existing.supplier,
-        supplierId: np.supplierId ?? existing.supplierId,
-        emoji: np.emoji || existing.emoji,
-        active: true,
-      }).where(eq(products.productId, existing.productId));
-    } else {
-      currentSort++;
-      inserts.push({
-        productId: genId("prd"),
-        cycleId,
-        name: np.name.trim(),
-        variant: np.variant?.trim() || null,
-        format: np.format?.trim() || null,
-        unit: np.unit?.trim() || null,
-        unitPrice: unitPriceStr,
-        pricePerKg: pricePerKgStr,
-        supplier: np.supplier?.trim() || null,
-        supplierId: np.supplierId?.trim() || null,
-        notes: np.notes?.trim() || null,
-        sortOrder: currentSort,
-        active: true,
-        category: np.category?.trim() || null,
-        emoji: np.emoji?.trim() || null,
-      });
-      // also add to map to prevent duplicates within the same batch
-      existingMap.set(key, true);
-    }
-  }
-
-  if (inserts.length > 0) {
-    await db.insert(products).values(inserts);
-  }
 }
 
 export async function adminLoadProducts(cycleId: string, text: string) {

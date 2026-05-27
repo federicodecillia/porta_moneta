@@ -16,6 +16,9 @@ and this project loosely follows [Semantic Versioning](https://semver.org/spec/v
 
 ## [Unreleased]
 
+### Added
+- **Guided import of a supplier listing into a cycle.** A new **📥 Importa listino** button on each open cycle opens a three-step wizard that accepts the supplier's own `.xlsx` or `.csv` file (free format, one row per product). The wizard sniffs the header row, suggests a supplier match from the filename or a "Fornitore:" cell (with an inline "create new supplier" option when nothing matches), then lets the admin map any columns it couldn't auto-detect (Nome and Prezzo are required, everything else optional). The final step shows a row-by-row preview where the admin can deselect rows, override the auto-suggested emoji (rows without a category match are flagged in red), choose whether to update prices for products already in the catalogue, and confirm whether the same rows should also be added to the open cycle. The same wizard is also reachable from Admin → Fornitori → Catalogo, where it imports into the catalogue only.
+
 ---
 
 ## [1.6.0] — 2026-05-21

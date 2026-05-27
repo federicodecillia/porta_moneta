@@ -123,8 +123,15 @@ const EMOJI_MAP: [RegExp, string][] = [
 ];
 
 export function getProductEmoji(name: string): string {
+  return getProductEmojiOrNull(name) ?? "🛒";
+}
+
+// Same matching as getProductEmoji but returns null when no category pattern
+// matched. The bulk-import wizard uses this to flag rows that need manual
+// emoji confirmation, instead of silently shipping the 🛒 fallback.
+export function getProductEmojiOrNull(name: string): string | null {
   for (const [pattern, emoji] of EMOJI_MAP) {
     if (pattern.test(name)) return emoji;
   }
-  return "🛒";
+  return null;
 }

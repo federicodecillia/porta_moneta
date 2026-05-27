@@ -14,6 +14,7 @@ import type { CatalogProductItem } from "@/lib/db/queries";
 import { ClosedCycleDetails } from "./closed-cycle-details";
 import { CycleReviewCloseButton } from "./cycle-review-modal";
 import { SupplierActionsDialog } from "./supplier-actions-dialog";
+import { ImportListingWizard } from "./import-listing-wizard";
 
 type Supplier = { supplierId: string; name: string };
 
@@ -48,6 +49,7 @@ export function OpenCycleCard({
 }) {
   const [editing, setEditing] = useState(false);
   const [managingProducts, setManagingProducts] = useState(false);
+  const [importingListing, setImportingListing] = useState(false);
 
   return (
     <Card className="mb-4 border-l-4 border-l-pm-teal">
@@ -68,6 +70,12 @@ export function OpenCycleCard({
             className="rounded-xl border border-pm-teal/30 bg-pm-teal-light px-3 py-1.5 text-[11px] font-bold text-pm-teal"
           >
             {managingProducts ? "Chiudi Prodotti" : "Gestisci Prodotti"}
+          </button>
+          <button
+            onClick={() => setImportingListing(true)}
+            className="rounded-xl border border-pm-orange/30 bg-pm-orange-light px-3 py-1.5 text-[11px] font-bold text-pm-orange"
+          >
+            📥 Importa listino
           </button>
           <button
             onClick={() => setEditing((v) => !v)}
@@ -179,6 +187,12 @@ export function OpenCycleCard({
           )}
         </CardBody>
       )}
+      <ImportListingWizard
+        open={importingListing}
+        onClose={() => setImportingListing(false)}
+        cycleId={cycle.cycleId}
+        cycleTitle={cycle.title}
+      />
     </Card>
   );
 }

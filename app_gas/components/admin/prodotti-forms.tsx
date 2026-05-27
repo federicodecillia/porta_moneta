@@ -12,6 +12,7 @@ import {
 } from "@/lib/actions/admin";
 import { formatEur, getProductEmoji } from "@/lib/utils";
 import type { CatalogProductItem } from "@/lib/db/queries";
+import { ImportListingWizard } from "./import-listing-wizard";
 
 // Help copy shared by every product form (catalog + cycle edit). Centralising
 // it keeps the wording consistent across the admin UI.
@@ -234,8 +235,10 @@ function decodeBase64ToBlob(base64: string, mimeType: string): Blob {
 }
 
 export function CatalogCsvActions({ supplierId }: { supplierId: string }) {
+  void supplierId; // wizard re-asks the supplier; this prop is kept for API parity
   const [isPending, startTransition] = useTransition();
   const [downloading, startDownload] = useTransition();
+  const [wizardOpen, setWizardOpen] = useState(false);
 
   function downloadTemplate() {
     startDownload(async () => {
@@ -323,6 +326,17 @@ export function CatalogCsvActions({ supplierId }: { supplierId: string }) {
           disabled={isPending || !supplierId}
         />
       </label>
+      <button
+        onClick={() => setWizardOpen(true)}
+        className="rounded-lg border border-pm-orange/30 bg-pm-orange-light px-3 py-1.5 text-[11px] font-bold text-pm-orange shadow-sm hover:opacity-90"
+      >
+        🪄 Import guidato (listino libero)
+      </button>
+      <ImportListingWizard
+        open={wizardOpen}
+        onClose={() => setWizardOpen(false)}
+        cycleId={null}
+      />
     </div>
   );
 }
