@@ -16,7 +16,7 @@ import {
   TARGET_LABEL,
   type TargetField,
 } from "@/lib/csv/header-heuristics";
-import { getProductEmojiOrNull } from "@/lib/utils";
+import { getProductEmojiOrNull, guessProductCategory } from "@/lib/utils";
 
 type Props = {
   open: boolean;
@@ -574,6 +574,7 @@ function Step3Review({
               <th className="p-2 text-left">Icona</th>
               <th className="p-2 text-left">Nome</th>
               <th className="p-2 text-left">Varietà</th>
+              <th className="p-2 text-left">Categoria</th>
               <th className="p-2 text-left">Formato</th>
               <th className="p-2 text-right">Prezzo</th>
               <th className="p-2 text-right">€/kg</th>
@@ -586,6 +587,8 @@ function Step3Review({
               const override = emojiOverrides[i];
               const currentEmoji = override || auto || "🛒";
               const selected = selectedIndexes.has(i);
+              const fileCategory = cell(i, "category");
+              const guessedCategory = fileCategory || (name ? guessProductCategory(name) : null);
               return (
                 <tr key={i} className={`border-b border-pm-border ${selected ? "" : "opacity-40"}`}>
                   <td className="p-2 align-middle">
@@ -603,6 +606,16 @@ function Step3Review({
                   </td>
                   <td className="p-2 align-middle font-semibold">{name || <em className="text-pm-red">vuoto</em>}</td>
                   <td className="p-2 align-middle text-pm-gray">{cell(i, "variant")}</td>
+                  <td className="p-2 align-middle text-pm-gray">
+                    {guessedCategory ? (
+                      <span>
+                        {guessedCategory}
+                        {!fileCategory && <span className="ml-1 text-[9px] text-pm-orange">auto</span>}
+                      </span>
+                    ) : (
+                      <span className="text-pm-gray-light">—</span>
+                    )}
+                  </td>
                   <td className="p-2 align-middle text-pm-gray">{cell(i, "format")}</td>
                   <td className="p-2 text-right align-middle font-mono">{cell(i, "unitPrice")}</td>
                   <td className="p-2 text-right align-middle font-mono text-pm-gray">{cell(i, "pricePerKg")}</td>

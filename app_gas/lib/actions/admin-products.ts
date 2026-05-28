@@ -5,7 +5,7 @@ import { eq } from "drizzle-orm";
 import { auth } from "@/auth";
 import { getDb } from "@/lib/db/client";
 import { supplierProducts, auditLog, suppliers } from "@/lib/db/schema";
-import { getProductEmoji, getProductEmojiOrNull } from "@/lib/utils";
+import { getProductEmoji, getProductEmojiOrNull, guessProductCategory } from "@/lib/utils";
 import { buildProductTemplate, parseProductTemplate } from "@/lib/csv/product-template";
 import { inspectListing, pickSupplierMatch, type ListingInspection } from "@/lib/csv/supplier-listing-parser";
 import { suggestMapping, TARGET_FIELDS, type TargetField } from "@/lib/csv/header-heuristics";
@@ -243,6 +243,7 @@ export type WizardRow = {
   unitPrice: string;
   pricePerKg: string | null;
   category: string | null;
+  categoryGuessed: boolean;
   emoji: string;
   emojiAutoMatched: boolean;
   notes: string | null;
@@ -313,6 +314,11 @@ function resolveRow(
   const autoEmoji = getProductEmojiOrNull(name);
   const emoji = (emojiOverride && emojiOverride.trim()) || autoEmoji || "🛒";
 
+  // Category: prefer the file column; when absent, guess from the name among
+  // the preset categories (null when unsure, so we never mislabel).
+  const fileCategory = pickCell(raw, mapping.category) || null;
+  const category = fileCategory ?? guessProductCategory(name);
+
   return {
     ok: true,
     row: {
@@ -322,7 +328,8 @@ function resolveRow(
       format: pickCell(raw, mapping.format) || null,
       unitPrice: unitPriceNum.toFixed(2),
       pricePerKg: ppkNum != null ? ppkNum.toFixed(2) : null,
-      category: pickCell(raw, mapping.category) || null,
+      category,
+      categoryGuessed: !fileCategory && category !== null,
       emoji,
       emojiAutoMatched: !emojiOverride && autoEmoji !== null,
       notes: pickCell(raw, mapping.notes) || null,
