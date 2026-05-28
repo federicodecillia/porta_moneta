@@ -22,6 +22,9 @@ e il versionamento è basato su [Semantic Versioning](https://semver.org/spec/v2
 ### Modificato
 - **Bottoni "Carica prodotti" più chiari in Admin → Prodotti.** Il menù del fornitore di destinazione ora sta su una riga propria con etichetta, invece di essere schiacciato fino a sparire dai bottoni accanto. Le tre azioni sono state accorciate e dotate di icone coerenti — "↓ Template", "↑ Carica file", "✨ Import guidato" — e restano leggibili sia da computer sia da telefono.
 
+### Risolto
+- **I bottoni del ciclo aperto non escono più dallo schermo.** In Admin → Ciclo la fila di azioni di un ciclo aperto (Gestisci Prodotti, Importa listino, Modifica, Chiudi con rettifiche, Chiudi ciclo) poteva sforare oltre il bordo destro; ora va a capo ordinatamente sotto il titolo. Anche le righe data/ora dei ritiri nei form di creazione/modifica ciclo sforavano sui telefoni stretti e ora mandano gli orari "Dalle/Alle" su una riga propria. Verificato fino a 320px di larghezza.
+
 ---
 
 ## [1.6.0] — 2026-05-21

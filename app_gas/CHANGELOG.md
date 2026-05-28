@@ -22,6 +22,9 @@ and this project loosely follows [Semantic Versioning](https://semver.org/spec/v
 ### Changed
 - **Clearer "Carica prodotti" buttons in Admin → Prodotti.** The destination-supplier dropdown now sits on its own labelled row instead of being squeezed to a sliver by the action buttons. The three actions were shortened and given consistent icons — "↓ Template", "↑ Carica file", "✨ Import guidato" — and now stay readable on both desktop and mobile.
 
+### Fixed
+- **Open-cycle action buttons no longer run off the screen.** In Admin → Ciclo the row of actions on an open cycle (Gestisci Prodotti, Importa listino, Modifica, Chiudi con rettifiche, Chiudi ciclo) could overflow past the right edge; it now wraps cleanly under the title. The pickup date/time rows in the cycle create/edit forms were also overflowing on narrow phones and now wrap the "Dalle/Alle" times onto their own line. Verified down to 320px wide.
+
 ---
 
 ## [1.6.0] — 2026-05-21
