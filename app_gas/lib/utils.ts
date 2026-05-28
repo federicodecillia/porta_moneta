@@ -123,8 +123,48 @@ const EMOJI_MAP: [RegExp, string][] = [
 ];
 
 export function getProductEmoji(name: string): string {
+  return getProductEmojiOrNull(name) ?? "🛒";
+}
+
+// Same matching as getProductEmoji but returns null when no category pattern
+// matched. The bulk-import wizard uses this to flag rows that need manual
+// emoji confirmation, instead of silently shipping the 🛒 fallback.
+export function getProductEmojiOrNull(name: string): string | null {
   for (const [pattern, emoji] of EMOJI_MAP) {
     if (pattern.test(name)) return emoji;
   }
-  return "🛒";
+  return null;
+}
+
+// Maps a product name to one of the preset categories used in CategorySelect
+// (DEFAULT_CATEGORIES). Specific patterns come before general ones; returns
+// null when nothing matches so the import wizard leaves the category blank
+// rather than guessing wrong. Keep the category strings in sync with
+// components/ui/category-select.tsx.
+const CATEGORY_MAP: [RegExp, string][] = [
+  // Pesce before Carne so "polpo/seppia" etc. don't fall into meat.
+  [/pesce|salmone|tonno|merluzzo|orata|branzino|alici|acciug|sgombro|gamber|cozze|vongole|calamar|seppia|polpo|baccal/i, "Pesce"],
+  // `\bpoll` (word boundary) so "cipollotto" falls through to Verdura instead
+  // of matching "pollo" mid-word.
+  [/\bpoll|gallina|tacchino|anatra|carne|manzo|vitello|maiale|salume|salsicc|prosciutto|speck|bresaola|salame|guanciale|pancetta|hamburger/i, "Carne"],
+  [/uov[ao]/i, "Uova"],
+  [/latte|yogurt|kefir|formagg|ricotta|mozzarella|pecorino|parmigian|stracchino|caciotta|burro|panna|mascarpone|gorgonzola/i, "Latticini"],
+  [/pasta|spaghett|penne|rigatoni|fusilli|maccheron|tagliatell|gnocch|lasagn|riso\b|risotto/i, "Pasta e riso"],
+  [/pane|focacc|pizza|grano|farro|orzo|avena|farina|cereal|crusca|cracker|grissin|fett[ae] biscott/i, "Pane e cereali"],
+  [/olio|aceto/i, "Olio e aceto"],
+  [/vino|birra|succo|spremitura|bibita|acqua\b|tisana|infuso/i, "Bevande"],
+  [/miele|marmellat|confettur|biscott|torta|dolce|cioccolat|cacao|nutella|crostata|merendin|zucchero/i, "Dolci"],
+  [/passat|pomodor[oi] pelat|conserv|sottolio|sottaceto|pesto|sugo|ragù|ragu\b|legumi in barattolo/i, "Conserve"],
+  // Frutta — mirror the emoji-map fruit area.
+  [/mela\b|mele\b|pera|pere\b|aranc|limone|cedro|banana|ananas|mango|uva\b|fragol|lampone|mirtillo|ribes|kiwi|fico|fichi|susina|prugna|pesca|pesche|cilieg|castagna|melagran|melogran|cocomero|anguria|melone|albicocc|mandarin|clementin|lime\b|frutt/i, "Frutta"],
+  // Verdura — mirror the emoji-map vegetable area.
+  [/pomodor|melanz|patat|carota|carote|mais|peperon|cetriolo|zucchin|zucca|insalata|lattug|radicchio|spinac|sedano|finocchio|erbett|cicoria|broccol|cavolo|cavoli|verza|cavolfiore|aglio|cipoll|porro|porrino|fungo|funghi|porcino|champignon|carciofo|asparago|biet[ao]|bietol|rapa|barbabietol|fagiolo|fagiolin|fava|fave\b|lenticchia|pisello|piselli|cece|ceci\b|topinambur|ravanell|rucola|verdur|ortagg/i, "Verdura"],
+];
+
+export function guessProductCategory(name: string): string | null {
+  if (!name) return null;
+  for (const [pattern, category] of CATEGORY_MAP) {
+    if (pattern.test(name)) return category;
+  }
+  return null;
 }

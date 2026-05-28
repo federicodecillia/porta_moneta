@@ -14,6 +14,7 @@ import type { CatalogProductItem } from "@/lib/db/queries";
 import { ClosedCycleDetails } from "./closed-cycle-details";
 import { CycleReviewCloseButton } from "./cycle-review-modal";
 import { SupplierActionsDialog } from "./supplier-actions-dialog";
+import { ImportListingWizard } from "./import-listing-wizard";
 
 type Supplier = { supplierId: string; name: string };
 
@@ -48,13 +49,14 @@ export function OpenCycleCard({
 }) {
   const [editing, setEditing] = useState(false);
   const [managingProducts, setManagingProducts] = useState(false);
+  const [importingListing, setImportingListing] = useState(false);
 
   return (
     <Card className="mb-4 border-l-4 border-l-pm-teal">
-      {/* On mobile (< sm) the title stacks above a wrapping button row so all
-          four actions stay inside the card. On ≥sm we keep the previous
-          side-by-side layout. */}
-      <CardHeader className="flex flex-col items-start gap-3 sm:flex-row sm:justify-between">
+      {/* The title stacks above a wrapping button row so the five actions
+          always wrap within the card instead of overflowing — the app caps at
+          640px, too narrow to ever fit them on one line beside the title. */}
+      <CardHeader className="flex flex-col items-start gap-3">
         <div>
           <span className="mb-1 inline-flex items-center gap-1.5 rounded-full bg-pm-teal-light px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-pm-teal">
             <span className="h-1.5 w-1.5 rounded-full bg-pm-teal" />
@@ -62,12 +64,18 @@ export function OpenCycleCard({
           </span>
           <h3 className="mt-1 text-[15px] font-bold text-pm-near-black">{cycle.title}</h3>
         </div>
-        <div className="flex w-full flex-wrap gap-2 sm:w-auto sm:shrink-0 sm:justify-end">
+        <div className="flex w-full flex-wrap gap-2">
           <button
             onClick={() => setManagingProducts((v) => !v)}
             className="rounded-xl border border-pm-teal/30 bg-pm-teal-light px-3 py-1.5 text-[11px] font-bold text-pm-teal"
           >
             {managingProducts ? "Chiudi Prodotti" : "Gestisci Prodotti"}
+          </button>
+          <button
+            onClick={() => setImportingListing(true)}
+            className="rounded-xl border border-pm-orange/30 bg-pm-orange-light px-3 py-1.5 text-[11px] font-bold text-pm-orange"
+          >
+            📥 Importa listino
           </button>
           <button
             onClick={() => setEditing((v) => !v)}
@@ -179,6 +187,12 @@ export function OpenCycleCard({
           )}
         </CardBody>
       )}
+      <ImportListingWizard
+        open={importingListing}
+        onClose={() => setImportingListing(false)}
+        cycleId={cycle.cycleId}
+        cycleTitle={cycle.title}
+      />
     </Card>
   );
 }
@@ -193,6 +207,41 @@ function buildDateTime(date: string, time: string): string {
 const inputCls = "rounded-lg border border-pm-border px-2 py-2 text-[13px] text-pm-near-black focus:outline-none focus:ring-2 focus:ring-pm-orange/30";
 const labelCls = "mb-1 block text-[11px] font-semibold uppercase tracking-wide text-pm-gray";
 const miniLabelCls = "shrink-0 text-[11px] font-medium text-pm-gray";
+
+// One pickup row (label + date + "Dalle/Alle" time range). The time range is a
+// single flex child with a min-width so it wraps onto its own line as a unit on
+// narrow screens instead of pushing the inputs past the viewport edge.
+function PickupRow({
+  label,
+  prefix,
+  defDate,
+  defStart,
+  defEnd,
+}: {
+  label: string;
+  prefix: "pickup" | "pickup2";
+  defDate?: string;
+  defStart?: string;
+  defEnd?: string;
+}) {
+  return (
+    <div className="flex flex-wrap items-center gap-x-2 gap-y-1.5">
+      <span className="w-[46px] shrink-0 text-[12px] font-semibold text-pm-near-black">{label}</span>
+      <input
+        name={`${prefix}DateOnly`}
+        type="date"
+        defaultValue={defDate}
+        className={`w-[140px] shrink-0 ${inputCls}`}
+      />
+      <div className="flex min-w-[190px] flex-1 items-center gap-1.5">
+        <span className={miniLabelCls}>Dalle</span>
+        <input name={`${prefix}StartTime`} type="time" defaultValue={defStart} className={`min-w-0 flex-1 ${inputCls}`} />
+        <span className={miniLabelCls}>Alle</span>
+        <input name={`${prefix}EndTime`} type="time" defaultValue={defEnd} className={`min-w-0 flex-1 ${inputCls}`} />
+      </div>
+    </div>
+  );
+}
 
 // Shared shipping section: a segmented switch between flat per-member fee
 // and proportional split, with the relevant input rendered below.
@@ -399,52 +448,20 @@ export function EditCycleForm({
       <div>
         <label className={labelCls}>Ritiri (opzionale)</label>
         <div className="space-y-2">
-          <div className="flex items-center gap-1.5">
-            <span className={`w-[46px] shrink-0 text-[12px] font-semibold text-pm-near-black`}>Ritiro 1</span>
-            <input
-              name="pickupDateOnly"
-              type="date"
-              defaultValue={cycle.pickupDate?.slice(0, 10) ?? ""}
-              className={`w-[130px] shrink-0 ${inputCls}`}
-            />
-            <span className={miniLabelCls}>Dalle</span>
-            <input
-              name="pickupStartTime"
-              type="time"
-              defaultValue={cycle.pickupDate?.slice(11, 16) ?? ""}
-              className={`flex-1 min-w-[72px] ${inputCls}`}
-            />
-            <span className={miniLabelCls}>Alle</span>
-            <input
-              name="pickupEndTime"
-              type="time"
-              defaultValue={cycle.pickupEndTime ?? ""}
-              className={`flex-1 min-w-[72px] ${inputCls}`}
-            />
-          </div>
-          <div className="flex items-center gap-1.5">
-            <span className={`w-[46px] shrink-0 text-[12px] font-semibold text-pm-near-black`}>Ritiro 2</span>
-            <input
-              name="pickup2DateOnly"
-              type="date"
-              defaultValue={cycle.pickup2Date?.slice(0, 10) ?? ""}
-              className={`w-[130px] shrink-0 ${inputCls}`}
-            />
-            <span className={miniLabelCls}>Dalle</span>
-            <input
-              name="pickup2StartTime"
-              type="time"
-              defaultValue={cycle.pickup2Date?.slice(11, 16) ?? ""}
-              className={`flex-1 min-w-[72px] ${inputCls}`}
-            />
-            <span className={miniLabelCls}>Alle</span>
-            <input
-              name="pickup2EndTime"
-              type="time"
-              defaultValue={cycle.pickup2EndTime ?? ""}
-              className={`flex-1 min-w-[72px] ${inputCls}`}
-            />
-          </div>
+          <PickupRow
+            label="Ritiro 1"
+            prefix="pickup"
+            defDate={cycle.pickupDate?.slice(0, 10) ?? ""}
+            defStart={cycle.pickupDate?.slice(11, 16) ?? ""}
+            defEnd={cycle.pickupEndTime ?? ""}
+          />
+          <PickupRow
+            label="Ritiro 2"
+            prefix="pickup2"
+            defDate={cycle.pickup2Date?.slice(0, 10) ?? ""}
+            defStart={cycle.pickup2Date?.slice(11, 16) ?? ""}
+            defEnd={cycle.pickup2EndTime ?? ""}
+          />
         </div>
       </div>
 
@@ -582,22 +599,8 @@ export function CreateCycleForm({ suppliers }: { suppliers: Supplier[] }) {
         <div>
           <label className={labelCls}>Ritiri (opzionale)</label>
           <div className="space-y-2">
-            <div className="flex items-center gap-1.5">
-              <span className="w-[46px] shrink-0 text-[12px] font-semibold text-pm-near-black">Ritiro 1</span>
-              <input name="pickupDateOnly" type="date" className={`w-[130px] shrink-0 ${inputCls}`} />
-              <span className={miniLabelCls}>Dalle</span>
-              <input name="pickupStartTime" type="time" className={`flex-1 min-w-[72px] ${inputCls}`} />
-              <span className={miniLabelCls}>Alle</span>
-              <input name="pickupEndTime" type="time" className={`flex-1 min-w-[72px] ${inputCls}`} />
-            </div>
-            <div className="flex items-center gap-1.5">
-              <span className="w-[46px] shrink-0 text-[12px] font-semibold text-pm-near-black">Ritiro 2</span>
-              <input name="pickup2DateOnly" type="date" className={`w-[130px] shrink-0 ${inputCls}`} />
-              <span className={miniLabelCls}>Dalle</span>
-              <input name="pickup2StartTime" type="time" className={`flex-1 min-w-[72px] ${inputCls}`} />
-              <span className={miniLabelCls}>Alle</span>
-              <input name="pickup2EndTime" type="time" className={`flex-1 min-w-[72px] ${inputCls}`} />
-            </div>
+            <PickupRow label="Ritiro 1" prefix="pickup" />
+            <PickupRow label="Ritiro 2" prefix="pickup2" />
           </div>
         </div>
 
