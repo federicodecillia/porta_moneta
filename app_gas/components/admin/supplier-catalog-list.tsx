@@ -97,22 +97,27 @@ export function SupplierCatalogList({
             </p>
           </div>
         </div>
-        <div className="grid gap-3 sm:grid-cols-[1fr_auto]">
-          <select
-            value={uploadSupplierId}
-            onChange={(e) => setUploadSupplierId(e.target.value)}
-            className="w-full rounded-lg border border-pm-border px-3 py-2 text-[13px] text-pm-near-black focus:outline-none focus:ring-2 focus:ring-pm-teal/30"
-          >
-            {suppliers.length === 0 ? (
-              <option value="">Nessun fornitore disponibile</option>
-            ) : (
-              suppliers.map((supplier) => (
-                <option key={supplier.supplierId} value={supplier.supplierId}>
-                  {supplier.name}
-                </option>
-              ))
-            )}
-          </select>
+        <div className="space-y-3">
+          <label className="block">
+            <span className="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-pm-gray">
+              Fornitore di destinazione
+            </span>
+            <select
+              value={uploadSupplierId}
+              onChange={(e) => setUploadSupplierId(e.target.value)}
+              className="w-full rounded-lg border border-pm-border px-3 py-2 text-[13px] text-pm-near-black focus:outline-none focus:ring-2 focus:ring-pm-teal/30"
+            >
+              {suppliers.length === 0 ? (
+                <option value="">Nessun fornitore disponibile</option>
+              ) : (
+                suppliers.map((supplier) => (
+                  <option key={supplier.supplierId} value={supplier.supplierId}>
+                    {supplier.name}
+                  </option>
+                ))
+              )}
+            </select>
+          </label>
           <CatalogCsvActions supplierId={uploadSupplierId} />
         </div>
       </section>

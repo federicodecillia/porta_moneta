@@ -307,17 +307,25 @@ export function CatalogCsvActions({ supplierId }: { supplierId: string }) {
     else reader.readAsText(file);
   }
 
+  const btnBase =
+    "flex flex-1 items-center justify-center gap-1.5 whitespace-nowrap rounded-lg border px-3 py-2 text-[12px] font-bold shadow-sm transition disabled:opacity-60";
   return (
     <div className="flex flex-wrap gap-2">
       <button
         onClick={downloadTemplate}
         disabled={downloading}
-        className="rounded-lg border border-pm-border bg-white px-3 py-1.5 text-[11px] font-bold text-pm-teal shadow-sm hover:bg-pm-warm-white/50 disabled:opacity-60"
+        title="Scarica il modello Excel da compilare"
+        className={`${btnBase} border-pm-border bg-white text-pm-teal hover:bg-pm-warm-white/50`}
       >
-        {downloading ? "Generazione…" : "📥 Scarica Template Excel"}
+        {downloading ? "Generazione…" : "↓ Template"}
       </button>
-      <label className="cursor-pointer rounded-lg border border-pm-border bg-white px-3 py-1.5 text-[11px] font-bold text-pm-teal shadow-sm hover:bg-pm-warm-white/50">
-        {isPending ? "Caricamento..." : "📤 Carica Excel/CSV"}
+      <label
+        title="Carica un file Excel/CSV già nel formato del template"
+        className={`${btnBase} cursor-pointer border-pm-border bg-white text-pm-teal hover:bg-pm-warm-white/50 ${
+          isPending || !supplierId ? "opacity-60" : ""
+        }`}
+      >
+        {isPending ? "Caricamento…" : "↑ Carica file"}
         <input
           type="file"
           accept=".xlsx,.csv,.txt"
@@ -328,9 +336,10 @@ export function CatalogCsvActions({ supplierId }: { supplierId: string }) {
       </label>
       <button
         onClick={() => setWizardOpen(true)}
-        className="rounded-lg border border-pm-orange/30 bg-pm-orange-light px-3 py-1.5 text-[11px] font-bold text-pm-orange shadow-sm hover:opacity-90"
+        title="Import guidato da un listino fornitore in formato libero"
+        className={`${btnBase} border-pm-orange/30 bg-pm-orange-light text-pm-orange hover:opacity-90`}
       >
-        🪄 Import guidato (listino libero)
+        ✨ Import guidato
       </button>
       <ImportListingWizard
         open={wizardOpen}
