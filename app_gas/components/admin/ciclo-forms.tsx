@@ -208,6 +208,35 @@ const inputCls = "rounded-lg border border-pm-border px-2 py-2 text-[13px] text-
 const labelCls = "mb-1 block text-[11px] font-semibold uppercase tracking-wide text-pm-gray";
 const miniLabelCls = "shrink-0 text-[11px] font-medium text-pm-gray";
 
+// 15-minute time slots from 06:00 to 22:00. A <select> of these replaces the
+// native <input type="time">: it is unambiguous on mobile and cannot produce an
+// "invalid" value when an admin types e.g. "19.30" with an Italian-style dot.
+const TIME_SLOTS: string[] = (() => {
+  const slots: string[] = [];
+  for (let m = 6 * 60; m <= 22 * 60; m += 15) {
+    const hh = String(Math.floor(m / 60)).padStart(2, "0");
+    const mm = String(m % 60).padStart(2, "0");
+    slots.push(`${hh}:${mm}`);
+  }
+  return slots;
+})();
+
+// A single time-slot dropdown. Keeps a legacy off-grid value (e.g. an old
+// "19:10") selectable by prepending it, so editing never silently resets it.
+function TimeSlotSelect({ name, defValue }: { name: string; defValue?: string }) {
+  const options = defValue && !TIME_SLOTS.includes(defValue) ? [defValue, ...TIME_SLOTS] : TIME_SLOTS;
+  return (
+    <select name={name} defaultValue={defValue ?? ""} className={`min-w-0 flex-1 ${inputCls}`}>
+      <option value="">—</option>
+      {options.map((t) => (
+        <option key={t} value={t}>
+          {t}
+        </option>
+      ))}
+    </select>
+  );
+}
+
 // One pickup row (label + date + "Dalle/Alle" time range). The time range is a
 // single flex child with a min-width so it wraps onto its own line as a unit on
 // narrow screens instead of pushing the inputs past the viewport edge.
@@ -235,9 +264,72 @@ function PickupRow({
       />
       <div className="flex min-w-[190px] flex-1 items-center gap-1.5">
         <span className={miniLabelCls}>Dalle</span>
-        <input name={`${prefix}StartTime`} type="time" defaultValue={defStart} className={`min-w-0 flex-1 ${inputCls}`} />
+        <TimeSlotSelect name={`${prefix}StartTime`} defValue={defStart} />
         <span className={miniLabelCls}>Alle</span>
-        <input name={`${prefix}EndTime`} type="time" defaultValue={defEnd} className={`min-w-0 flex-1 ${inputCls}`} />
+        <TimeSlotSelect name={`${prefix}EndTime`} defValue={defEnd} />
+      </div>
+    </div>
+  );
+}
+
+// Pickup section shared by create + edit forms. The first pickup is always
+// shown; the second is hidden behind a toggle so the admin is never confronted
+// with empty Ritiro 2 fields. When hidden, its inputs are not rendered, so the
+// FormData carries no pickup2 values → the server stores NULL (and the edit
+// patch, which always includes the pickup2 keys, clears a previously-saved one).
+function PickupSection({
+  defPickup1Date,
+  defPickup1Start,
+  defPickup1End,
+  defPickup2Date,
+  defPickup2Start,
+  defPickup2End,
+}: {
+  defPickup1Date?: string;
+  defPickup1Start?: string;
+  defPickup1End?: string;
+  defPickup2Date?: string;
+  defPickup2Start?: string;
+  defPickup2End?: string;
+}) {
+  const [showPickup2, setShowPickup2] = useState(Boolean(defPickup2Date));
+  return (
+    <div>
+      <label className={labelCls}>Ritiri (opzionale)</label>
+      <div className="space-y-2">
+        <PickupRow
+          label="Ritiro 1"
+          prefix="pickup"
+          defDate={defPickup1Date}
+          defStart={defPickup1Start}
+          defEnd={defPickup1End}
+        />
+        {showPickup2 ? (
+          <>
+            <PickupRow
+              label="Ritiro 2"
+              prefix="pickup2"
+              defDate={defPickup2Date}
+              defStart={defPickup2Start}
+              defEnd={defPickup2End}
+            />
+            <button
+              type="button"
+              onClick={() => setShowPickup2(false)}
+              className="text-[11px] font-semibold text-pm-gray hover:text-pm-red"
+            >
+              ✕ Rimuovi secondo ritiro
+            </button>
+          </>
+        ) : (
+          <button
+            type="button"
+            onClick={() => setShowPickup2(true)}
+            className="text-[12px] font-semibold text-pm-orange hover:underline"
+          >
+            ➕ Aggiungi secondo ritiro
+          </button>
+        )}
       </div>
     </div>
   );
@@ -444,26 +536,14 @@ export function EditCycleForm({
       )}
 
 
-      {/* Ritiri: due righe allineate verticalmente */}
-      <div>
-        <label className={labelCls}>Ritiri (opzionale)</label>
-        <div className="space-y-2">
-          <PickupRow
-            label="Ritiro 1"
-            prefix="pickup"
-            defDate={cycle.pickupDate?.slice(0, 10) ?? ""}
-            defStart={cycle.pickupDate?.slice(11, 16) ?? ""}
-            defEnd={cycle.pickupEndTime ?? ""}
-          />
-          <PickupRow
-            label="Ritiro 2"
-            prefix="pickup2"
-            defDate={cycle.pickup2Date?.slice(0, 10) ?? ""}
-            defStart={cycle.pickup2Date?.slice(11, 16) ?? ""}
-            defEnd={cycle.pickup2EndTime ?? ""}
-          />
-        </div>
-      </div>
+      <PickupSection
+        defPickup1Date={cycle.pickupDate?.slice(0, 10) ?? ""}
+        defPickup1Start={cycle.pickupDate?.slice(11, 16) ?? ""}
+        defPickup1End={cycle.pickupEndTime ?? ""}
+        defPickup2Date={cycle.pickup2Date?.slice(0, 10) ?? ""}
+        defPickup2Start={cycle.pickup2Date?.slice(11, 16) ?? ""}
+        defPickup2End={cycle.pickup2EndTime ?? ""}
+      />
 
       {!isClosed && (
         <div className="grid grid-cols-2 gap-3">
@@ -595,14 +675,7 @@ export function CreateCycleForm({ suppliers }: { suppliers: Supplier[] }) {
           defaultTotal=""
         />
 
-        {/* Ritiri: due righe allineate verticalmente */}
-        <div>
-          <label className={labelCls}>Ritiri (opzionale)</label>
-          <div className="space-y-2">
-            <PickupRow label="Ritiro 1" prefix="pickup" />
-            <PickupRow label="Ritiro 2" prefix="pickup2" />
-          </div>
-        </div>
+        <PickupSection />
 
         <div className="grid grid-cols-2 gap-3">
           <div>
