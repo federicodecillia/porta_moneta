@@ -54,7 +54,8 @@ Env flag `DEMO_MODE=true`, set ONLY on the demo Vercel project.
 - Second Vercel project, same repo, root `app_gas/`, demo env vars
   (`DEMO_MODE=true`, demo Neon URL, `AUTH_SECRET`). Default
   `*.vercel.app` URL is fine (e.g. `porta-moneta-demo.vercel.app`).
-- Separate Neon free-tier database (or Neon branch) for demo data.
+- Separate Neon project (free tier) for demo data — NOT a branch of the prod
+  project, so a connection-string mixup can never touch prod.
 - Prod project untouched: no `DEMO_MODE` var set there.
 
 ## README + marketing surface
