@@ -6,6 +6,7 @@ Google, place orders inside a time-boxed cycle, and track a running ledger
 balance. Admins manage cycles, products, suppliers, top-ups, and analytics.
 
 **Live:** [gas.portamoneta.org](https://gas.portamoneta.org)
+**Try it now:** [porta-moneta-demo.vercel.app](https://porta-moneta-demo.vercel.app) — one-click demo login (Socio or Admin), fake data, nightly reset
 **Changelog:** [English](./app_gas/CHANGELOG.md) · [Italiano](./app_gas/CHANGELOG.it.md)
 
 The UI is in Italian because that's the target audience. Code, identifiers,
@@ -183,3 +184,13 @@ Code is [MIT licensed](./LICENSE) — fork it, adapt it, run it for your own
 GAS or co-op. The brand assets (`logo.png`, `icon.png`, the `portamoneta.org`
 domain and the "Porta Moneta" name) belong to APS Porta Moneta and are **not**
 covered by the license: replace them in your fork.
+
+---
+
+## Want this for your GAS / co-op / association?
+
+Fork it and run it yourself — it's MIT. If you'd rather have someone set it
+up, adapt it, or build something similar for your organization, that's what
+I do: [gptchatbot.it](https://www.gptchatbot.it) ·
+[LinkedIn](https://www.linkedin.com/in/federicodecillia) ·
+[GitHub](https://github.com/federicodecillia)
