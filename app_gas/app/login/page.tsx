@@ -26,7 +26,9 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
       <div className="w-full rounded-lg border border-pm-border bg-white p-6 shadow-sm">
         <h1 className="text-xl font-semibold">Porta Moneta - GAS</h1>
         <p className="text-pm-gray mt-2 text-sm">
-          Accedi con Google per continuare.
+          {isDemo
+            ? "Demo pubblica: entra con un click, senza registrazione."
+            : "Accedi con Google per continuare."}
         </p>
         {showAccessDenied ? (
           <p className="mt-3 rounded-md border border-red-300 bg-red-50 p-2 text-sm text-red-700">
