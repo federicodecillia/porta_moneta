@@ -1,0 +1,38 @@
+name: Nightly Demo Reset
+
+# Re-seeds the DEMO Neon database every night so the public demo always
+# looks fresh (the open cycle's dates are relative to "now"). Also runnable
+# on demand from the Actions tab.
+#
+# Required GitHub repository secret:
+#   - DEMO_DATABASE_URL  Neon DEMO connection string (NOT production)
+
+on:
+  schedule:
+    - cron: '0 2 * * *'
+  workflow_dispatch:
+
+jobs:
+  reset:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: app_gas/package-lock.json
+
+      - name: Install dependencies
+        working-directory: app_gas
+        run: npm ci
+
+      - name: Seed demo database
+        working-directory: app_gas
+        env:
+          DATABASE_URL: ${{ secrets.DEMO_DATABASE_URL }}
+          DEMO_MODE: "true"
+        run: npx tsx scripts/seed-demo.ts
