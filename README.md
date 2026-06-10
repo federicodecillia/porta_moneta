@@ -179,11 +179,7 @@ so the database is always one step ahead of the live code.
 
 ## License
 
-This repository is published primarily as a portfolio piece. The code
-covers a real production app serving a real food cooperative, but the
-brand assets (`logo.png`, the `portamoneta.org` domain) belong to APS
-Porta Moneta and are not licensed for reuse.
-
-If you want to adapt the patterns here (cycle/ledger model, atomic
-close-cycle, proportional shipping split, etc.) to your own GAS or
-co-op project, open an issue and let's talk.
+Code is [MIT licensed](./LICENSE) — fork it, adapt it, run it for your own
+GAS or co-op. The brand assets (`logo.png`, `icon.png`, the `portamoneta.org`
+domain and the "Porta Moneta" name) belong to APS Porta Moneta and are **not**
+covered by the license: replace them in your fork.
