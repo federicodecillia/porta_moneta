@@ -48,6 +48,7 @@ export const it = {
     days_plural: "giorni",
     nextPickup: "Prossimo ritiro",
     secondPickup: "Secondo ritiro",
+    pickup: "Ritiro",
   },
   order: {
     yourOrder: "Il tuo ordine",
@@ -69,6 +70,8 @@ export const it = {
       `Riproposti ${count} prodotti da "${title}". Modifica e conferma.`,
     savedSuccess: "Ordine salvato ✓",
     otherCategory: "Altro",
+    genericError: "Errore",
+    saveError: "Errore durante il salvataggio",
   },
   history: {
     orders: "Ordini",
@@ -91,6 +94,7 @@ export const it = {
     noNotifications: "Nessuna notifica",
     noNotificationsHint: "Ti avviseremo quando ci sono novità sull'ordine o sul saldo.",
     unreadLabel: "Non letta",
+    unreadCountLabel: (n: number) => `${n} notifiche non lette`,
   },
   login: {
     appName: "Porta Moneta",

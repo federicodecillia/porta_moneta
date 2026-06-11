@@ -112,7 +112,7 @@ export function OrderForm({
         setDraft(result.quantities);
         toast.success(t.order.reproposeSuccess(result.matched, result.cycleTitle || ""));
       } catch (err) {
-        toast.error(err instanceof Error ? err.message : "Errore");
+        toast.error(err instanceof Error ? err.message : t.order.genericError);
       }
     });
   }
@@ -131,7 +131,7 @@ export function OrderForm({
           toast.success(t.order.savedSuccess);
         }
       } catch (err) {
-        const message = err instanceof Error ? err.message : "Errore durante il salvataggio";
+        const message = err instanceof Error ? err.message : t.order.saveError;
         toast.error(message);
         // If the cycle was closed while the user was editing, refresh so the
         // page reflects the new state (the ordine page will redirect or show

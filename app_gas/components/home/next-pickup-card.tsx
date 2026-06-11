@@ -1,5 +1,5 @@
 import { t } from "@/lib/i18n";
-import { formatTime } from "@/lib/i18n/format";
+import { formatTime, formatDate } from "@/lib/i18n/format";
 import type { NextPickup } from "@/lib/db/queries";
 
 // Visible only when the member has at least one ordered cycle whose pickup
@@ -57,7 +57,7 @@ export function NextPickupCard({ pickup }: { pickup: NextPickup }) {
 function formatDayLabel(date: Date, daysUntil: number): string {
   if (daysUntil === 0) return t.cycle.today;
   if (daysUntil === 1) return t.cycle.tomorrow;
-  return date.toLocaleDateString("it-IT", {
+  return formatDate(date, {
     weekday: "long",
     day: "numeric",
     month: "long",

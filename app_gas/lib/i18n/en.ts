@@ -48,6 +48,7 @@ export const en: Strings = {
     days_plural: "days",
     nextPickup: "Next pickup",
     secondPickup: "Second pickup",
+    pickup: "Pickup",
   },
   order: {
     yourOrder: "Your order",
@@ -69,6 +70,8 @@ export const en: Strings = {
       `Repeated ${count} products from "${title}". Edit and confirm.`,
     savedSuccess: "Order saved ✓",
     otherCategory: "Other",
+    genericError: "Error",
+    saveError: "Error while saving",
   },
   history: {
     orders: "Orders",
@@ -81,7 +84,7 @@ export const en: Strings = {
     open: "Open",
     pickedUp: "Picked up",
     currentBalance: "Current balance",
-    transfer: "Transfer",
+    transfer: "Bank transfer",
     orderCharge: "Order",
     correction: "Correction",
   },
@@ -91,6 +94,7 @@ export const en: Strings = {
     noNotifications: "No notifications",
     noNotificationsHint: "We'll notify you when there are updates on your order or balance.",
     unreadLabel: "Unread",
+    unreadCountLabel: (n: number) => `${n} unread notifications`,
   },
   login: {
     appName: "Porta Moneta",

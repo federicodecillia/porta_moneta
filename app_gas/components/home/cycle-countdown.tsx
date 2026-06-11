@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { formatDateTime } from "@/lib/utils";
 import { t } from "@/lib/i18n";
+import { formatDate, formatTime } from "@/lib/i18n/format";
 import Link from "next/link";
 
 type Props = {
@@ -30,10 +31,10 @@ function computeCountdown(closeAt: string, openAt: string, now: Date) {
 
 function formatPickupSlot(date: string, endTime: string | null): string {
   const d = new Date(date);
-  const dateStr = d.toLocaleDateString("it-IT", { weekday: "short", day: "numeric", month: "short" });
+  const dateStr = formatDate(d, { weekday: "short", day: "numeric", month: "short" });
   const hasStartTime = d.getHours() !== 0 || d.getMinutes() !== 0;
   if (!hasStartTime) return dateStr;
-  const startStr = d.toLocaleTimeString("it-IT", { hour: "2-digit", minute: "2-digit" });
+  const startStr = formatTime(d);
   return endTime ? `${dateStr} · ${startStr}–${endTime}` : `${dateStr} · ${startStr}`;
 }
 
@@ -67,7 +68,7 @@ export function CycleCountdown({ title, orderCloseAt, orderOpenAt, pickupDate, p
             </div>
             {pickupDate && (
               <div className="font-mono text-[10px] text-brand-gray">
-                {pickup2Date ? t.cycle.pickup1(formatPickupSlot(pickupDate, pickupEndTime)) : `${t.nav.order}: ${formatPickupSlot(pickupDate, pickupEndTime)}`}
+                {pickup2Date ? t.cycle.pickup1(formatPickupSlot(pickupDate, pickupEndTime)) : `${t.cycle.pickup}: ${formatPickupSlot(pickupDate, pickupEndTime)}`}
               </div>
             )}
             {pickup2Date && (

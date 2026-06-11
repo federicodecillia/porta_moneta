@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { t } from "@/lib/i18n";
+import { formatMoney } from "@/lib/i18n/format";
 import { formatDate, formatEur, formatEurSigned, getProductEmoji } from "@/lib/utils";
 import type { CycleHistoryEntry } from "@/lib/db/queries";
 
@@ -159,16 +160,13 @@ export function StoricoTabs({ orderHistory, movements, balance }: Props) {
             >
               {t.history.currentBalance}
             </div>
-            <div className="flex items-baseline gap-1">
-              <span className="text-[18px] font-bold text-brand-near-black/30">€</span>
-              <span
-                className={`text-[36px] font-black tracking-[-0.04em] ${
-                  balance < 0 ? "text-brand-red" : "text-brand-near-black"
-                }`}
-              >
-                {Math.abs(balance).toFixed(2).replace(".", ",")}
-              </span>
-            </div>
+            <span
+              className={`text-[36px] font-black tracking-[-0.04em] ${
+                balance < 0 ? "text-brand-red" : "text-brand-near-black"
+              }`}
+            >
+              {formatMoney(Math.abs(balance))}
+            </span>
           </div>
 
           {movements.length === 0 ? (

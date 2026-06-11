@@ -3,6 +3,7 @@ import { AppShell } from "@/components/app-shell";
 import { CycleCountdown } from "@/components/home/cycle-countdown";
 import { NextPickupCard } from "@/components/home/next-pickup-card";
 import { t } from "@/lib/i18n";
+import { formatMoney } from "@/lib/i18n/format";
 import { getUserRole, requireUserSession } from "@/lib/auth/session";
 import {
   getCycleProducts,
@@ -62,13 +63,12 @@ export default async function HomePage() {
           {t.home.balanceTitle}
         </div>
         <div className="mb-[16px] flex items-baseline gap-[6px]">
-          <span className="text-[28px] font-bold leading-none text-brand-near-black/25">€</span>
           <span
             className={`text-[70px] font-black leading-none tracking-[-0.045em] ${
               isNegative ? "text-brand-red" : "text-brand-near-black"
             }`}
           >
-            {Math.abs(balance).toFixed(2).replace(".", ",")}
+            {formatMoney(Math.abs(balance))}
           </span>
         </div>
         <div
@@ -228,10 +228,10 @@ export default async function HomePage() {
             const isPos = parseFloat(e.amount) >= 0;
             const typeLabel =
               e.type === "topup"
-                ? "Bonifico"
+                ? t.history.transfer
                 : e.type === "order_charge"
-                  ? "Ordine"
-                  : "Rettifica";
+                  ? t.history.orderCharge
+                  : t.history.correction;
             const label = typeLabel + (e.note ? " · " + e.note : "");
             return (
               <div
