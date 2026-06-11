@@ -116,6 +116,91 @@ export const it = {
   demo: {
     banner: "🧪 Ambiente demo: dati fittizi, reset automatico ogni notte.",
   },
+  guide: {
+    title: "Come funziona",
+    howToSteps: [
+      {
+        n: 1,
+        title: "Controlla il saldo",
+        body: "Nella Home vedi il tuo saldo e lo stato dell'ordine aperto.",
+      },
+      {
+        n: 2,
+        title: "Vai all'ordine",
+        body: "Tocca il tab Ordine in basso e scegli i prodotti con i pulsanti + e −.",
+      },
+      {
+        n: 3,
+        title: "Conferma l'ordine",
+        body: 'Premi "Conferma ordine" in basso. Puoi modificarlo finché l\'ordine è aperto.',
+      },
+      {
+        n: 4,
+        title: "Storico",
+        body: "Nel tab Storico vedi i tuoi ordini passati e tutti i movimenti del saldo.",
+      },
+      {
+        n: 5,
+        title: "Ritira e ricarica",
+        body: "Vieni a ritirare nel giorno indicato. Per ricaricare il saldo fai un bonifico — chi gestisce la cassa lo registra nell'app.",
+      },
+      {
+        n: 6,
+        title: "Notifiche",
+        body: "Quando un ciclo viene chiuso o un bonifico viene registrato, vedrai un pallino rosso sulla campanella in alto. Toccala per leggere le notifiche.",
+      },
+    ] as { n: number; title: string; body: string }[],
+    newsTitle: "Novità",
+    newsSubtitle: "Cosa è cambiato",
+    seeAllNews: "Vedi tutte le novità →",
+    faqTitle: "Domande frequenti",
+    faq: [
+      {
+        q: "Come è organizzata l'app?",
+        a: "L'app è divisa in 4 tab: Home, Ordine, Storico, Guida. Il tab Admin è visibile solo agli amministratori.",
+      },
+      {
+        q: "Chi gestisce prodotti e cicli?",
+        a: "Gli amministratori creano i cicli d'ordine, caricano i prodotti dal catalogo dei fornitori, e chiudono i cicli.",
+      },
+      {
+        q: "Quando posso ordinare?",
+        a: "Quando c'è un ordine aperto puoi ordinare. La Home mostra i giorni e le ore rimanenti alla chiusura. Oltre quel termine non puoi più modificare l'ordine.",
+      },
+      {
+        q: "Come funziona il saldo?",
+        a: "Il saldo è il tuo credito presso l'associazione. Alla chiusura dell'ordine il costo viene addebitato automaticamente. Per ricaricare fai un bonifico sul conto dell'associazione: chi gestisce la cassa lo registra e il saldo si aggiorna.",
+      },
+      {
+        q: "Posso modificare l'ordine dopo averlo confermato?",
+        a: 'Sì, finché l\'ordine è aperto. Vai al tab Ordine, modifica le quantità e ri-premi "Conferma ordine". L\'ultimo salvataggio sostituisce il precedente.',
+      },
+      {
+        q: "Cosa succede se il saldo è negativo?",
+        a: "Puoi comunque ordinare, ma riceverai un avviso. Ricordati di effettuare un bonifico al più presto per coprire il debito.",
+      },
+      {
+        q: "Come aggiungo l'app alla schermata Home?",
+        a: 'Su iPhone (Safari): tocca l\'icona di condivisione → "Aggiungi a schermata Home". Su Android (Chrome): tocca i tre puntini → "Aggiungi a schermata Home".',
+      },
+      {
+        q: "Cosa succede se il mio saldo è insufficiente?",
+        a: "L'app ti permette di ordinare anche se il saldo è basso o negativo (entro certi limiti), per non impedirti di fare la spesa. Tuttavia, è fondamentale ricaricare prontamente per mantenere l'associazione in salute e permettere il pagamento dei fornitori.",
+      },
+      {
+        q: "Chi sono i fornitori?",
+        a: "Collaboriamo con produttori locali e biologici. Ogni ciclo d'ordine può coinvolgere uno o più fornitori diversi (es. frutta/verdura, uova, formaggi). Puoi vedere i dettagli dei prodotti nel tab Ordine.",
+      },
+      {
+        q: "Come funzionano le notifiche?",
+        a: "L'app ti avvisa automaticamente quando un ciclo viene chiuso (con l'importo addebitato) e quando un bonifico viene registrato da chi gestisce la cassa. La campanella in alto nell'app mostra il numero di notifiche non lette. Toccala per vederle tutte e marcarle come lette.",
+      },
+    ] as { q: string; a: string }[],
+    contactEmoji: "📬",
+    contactHeading: "Hai altre domande?",
+    contactIntro: (appName: string) =>
+      `Scrivici o parla con chi gestisce la cassa al ritiro. Per problemi tecnici contatta il team IT di ${appName}.`,
+  },
 };
 
 export type Strings = typeof it;

@@ -116,4 +116,89 @@ export const en: Strings = {
   demo: {
     banner: "🧪 Demo environment: test data, automatic reset every night.",
   },
+  guide: {
+    title: "How it works",
+    howToSteps: [
+      {
+        n: 1,
+        title: "Check your balance",
+        body: "On the Home screen, see your balance and the status of the open order.",
+      },
+      {
+        n: 2,
+        title: "Go to your order",
+        body: "Tap the Order tab at the bottom and select products using the + and − buttons.",
+      },
+      {
+        n: 3,
+        title: "Confirm your order",
+        body: 'Press "Confirm order" at the bottom. You can modify it as long as the order is open.',
+      },
+      {
+        n: 4,
+        title: "History",
+        body: "In the History tab, see your past orders and all balance movements.",
+      },
+      {
+        n: 5,
+        title: "Pickup and recharge",
+        body: "Come pick up on the date indicated. To recharge your balance, make a bank transfer — whoever manages the treasury will register it in the app.",
+      },
+      {
+        n: 6,
+        title: "Notifications",
+        body: "When a cycle closes or a transfer is registered, you'll see a red dot on the bell icon at the top. Tap it to read your notifications.",
+      },
+    ] as { n: number; title: string; body: string }[],
+    newsTitle: "News",
+    newsSubtitle: "What's new",
+    seeAllNews: "See all updates →",
+    faqTitle: "Frequently asked questions",
+    faq: [
+      {
+        q: "How is the app organized?",
+        a: "The app is divided into 4 tabs: Home, Order, History, and Guide. The Admin tab is only visible to administrators.",
+      },
+      {
+        q: "Who manages products and cycles?",
+        a: "Administrators create order cycles, upload products from supplier catalogs, and close cycles.",
+      },
+      {
+        q: "When can I order?",
+        a: "You can order when there's an open order. The Home screen shows the days and hours remaining until closure. After that deadline, you can no longer edit your order.",
+      },
+      {
+        q: "How does the balance work?",
+        a: "Your balance is your credit with the buying group. When an order closes, the cost is automatically deducted. To recharge, make a bank transfer to the group's account: whoever manages the treasury will register it and your balance will update.",
+      },
+      {
+        q: "Can I edit my order after confirming it?",
+        a: 'Yes, as long as the order is open. Go to the Order tab, change quantities, and press "Confirm order" again. The last save replaces the previous one.',
+      },
+      {
+        q: "What happens if my balance is negative?",
+        a: "You can still order, but you'll receive a warning. Remember to make a bank transfer as soon as possible to cover the debt.",
+      },
+      {
+        q: "How do I add the app to my home screen?",
+        a: 'On iPhone (Safari): tap the share icon → "Add to Home Screen". On Android (Chrome): tap the three dots → "Add to Home Screen".',
+      },
+      {
+        q: "What if my balance is insufficient?",
+        a: "The app lets you order even if your balance is low or negative (within certain limits) so you can still shop. However, it's essential to recharge promptly to keep the buying group healthy and allow payment to suppliers.",
+      },
+      {
+        q: "Who are the suppliers?",
+        a: "We work with local and organic producers. Each order cycle can involve one or more different suppliers (e.g., fruits/vegetables, eggs, cheeses). You can see product details in the Order tab.",
+      },
+      {
+        q: "How do notifications work?",
+        a: "The app notifies you automatically when a cycle closes (with the amount deducted) and when a transfer is registered by whoever manages the treasury. The bell icon at the top shows the number of unread notifications. Tap it to see all of them and mark them as read.",
+      },
+    ] as { q: string; a: string }[],
+    contactEmoji: "📬",
+    contactHeading: "Do you have other questions?",
+    contactIntro: (appName: string) =>
+      `Write to us or talk to whoever manages the treasury at pickup. For technical issues, contact ${appName}'s IT team.`,
+  },
 };
