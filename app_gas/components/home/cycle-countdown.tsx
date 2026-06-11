@@ -54,31 +54,31 @@ export function CycleCountdown({ title, orderCloseAt, orderOpenAt, pickupDate, p
   const danger = hoursLeft <= 12;
 
   return (
-    <div className="mb-[14px] rounded-[18px] border border-pm-border bg-white shadow-[0_1px_2px_rgba(0,0,0,0.04)] p-[18px]">
+    <div className="mb-[14px] rounded-[18px] border border-brand-border bg-white shadow-[0_1px_2px_rgba(0,0,0,0.04)] p-[18px]">
       <div className="mb-[14px] flex items-start justify-between">
         <div>
-          <div className="text-[16px] font-extrabold tracking-[-0.02em] text-pm-near-black leading-snug">
+          <div className="text-[16px] font-extrabold tracking-[-0.02em] text-brand-near-black leading-snug">
             {title}
           </div>
           <div className="mt-[3px] space-y-[2px]">
-            <div className="font-mono text-[10px] text-pm-gray">
+            <div className="font-mono text-[10px] text-brand-gray">
               Chiude: {formatDateTime(orderCloseAt)}
             </div>
             {pickupDate && (
-              <div className="font-mono text-[10px] text-pm-gray">
+              <div className="font-mono text-[10px] text-brand-gray">
                 {pickup2Date ? "Ritiro 1: " : "Ritiro: "}
                 {formatPickupSlot(pickupDate, pickupEndTime)}
               </div>
             )}
             {pickup2Date && (
-              <div className="font-mono text-[10px] text-pm-gray">
+              <div className="font-mono text-[10px] text-brand-gray">
                 Ritiro 2: {formatPickupSlot(pickup2Date, pickup2EndTime)}
               </div>
             )}
           </div>
         </div>
-        <span className="inline-flex items-center gap-1.5 rounded-full border border-pm-teal/20 bg-pm-teal-light px-2.5 py-0.5 font-mono text-[10px] font-semibold text-pm-teal">
-          <span className="h-1.5 w-1.5 rounded-full bg-pm-teal opacity-75" />
+        <span className="inline-flex items-center gap-1.5 rounded-full border border-brand-teal/20 bg-brand-teal-light px-2.5 py-0.5 font-mono text-[10px] font-semibold text-brand-teal">
+          <span className="h-1.5 w-1.5 rounded-full bg-brand-teal opacity-75" />
           Aperto
         </span>
       </div>
@@ -93,10 +93,10 @@ export function CycleCountdown({ title, orderCloseAt, orderOpenAt, pickupDate, p
             key={unit}
             className="min-w-[62px] rounded-[10px] bg-black/[0.06] px-[14px] py-[9px] text-center"
           >
-            <div className="font-mono text-[22px] font-semibold leading-none text-pm-near-black">
+            <div className="font-mono text-[22px] font-semibold leading-none text-brand-near-black">
               {num}
             </div>
-            <div className="mt-[3px] font-mono text-[9px] uppercase tracking-[0.08em] text-pm-gray-light">
+            <div className="mt-[3px] font-mono text-[9px] uppercase tracking-[0.08em] text-brand-gray-light">
               {unit}
             </div>
           </div>
@@ -105,18 +105,18 @@ export function CycleCountdown({ title, orderCloseAt, orderOpenAt, pickupDate, p
 
       <div className="h-[3px] overflow-hidden rounded-full bg-black/[0.07]">
         <div
-          className={`h-full rounded-full transition-[width] duration-300 ${danger ? "bg-pm-red" : "bg-pm-teal"}`}
+          className={`h-full rounded-full transition-[width] duration-300 ${danger ? "bg-brand-red" : "bg-brand-teal"}`}
           style={{ width: `${pct}%` }}
         />
       </div>
-      <div className="mt-[5px] font-mono text-[10px] text-pm-gray-light">
+      <div className="mt-[5px] font-mono text-[10px] text-brand-gray-light">
         {hoursLeft > 0 ? `${hoursLeft} ore rimanenti` : "Chiusura imminente"}
       </div>
 
       <div className="mt-3">
         <Link
           href="/ordine"
-          className="inline-flex w-full items-center justify-center rounded-full bg-pm-orange px-[22px] py-[14px] text-sm font-bold text-white transition-[opacity,transform] duration-150 active:scale-[0.98]"
+          className="inline-flex w-full items-center justify-center rounded-full bg-brand-orange px-[22px] py-[14px] text-sm font-bold text-white transition-[opacity,transform] duration-150 active:scale-[0.98]"
         >
           Vai all&apos;ordine →
         </Link>

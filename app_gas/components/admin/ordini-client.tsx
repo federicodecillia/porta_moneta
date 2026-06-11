@@ -32,7 +32,7 @@ export function OrdiniFilters({
   const currentMember = sp.get("member") ?? "";
 
   const selectCls =
-    "rounded-xl border border-pm-border bg-white px-3 py-2 text-[12px] font-semibold text-pm-near-black focus:outline-none focus:ring-2 focus:ring-pm-orange/30 flex-1";
+    "rounded-xl border border-brand-border bg-white px-3 py-2 text-[12px] font-semibold text-brand-near-black focus:outline-none focus:ring-2 focus:ring-brand-orange/30 flex-1";
 
   function onMemberChange(e: React.ChangeEvent<HTMLSelectElement>) {
     const val = e.target.value;
@@ -86,50 +86,50 @@ export function OrdiniByMember({ byMember }: { byMember: CycleSummary["byMember"
   }
 
   return (
-    <div className="divide-y divide-pm-border">
+    <div className="divide-y divide-brand-border">
       {byMember.map((m) => (
         <div key={m.memberId}>
           <button
             onClick={() => toggle(m.memberId)}
             className="flex w-full items-center justify-between px-4 py-3 text-left"
           >
-            <span className="text-[13px] font-medium text-pm-near-black">{m.fullName}</span>
+            <span className="text-[13px] font-medium text-brand-near-black">{m.fullName}</span>
             <div className="flex items-center gap-2">
-              <span className="font-mono text-[13px] font-bold text-pm-near-black">
+              <span className="font-mono text-[13px] font-bold text-brand-near-black">
                 {formatEur(m.total)}
               </span>
-              <span className="text-pm-gray-light">{expanded.has(m.memberId) ? "▲" : "▼"}</span>
+              <span className="text-brand-gray-light">{expanded.has(m.memberId) ? "▲" : "▼"}</span>
             </div>
           </button>
           {expanded.has(m.memberId) && (
             <div className="bg-black/[0.02] px-4 pb-3 pt-1">
               {m.lines.map((line, i) => (
                 <div key={i} className="flex items-center justify-between py-1">
-                  <span className="flex items-center gap-1.5 text-[12px] text-pm-gray">
+                  <span className="flex items-center gap-1.5 text-[12px] text-brand-gray">
                     <span className="text-[14px] leading-none">{getProductEmoji(line.productName)}</span>
                     {line.productName}
                     {line.variant ? ` · ${line.variant}` : ""}
-                    <span className="ml-1 font-mono text-[11px] text-pm-gray-light">
+                    <span className="ml-1 font-mono text-[11px] text-brand-gray-light">
                       ×{line.quantity}
                     </span>
                     {line.adjusted && (
-                      <span className="ml-1 rounded-full bg-pm-orange/15 px-1.5 py-px text-[9px] font-bold uppercase tracking-wide text-pm-orange">
+                      <span className="ml-1 rounded-full bg-brand-orange/15 px-1.5 py-px text-[9px] font-bold uppercase tracking-wide text-brand-orange">
                         rettificato
                       </span>
                     )}
                   </span>
-                  <span className="font-mono text-[12px] text-pm-near-black">
+                  <span className="font-mono text-[12px] text-brand-near-black">
                     {formatEur(line.lineTotal)}
                   </span>
                 </div>
               ))}
               {m.shipping > 0 && (
                 <div className="flex items-center justify-between py-1">
-                  <span className="flex items-center gap-1.5 text-[12px] text-pm-gray">
+                  <span className="flex items-center gap-1.5 text-[12px] text-brand-gray">
                     <span className="text-[14px] leading-none">🚚</span>
                     Spedizione
                   </span>
-                  <span className="font-mono text-[12px] text-pm-near-black">
+                  <span className="font-mono text-[12px] text-brand-near-black">
                     {formatEur(m.shipping)}
                   </span>
                 </div>
@@ -183,7 +183,7 @@ export function CsvExportButton({
     <button
       onClick={handleExport}
       disabled={isPending}
-      className="rounded-xl border border-pm-border px-4 py-2 text-[12px] font-semibold text-pm-gray disabled:opacity-60"
+      className="rounded-xl border border-brand-border px-4 py-2 text-[12px] font-semibold text-brand-gray disabled:opacity-60"
     >
       {isPending ? "Generazione…" : "📥 Scarica Excel"}
     </button>

@@ -24,9 +24,9 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
   return (
     <main className="mx-auto flex min-h-screen w-full max-w-[480px] flex-col items-center justify-center p-6">
       <DemoBanner />
-      <div className="w-full rounded-lg border border-pm-border bg-white p-6 shadow-sm">
+      <div className="w-full rounded-lg border border-brand-border bg-white p-6 shadow-sm">
         <h1 className="text-xl font-semibold">{brand.appName}</h1>
-        <p className="text-pm-gray mt-2 text-sm">
+        <p className="text-brand-gray mt-2 text-sm">
           {isDemo
             ? "Demo pubblica: entra con un click, senza registrazione."
             : "Accedi con Google per continuare."}
@@ -91,7 +91,7 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
             </>
           ) : null}
           {!hasGoogleAuth && !hasDevLogin && !isDemo ? (
-            <p className="rounded-md border border-pm-border bg-pm-warm-white p-2 text-sm text-pm-gray">
+            <p className="rounded-md border border-brand-border bg-brand-warm-white p-2 text-sm text-brand-gray">
               Aggiungi le variabili auth in .env.local per abilitare il login locale.
             </p>
           ) : null}

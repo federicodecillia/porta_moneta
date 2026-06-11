@@ -43,8 +43,8 @@ export default async function OrdinePage({
       <AppShell email={session.user.email} isAdmin={role === "admin"} memberId={memberId}>
         <div className="flex flex-col items-center justify-center py-16 text-center">
           <span className="mb-4 text-4xl">🛒</span>
-          <h2 className="text-[18px] font-bold text-pm-near-black">Nessun ordine aperto</h2>
-          <p className="mt-2 text-[14px] text-pm-gray">
+          <h2 className="text-[18px] font-bold text-brand-near-black">Nessun ordine aperto</h2>
+          <p className="mt-2 text-[14px] text-brand-gray">
             Torna quando l&apos;ordine sarà aperto.
           </p>
         </div>
@@ -67,8 +67,8 @@ export default async function OrdinePage({
               href={`/ordine?cycleId=${c.cycleId}`}
               className={`shrink-0 rounded-full px-4 py-1.5 text-[12px] font-bold transition-colors ${
                 c.cycleId === openCycle!.cycleId
-                  ? "bg-pm-teal text-white shadow-sm"
-                  : "bg-white text-pm-gray border border-pm-border hover:bg-pm-warm-white"
+                  ? "bg-brand-teal text-white shadow-sm"
+                  : "bg-white text-brand-gray border border-brand-border hover:bg-brand-warm-white"
               }`}
             >
               {c.title}

@@ -79,7 +79,7 @@ export function StatsFilters({
       {hasAny && (
         <button
           onClick={() => pushWith({ cycles: [], suppliers: [], members: [] })}
-          className="text-[11px] font-semibold text-pm-orange hover:underline"
+          className="text-[11px] font-semibold text-brand-orange hover:underline"
         >
           ✕ Rimuovi filtri
         </button>
@@ -148,31 +148,31 @@ function MultiSelect({
         onClick={() => setOpen((v) => !v)}
         aria-haspopup="listbox"
         aria-expanded={open}
-        className={`flex w-full items-center justify-between gap-2 rounded-xl border px-3 py-2 text-left text-[12px] font-semibold focus:outline-none focus:ring-2 focus:ring-pm-orange/30 ${
+        className={`flex w-full items-center justify-between gap-2 rounded-xl border px-3 py-2 text-left text-[12px] font-semibold focus:outline-none focus:ring-2 focus:ring-brand-orange/30 ${
           selected.length > 0
-            ? "border-pm-orange/40 bg-pm-orange-light text-pm-near-black"
-            : "border-pm-border bg-white text-pm-near-black"
+            ? "border-brand-orange/40 bg-brand-orange-light text-brand-near-black"
+            : "border-brand-border bg-white text-brand-near-black"
         }`}
       >
         <span className="truncate">{summary}</span>
-        <span className="shrink-0 text-pm-gray-light">{open ? "▲" : "▼"}</span>
+        <span className="shrink-0 text-brand-gray-light">{open ? "▲" : "▼"}</span>
       </button>
       {open && (
-        <div className="absolute left-0 right-0 top-full z-20 mt-1 max-h-[280px] overflow-hidden rounded-xl border border-pm-border bg-white shadow-lg">
-          <div className="border-b border-pm-border p-2">
+        <div className="absolute left-0 right-0 top-full z-20 mt-1 max-h-[280px] overflow-hidden rounded-xl border border-brand-border bg-white shadow-lg">
+          <div className="border-b border-brand-border p-2">
             <input
               type="search"
               autoFocus
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               placeholder={`Cerca ${label.toLowerCase()}…`}
-              className="w-full rounded-lg border border-pm-border px-2 py-1 text-[12px] focus:outline-none focus:ring-2 focus:ring-pm-orange/30"
+              className="w-full rounded-lg border border-brand-border px-2 py-1 text-[12px] focus:outline-none focus:ring-2 focus:ring-brand-orange/30"
             />
             {selected.length > 0 && (
               <button
                 type="button"
                 onClick={() => onChange([])}
-                className="mt-1 text-[11px] font-semibold text-pm-orange hover:underline"
+                className="mt-1 text-[11px] font-semibold text-brand-orange hover:underline"
               >
                 Deseleziona tutti
               </button>
@@ -180,24 +180,24 @@ function MultiSelect({
           </div>
           <div className="max-h-[220px] overflow-y-auto py-1">
             {visibleOptions.length === 0 ? (
-              <p className="px-3 py-2 text-[11px] text-pm-gray">Nessun risultato</p>
+              <p className="px-3 py-2 text-[11px] text-brand-gray">Nessun risultato</p>
             ) : (
               visibleOptions.map((o) => {
                 const checked = selectedSet.has(o.id);
                 return (
                   <label
                     key={o.id}
-                    className={`flex cursor-pointer items-center gap-2 px-3 py-1.5 text-[12px] hover:bg-pm-warm-white/60 ${
-                      checked ? "bg-pm-orange-light/40" : ""
+                    className={`flex cursor-pointer items-center gap-2 px-3 py-1.5 text-[12px] hover:bg-brand-warm-white/60 ${
+                      checked ? "bg-brand-orange-light/40" : ""
                     }`}
                   >
                     <input
                       type="checkbox"
                       checked={checked}
                       onChange={() => toggle(o.id)}
-                      className="h-3.5 w-3.5 accent-pm-orange"
+                      className="h-3.5 w-3.5 accent-brand-orange"
                     />
-                    <span className="truncate text-pm-near-black">{o.label}</span>
+                    <span className="truncate text-brand-near-black">{o.label}</span>
                   </label>
                 );
               })

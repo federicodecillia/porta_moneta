@@ -59,7 +59,7 @@ export async function TabCiclo() {
           })}
         </div>
       ) : (
-        <div className="mb-4 rounded-xl border border-dashed border-pm-border p-4 text-center text-[13px] text-pm-gray">
+        <div className="mb-4 rounded-xl border border-dashed border-brand-border p-4 text-center text-[13px] text-brand-gray">
           Nessun ciclo aperto
         </div>
       )}
@@ -69,9 +69,9 @@ export async function TabCiclo() {
       {cycles.length > 0 && (
         <Card className="mt-4">
           <CardHeader>
-            <h3 className="text-[13px] font-bold text-pm-near-black">Ultimi cicli</h3>
+            <h3 className="text-[13px] font-bold text-brand-near-black">Ultimi cicli</h3>
           </CardHeader>
-          <div className="divide-y divide-pm-border">
+          <div className="divide-y divide-brand-border">
             {cycles.map((c) => (
               <div key={c.cycleId} className="px-4 py-3">
                 <div className="flex items-center gap-2">
@@ -80,15 +80,15 @@ export async function TabCiclo() {
                   <span
                     className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide ${
                       c.status === "open"
-                        ? "bg-pm-teal-light text-pm-teal"
-                        : "bg-black/[0.05] text-pm-gray"
+                        ? "bg-brand-teal-light text-brand-teal"
+                        : "bg-black/[0.05] text-brand-gray"
                     }`}
                   >
                     {c.status === "open" ? "Aperto" : "Chiuso"}
                   </span>
                   <div className="min-w-0 flex-1">
-                    <div className="truncate text-[13px] font-medium text-pm-near-black">{c.title}</div>
-                    <div className="mt-0.5 truncate font-mono text-[10px] text-pm-gray-light">
+                    <div className="truncate text-[13px] font-medium text-brand-near-black">{c.title}</div>
+                    <div className="mt-0.5 truncate font-mono text-[10px] text-brand-gray-light">
                       {c.supplierName ?? "—"}
                       {c.pickupDate ? ` · ${formatDate(c.pickupDate)}` : ""}
                     </div>

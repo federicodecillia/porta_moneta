@@ -32,10 +32,10 @@ export default async function ChangelogPage({
     >
       <div className="mb-4 flex items-start justify-between gap-3">
         <div>
-          <h1 className="text-[20px] font-black tracking-[-0.03em] text-pm-near-black">
+          <h1 className="text-[20px] font-black tracking-[-0.03em] text-brand-near-black">
             {t.title}
           </h1>
-          <p className="mt-1 text-[13px] text-pm-gray">{t.subtitle}</p>
+          <p className="mt-1 text-[13px] text-brand-gray">{t.subtitle}</p>
         </div>
         <LanguageToggle current={lang} />
       </div>
@@ -46,8 +46,8 @@ export default async function ChangelogPage({
         ))}
       </div>
 
-      <div className="mt-8 text-center text-[11px] text-pm-gray-light">
-        <Link href="/guida" className="text-pm-teal underline-offset-2 hover:underline">
+      <div className="mt-8 text-center text-[11px] text-brand-gray-light">
+        <Link href="/guida" className="text-brand-teal underline-offset-2 hover:underline">
           ← {t.backToGuide}
         </Link>
       </div>
@@ -69,13 +69,13 @@ function VersionBlock({
   const t = strings[lang];
 
   return (
-    <article className="overflow-hidden rounded-[18px] border border-pm-border bg-white shadow-[0_1px_2px_rgba(0,0,0,0.04)]">
-      <header className="flex items-baseline justify-between gap-2 border-b border-pm-border bg-pm-warm-white px-4 py-3">
-        <h2 className="text-[15px] font-black tracking-[-0.01em] text-pm-near-black">
+    <article className="overflow-hidden rounded-[18px] border border-brand-border bg-white shadow-[0_1px_2px_rgba(0,0,0,0.04)]">
+      <header className="flex items-baseline justify-between gap-2 border-b border-brand-border bg-brand-warm-white px-4 py-3">
+        <h2 className="text-[15px] font-black tracking-[-0.01em] text-brand-near-black">
           {isUnreleased ? t.unreleased : `v${version.version}`}
         </h2>
         {version.date && (
-          <span className="font-mono text-[10px] uppercase tracking-wide text-pm-gray-light">
+          <span className="font-mono text-[10px] uppercase tracking-wide text-brand-gray-light">
             {version.date}
           </span>
         )}
@@ -90,10 +90,10 @@ function VersionBlock({
             </h3>
             <ul className="space-y-2">
               {s.items.map((item, idx) => (
-                <li key={idx} className="text-[13px] leading-[1.5] text-pm-near-black">
+                <li key={idx} className="text-[13px] leading-[1.5] text-brand-near-black">
                   <InlineMarkdown text={item.text} />
                   {item.subitems.length > 0 && (
-                    <ul className="mt-1 ml-4 list-disc space-y-0.5 text-[12px] text-pm-gray">
+                    <ul className="mt-1 ml-4 list-disc space-y-0.5 text-[12px] text-brand-gray">
                       {item.subitems.map((sub, j) => (
                         <li key={j}>
                           <InlineMarkdown text={sub} />
@@ -116,15 +116,15 @@ function VersionBlock({
 // language.
 function toneFor(heading: string): string {
   const h = heading.toLowerCase();
-  if (h === "added" || h === "aggiunte") return "bg-pm-teal-light text-pm-teal";
-  if (h === "fixed" || h === "risolto") return "bg-pm-red-light text-pm-red";
+  if (h === "added" || h === "aggiunte") return "bg-brand-teal-light text-brand-teal";
+  if (h === "fixed" || h === "risolto") return "bg-brand-red-light text-brand-red";
   if (h === "changed" || h === "modificato")
-    return "bg-pm-orange-light text-pm-orange";
+    return "bg-brand-orange-light text-brand-orange";
   if (h === "performance") return "bg-[#e7ddff] text-[#5e2dc8]";
-  if (h === "removed" || h === "rimosso") return "bg-black/[0.08] text-pm-gray";
+  if (h === "removed" || h === "rimosso") return "bg-black/[0.08] text-brand-gray";
   if (h === "security" || h === "sicurezza")
-    return "bg-pm-red-light text-pm-red";
-  return "bg-pm-warm-white text-pm-gray";
+    return "bg-brand-red-light text-brand-red";
+  return "bg-brand-warm-white text-brand-gray";
 }
 
 // Renders **bold** segments inline without pulling in a markdown library.
@@ -134,7 +134,7 @@ function InlineMarkdown({ text }: { text: string }) {
     <>
       {parts.map((p, i) =>
         p.bold ? (
-          <strong key={i} className="font-bold text-pm-near-black">
+          <strong key={i} className="font-bold text-brand-near-black">
             {p.value}
           </strong>
         ) : (
@@ -149,17 +149,17 @@ function InlineMarkdown({ text }: { text: string }) {
 
 function LanguageToggle({ current }: { current: ChangelogLanguage }) {
   return (
-    <div className="flex shrink-0 overflow-hidden rounded-full border border-pm-border bg-white text-[10px] font-bold">
+    <div className="flex shrink-0 overflow-hidden rounded-full border border-brand-border bg-white text-[10px] font-bold">
       <Link
         href="/changelog?lang=it"
-        className={`px-2.5 py-1 ${current === "it" ? "bg-pm-near-black text-white" : "text-pm-gray"}`}
+        className={`px-2.5 py-1 ${current === "it" ? "bg-brand-near-black text-white" : "text-brand-gray"}`}
         aria-current={current === "it" ? "page" : undefined}
       >
         IT
       </Link>
       <Link
         href="/changelog?lang=en"
-        className={`px-2.5 py-1 ${current === "en" ? "bg-pm-near-black text-white" : "text-pm-gray"}`}
+        className={`px-2.5 py-1 ${current === "en" ? "bg-brand-near-black text-white" : "text-brand-gray"}`}
         aria-current={current === "en" ? "page" : undefined}
       >
         EN

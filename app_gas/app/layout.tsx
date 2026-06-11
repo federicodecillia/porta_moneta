@@ -72,7 +72,7 @@ export default function RootLayout({
       <head>
         <link rel="apple-touch-icon" href={brand.logoUrl} />
       </head>
-      <body className="text-pm-near-black flex min-h-full flex-col">
+      <body className="text-brand-near-black flex min-h-full flex-col">
         {children}
         <Toaster />
         <ConfirmDialogProvider />

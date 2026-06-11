@@ -133,22 +133,22 @@ export function EmojiPicker({ name, value, onChange }: Props) {
               width: Math.min(POPOVER_WIDTH, window.innerWidth - VIEWPORT_MARGIN * 2),
               maxHeight: coords.maxHeight,
             }}
-            className="z-[80] flex flex-col overflow-hidden rounded-xl border border-pm-border bg-white shadow-lg"
+            className="z-[80] flex flex-col overflow-hidden rounded-xl border border-brand-border bg-white shadow-lg"
           >
-            <div className="border-b border-pm-border p-2">
+            <div className="border-b border-brand-border p-2">
               <input
                 ref={searchRef}
                 type="text"
                 placeholder="Cerca: es. pomodoro, miele…"
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
-                className="w-full rounded-md border border-pm-border px-2.5 py-1.5 text-[12px] text-pm-near-black placeholder:text-pm-gray-light focus:outline-none focus:ring-2 focus:ring-pm-teal/30"
+                className="w-full rounded-md border border-brand-border px-2.5 py-1.5 text-[12px] text-brand-near-black placeholder:text-brand-gray-light focus:outline-none focus:ring-2 focus:ring-brand-teal/30"
               />
             </div>
 
             <div className="min-h-0 flex-1 overflow-y-auto p-2">
               {filtered.length === 0 ? (
-                <div className="px-2 py-6 text-center text-[12px] text-pm-gray">
+                <div className="px-2 py-6 text-center text-[12px] text-brand-gray">
                   Nessuna emoji trovata per “{query}”.
                 </div>
               ) : (
@@ -162,8 +162,8 @@ export function EmojiPicker({ name, value, onChange }: Props) {
                         onClick={() => pick(e.char)}
                         title={e.name}
                         aria-label={e.name}
-                        className={`flex h-8 w-8 items-center justify-center rounded-md text-xl leading-none transition hover:bg-pm-teal-light ${
-                          isSelected ? "bg-pm-teal-light ring-2 ring-pm-teal" : ""
+                        className={`flex h-8 w-8 items-center justify-center rounded-md text-xl leading-none transition hover:bg-brand-teal-light ${
+                          isSelected ? "bg-brand-teal-light ring-2 ring-brand-teal" : ""
                         }`}
                       >
                         {e.char}
@@ -174,14 +174,14 @@ export function EmojiPicker({ name, value, onChange }: Props) {
               )}
             </div>
 
-            <div className="flex items-center justify-between border-t border-pm-border bg-pm-warm-white px-3 py-2 text-[10px] text-pm-gray">
+            <div className="flex items-center justify-between border-t border-brand-border bg-brand-warm-white px-3 py-2 text-[10px] text-brand-gray">
               <span>
                 {filtered.length} di {EMOJI_CATALOG.length}
               </span>
               <button
                 type="button"
                 onClick={() => setOpen(false)}
-                className="font-semibold text-pm-near-black hover:underline"
+                className="font-semibold text-brand-near-black hover:underline"
               >
                 Chiudi
               </button>
@@ -203,7 +203,7 @@ export function EmojiPicker({ name, value, onChange }: Props) {
         onClick={() => setOpen((o) => !o)}
         aria-haspopup="dialog"
         aria-expanded={open}
-        className="flex h-[38px] w-full items-center justify-center rounded-lg border border-pm-border bg-white text-2xl leading-none transition hover:border-pm-teal/60 focus:outline-none focus:ring-2 focus:ring-pm-teal/30"
+        className="flex h-[38px] w-full items-center justify-center rounded-lg border border-brand-border bg-white text-2xl leading-none transition hover:border-brand-teal/60 focus:outline-none focus:ring-2 focus:ring-brand-teal/30"
       >
         {current}
       </button>

@@ -58,10 +58,10 @@ function InsightCard({
   truncate?: boolean;
 }) {
   const toneClasses = {
-    neutral: "border-pm-border bg-white",
-    warning: "border-pm-orange-mid bg-pm-orange-light",
-    danger: "border-pm-red/30 bg-pm-red-light",
-    info: "border-pm-teal/20 bg-pm-teal-light",
+    neutral: "border-brand-border bg-white",
+    warning: "border-brand-orange-mid bg-brand-orange-light",
+    danger: "border-brand-red/30 bg-brand-red-light",
+    info: "border-brand-teal/20 bg-brand-teal-light",
   }[tone];
 
   return (
@@ -70,18 +70,18 @@ function InsightCard({
       className={`block rounded-xl border p-2.5 transition-transform active:scale-[0.98] ${toneClasses}`}
     >
       <div className="mb-0.5 flex items-center justify-between gap-1">
-        <span className="font-mono text-[8px] uppercase tracking-wide text-pm-gray">
+        <span className="font-mono text-[8px] uppercase tracking-wide text-brand-gray">
           {label}
         </span>
         <span className="text-[13px] leading-none">{icon}</span>
       </div>
       <div
-        className={`text-[15px] font-black tracking-[-0.02em] text-pm-near-black ${truncate ? "truncate" : ""}`}
+        className={`text-[15px] font-black tracking-[-0.02em] text-brand-near-black ${truncate ? "truncate" : ""}`}
       >
         {value}
       </div>
       {hint && (
-        <div className="mt-0.5 truncate font-mono text-[8px] text-pm-gray-light">
+        <div className="mt-0.5 truncate font-mono text-[8px] text-brand-gray-light">
           {hint}
         </div>
       )}

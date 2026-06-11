@@ -82,7 +82,7 @@ export function BottomNav({ isAdmin }: BottomNavProps) {
   const pathname = usePathname();
 
   return (
-    <nav className="sticky bottom-0 z-20 border-t border-pm-border bg-pm-warm-white pb-[env(safe-area-inset-bottom)]">
+    <nav className="sticky bottom-0 z-20 border-t border-brand-border bg-brand-warm-white pb-[env(safe-area-inset-bottom)]">
       <ul className="grid h-nav-h grid-cols-5">
         {navItems.map((item) => {
           const active = isItemActive(pathname, item);
@@ -90,10 +90,10 @@ export function BottomNav({ isAdmin }: BottomNavProps) {
           const baseClasses =
             "flex h-full flex-col items-center justify-center gap-1 text-[11px] font-medium tracking-[0.02em]";
           const stateClasses = active
-            ? "text-pm-orange"
+            ? "text-brand-orange"
             : locked
-              ? "text-pm-gray-light"
-              : "text-pm-gray";
+              ? "text-brand-gray-light"
+              : "text-brand-gray";
 
           return (
             <li key={item.href}>

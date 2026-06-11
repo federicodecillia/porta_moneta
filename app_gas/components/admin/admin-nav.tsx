@@ -25,8 +25,8 @@ export function AdminNav() {
           href={`/admin?tab=${tab.id}`}
           className={`flex-1 rounded-full py-[7px] text-center text-[12px] font-semibold transition-colors ${
             active === tab.id
-              ? "bg-white text-pm-near-black shadow-sm"
-              : "text-pm-gray"
+              ? "bg-white text-brand-near-black shadow-sm"
+              : "text-brand-gray"
           }`}
         >
           {tab.label}

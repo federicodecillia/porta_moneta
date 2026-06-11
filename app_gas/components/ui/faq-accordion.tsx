@@ -10,13 +10,13 @@ export function FaqAccordion({ faqs }: { faqs: Faq[] }) {
   return (
     <div>
       {faqs.map((faq, i) => (
-        <div key={i} className="border-b border-pm-border">
+        <div key={i} className="border-b border-brand-border">
           <button
             onClick={() => setOpen(open === i ? null : i)}
             className="flex w-full items-center justify-between py-[14px] text-left"
             aria-expanded={open === i}
           >
-            <span className="pr-4 text-[14px] font-semibold text-pm-near-black">{faq.q}</span>
+            <span className="pr-4 text-[14px] font-semibold text-brand-near-black">{faq.q}</span>
             <svg
               width="18"
               height="18"
@@ -26,7 +26,7 @@ export function FaqAccordion({ faqs }: { faqs: Faq[] }) {
               strokeWidth="2"
               strokeLinecap="round"
               strokeLinejoin="round"
-              className={`flex-shrink-0 text-pm-gray-light transition-transform duration-150 ${
+              className={`flex-shrink-0 text-brand-gray-light transition-transform duration-150 ${
                 open === i ? "rotate-180" : ""
               }`}
             >
@@ -34,7 +34,7 @@ export function FaqAccordion({ faqs }: { faqs: Faq[] }) {
             </svg>
           </button>
           {open === i && (
-            <p className="pb-[14px] text-[13px] leading-relaxed text-pm-gray">{faq.a}</p>
+            <p className="pb-[14px] text-[13px] leading-relaxed text-brand-gray">{faq.a}</p>
           )}
         </div>
       ))}

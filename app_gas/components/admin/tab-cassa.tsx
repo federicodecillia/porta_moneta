@@ -37,7 +37,7 @@ export async function TabCassa({ balanceFilter }: Props) {
 
       <Card>
         <CardHeader>
-          <h3 className="text-[13px] font-bold text-pm-near-black">
+          <h3 className="text-[13px] font-bold text-brand-near-black">
             Saldi soci ({membersWithBalances.length})
           </h3>
         </CardHeader>

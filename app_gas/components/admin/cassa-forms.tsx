@@ -34,42 +34,42 @@ export function CassaSummaryCards({
   }
 
   const total = (
-    <div className="rounded-xl border border-pm-teal/20 bg-pm-teal-light p-3">
+    <div className="rounded-xl border border-brand-teal/20 bg-brand-teal-light p-3">
       <div className="mb-0.5 flex items-center justify-between">
-        <span className="font-mono text-[9px] uppercase tracking-wide text-pm-gray">
+        <span className="font-mono text-[9px] uppercase tracking-wide text-brand-gray">
           Saldo totale
         </span>
         <span className="text-[14px] leading-none">💰</span>
       </div>
       <div
         className={`text-[18px] font-black tracking-[-0.02em] ${
-          totalBalance >= 0 ? "text-pm-near-black" : "text-pm-red"
+          totalBalance >= 0 ? "text-brand-near-black" : "text-brand-red"
         }`}
       >
         {formatEur(totalBalance)}
       </div>
-      <div className="mt-0.5 font-mono text-[9px] text-pm-gray-light">
+      <div className="mt-0.5 font-mono text-[9px] text-brand-gray-light">
         soci attivi
       </div>
     </div>
   );
 
   const avg = (
-    <div className="rounded-xl border border-pm-border bg-white p-3">
+    <div className="rounded-xl border border-brand-border bg-white p-3">
       <div className="mb-0.5 flex items-center justify-between">
-        <span className="font-mono text-[9px] uppercase tracking-wide text-pm-gray">
+        <span className="font-mono text-[9px] uppercase tracking-wide text-brand-gray">
           Saldo medio
         </span>
         <span className="text-[14px] leading-none">📊</span>
       </div>
       <div
         className={`text-[18px] font-black tracking-[-0.02em] ${
-          avgBalance >= 0 ? "text-pm-near-black" : "text-pm-red"
+          avgBalance >= 0 ? "text-brand-near-black" : "text-brand-red"
         }`}
       >
         {formatEur(avgBalance)}
       </div>
-      <div className="mt-0.5 font-mono text-[9px] text-pm-gray-light">
+      <div className="mt-0.5 font-mono text-[9px] text-brand-gray-light">
         per socio attivo
       </div>
     </div>
@@ -83,22 +83,22 @@ export function CassaSummaryCards({
       aria-pressed={isActive}
       className={`text-left rounded-xl border p-3 transition-transform active:scale-[0.98] ${
         isActive
-          ? "border-pm-red bg-pm-red-light ring-2 ring-pm-red/40"
+          ? "border-brand-red bg-brand-red-light ring-2 ring-brand-red/40"
           : negativeCount > 0
-            ? "border-pm-red/30 bg-pm-red-light"
-            : "border-pm-border bg-white"
+            ? "border-brand-red/30 bg-brand-red-light"
+            : "border-brand-border bg-white"
       }`}
     >
       <div className="mb-0.5 flex items-center justify-between">
-        <span className="font-mono text-[9px] uppercase tracking-wide text-pm-gray">
+        <span className="font-mono text-[9px] uppercase tracking-wide text-brand-gray">
           Saldo &lt; 0
         </span>
         <span className="text-[14px] leading-none">💸</span>
       </div>
-      <div className="text-[18px] font-black tracking-[-0.02em] text-pm-near-black">
+      <div className="text-[18px] font-black tracking-[-0.02em] text-brand-near-black">
         {negativeCount}
       </div>
-      <div className="mt-0.5 font-mono text-[9px] text-pm-gray-light">
+      <div className="mt-0.5 font-mono text-[9px] text-brand-gray-light">
         {isActive ? "filtro attivo · tocca per togliere" : "tocca per filtrare"}
       </div>
     </button>
@@ -144,17 +144,17 @@ export function TopupForm({ members }: { members: Member[] }) {
   }
 
   return (
-    <form onSubmit={handleSubmit} className="rounded-xl border border-pm-border bg-white p-4 shadow-sm">
-      <p className="mb-3 text-[13px] font-bold text-pm-near-black">Nuova ricarica</p>
+    <form onSubmit={handleSubmit} className="rounded-xl border border-brand-border bg-white p-4 shadow-sm">
+      <p className="mb-3 text-[13px] font-bold text-brand-near-black">Nuova ricarica</p>
       <div className="space-y-3">
         <div>
-          <label className="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-pm-gray">
+          <label className="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-brand-gray">
             Socio *
           </label>
           <select
             name="memberId"
             required
-            className="w-full rounded-lg border border-pm-border px-3 py-2 text-[13px] text-pm-near-black focus:outline-none focus:ring-2 focus:ring-pm-teal/30"
+            className="w-full rounded-lg border border-brand-border px-3 py-2 text-[13px] text-brand-near-black focus:outline-none focus:ring-2 focus:ring-brand-teal/30"
           >
             <option value="">— seleziona —</option>
             {members.map((m) => (
@@ -166,7 +166,7 @@ export function TopupForm({ members }: { members: Member[] }) {
         </div>
         <div className="grid grid-cols-2 gap-3">
           <div>
-            <label className="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-pm-gray">
+            <label className="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-brand-gray">
               Importo € *
             </label>
             <input
@@ -176,36 +176,36 @@ export function TopupForm({ members }: { members: Member[] }) {
               step="0.01"
               required
               placeholder="0,00"
-              className="w-full rounded-lg border border-pm-border px-3 py-2 text-[13px] text-pm-near-black focus:outline-none focus:ring-2 focus:ring-pm-teal/30"
+              className="w-full rounded-lg border border-brand-border px-3 py-2 text-[13px] text-brand-near-black focus:outline-none focus:ring-2 focus:ring-brand-teal/30"
             />
           </div>
           <div>
-            <label className="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-pm-gray">
+            <label className="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-brand-gray">
               Data
             </label>
             <input
               name="entryDate"
               type="date"
               defaultValue={today}
-              className="w-full rounded-lg border border-pm-border px-3 py-2 text-[13px] text-pm-near-black focus:outline-none focus:ring-2 focus:ring-pm-teal/30"
+              className="w-full rounded-lg border border-brand-border px-3 py-2 text-[13px] text-brand-near-black focus:outline-none focus:ring-2 focus:ring-brand-teal/30"
             />
           </div>
         </div>
         <div>
-          <label className="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-pm-gray">
+          <label className="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-brand-gray">
             Nota
           </label>
           <input
             name="note"
             placeholder="Ricarica"
-            className="w-full rounded-lg border border-pm-border px-3 py-2 text-[13px] text-pm-near-black focus:outline-none focus:ring-2 focus:ring-pm-teal/30"
+            className="w-full rounded-lg border border-brand-border px-3 py-2 text-[13px] text-brand-near-black focus:outline-none focus:ring-2 focus:ring-brand-teal/30"
           />
         </div>
       </div>
       <button
         type="submit"
         disabled={isPending}
-        className="mt-4 w-full rounded-xl bg-pm-teal py-2 text-[13px] font-bold text-white disabled:opacity-60"
+        className="mt-4 w-full rounded-xl bg-brand-teal py-2 text-[13px] font-bold text-white disabled:opacity-60"
       >
         {isPending ? "Registrazione…" : "Registra ricarica"}
       </button>
@@ -262,7 +262,7 @@ export function LedgerEntryRow({ entry }: { entry: LedgerEntry }) {
 
   if (editing) {
     return (
-      <div className="bg-pm-orange-light px-4 py-3">
+      <div className="bg-brand-orange-light px-4 py-3">
         <div className="flex items-center gap-2">
           <input
             type="number"
@@ -270,25 +270,25 @@ export function LedgerEntryRow({ entry }: { entry: LedgerEntry }) {
             step="0.01"
             value={amount}
             onChange={(e) => setAmount(e.target.value)}
-            className="w-24 rounded-lg border border-pm-border px-2 py-1 font-mono text-[12px]"
+            className="w-24 rounded-lg border border-brand-border px-2 py-1 font-mono text-[12px]"
           />
           <input
             type="text"
             value={note}
             onChange={(e) => setNote(e.target.value)}
             placeholder="nota"
-            className="flex-1 rounded-lg border border-pm-border px-2 py-1 text-[12px]"
+            className="flex-1 rounded-lg border border-brand-border px-2 py-1 text-[12px]"
           />
           <button
             onClick={handleSave}
             disabled={isPending}
-            className="rounded-lg bg-pm-teal px-3 py-1 text-[11px] font-bold text-white disabled:opacity-60"
+            className="rounded-lg bg-brand-teal px-3 py-1 text-[11px] font-bold text-white disabled:opacity-60"
           >
             Salva
           </button>
           <button
             onClick={() => setEditing(false)}
-            className="rounded-lg border border-pm-border px-3 py-1 text-[11px] text-pm-gray"
+            className="rounded-lg border border-brand-border px-3 py-1 text-[11px] text-brand-gray"
           >
             ✕
           </button>
@@ -303,42 +303,42 @@ export function LedgerEntryRow({ entry }: { entry: LedgerEntry }) {
         <span
           className={`mr-2 rounded-full px-1.5 py-0.5 text-[9px] font-bold uppercase ${
             isTopup
-              ? "bg-pm-teal-light text-pm-teal"
+              ? "bg-brand-teal-light text-brand-teal"
               : isCharge
-                ? "bg-pm-red-light text-pm-red"
-                : "bg-black/[0.05] text-pm-gray"
+                ? "bg-brand-red-light text-brand-red"
+                : "bg-black/[0.05] text-brand-gray"
           }`}
         >
           {isTopup ? "ricarica" : isCharge ? "addebito" : entry.type}
         </span>
-        <span className="text-[12px] text-pm-gray">
+        <span className="text-[12px] text-brand-gray">
           {entry.cycleTitle ? (
-            <span className="font-medium text-pm-near-black">{entry.cycleTitle}</span>
+            <span className="font-medium text-brand-near-black">{entry.cycleTitle}</span>
           ) : (
             entry.note ?? "—"
           )}
           {entry.cycleTitle && entry.note && entry.note !== "Addebito ordine" && (
-            <span className="ml-1 text-pm-gray-light">· {entry.note}</span>
+            <span className="ml-1 text-brand-gray-light">· {entry.note}</span>
           )}
         </span>
       </div>
       <div className="flex items-center gap-2">
         <span
-          className={`font-mono text-[13px] font-bold ${amountNum >= 0 ? "text-pm-teal" : "text-pm-red"}`}
+          className={`font-mono text-[13px] font-bold ${amountNum >= 0 ? "text-brand-teal" : "text-brand-red"}`}
         >
           {amountNum >= 0 ? "+" : ""}
           {amountNum.toFixed(2).replace(".", ",")}
         </span>
         <button
           onClick={() => setEditing(true)}
-          className="rounded px-1.5 py-0.5 text-[10px] text-pm-gray hover:text-pm-near-black"
+          className="rounded px-1.5 py-0.5 text-[10px] text-brand-gray hover:text-brand-near-black"
         >
           ✏
         </button>
         <button
           onClick={handleDelete}
           disabled={isPending}
-          className="rounded px-1.5 py-0.5 text-[10px] text-pm-red disabled:opacity-40"
+          className="rounded px-1.5 py-0.5 text-[10px] text-brand-red disabled:opacity-40"
         >
           ✕
         </button>
@@ -372,16 +372,16 @@ export function CassaInlineList({
 
   return (
     <div>
-      <div className="border-b border-pm-border px-4 py-2">
+      <div className="border-b border-brand-border px-4 py-2">
         <input
           type="search"
           value={filter}
           onChange={(e) => setFilter(e.target.value)}
           placeholder="Cerca socio…"
-          className="w-full rounded-lg border border-pm-border px-3 py-1.5 text-[12px] text-pm-near-black placeholder:text-pm-gray-light focus:outline-none focus:ring-2 focus:ring-pm-orange/30"
+          className="w-full rounded-lg border border-brand-border px-3 py-1.5 text-[12px] text-brand-near-black placeholder:text-brand-gray-light focus:outline-none focus:ring-2 focus:ring-brand-orange/30"
         />
       </div>
-      <div className="divide-y divide-pm-border">
+      <div className="divide-y divide-brand-border">
         {filtered.map((m) => {
           const entries = ledgerByMember[m.memberId] ?? [];
           const isExpanded = expandedId === m.memberId;
@@ -392,8 +392,8 @@ export function CassaInlineList({
                 className="flex w-full items-center justify-between px-4 py-2.5 text-left"
               >
                 <div className="min-w-0 flex-1">
-                  <div className="text-[13px] font-medium text-pm-near-black">{m.fullName}</div>
-                  <div className="font-mono text-[10px] text-pm-gray-light">
+                  <div className="text-[13px] font-medium text-brand-near-black">{m.fullName}</div>
+                  <div className="font-mono text-[10px] text-brand-gray-light">
                     {m.role}
                     {m.active ? "" : " · inattivo"} · {entries.length} movimenti
                   </div>
@@ -401,26 +401,26 @@ export function CassaInlineList({
                 <div className="flex items-center gap-2">
                   <span
                     className={`font-mono text-[13px] font-bold ${
-                      m.balance >= 0 ? "text-pm-teal" : "text-pm-red"
+                      m.balance >= 0 ? "text-brand-teal" : "text-brand-red"
                     }`}
                   >
                     {m.balance >= 0 ? "+" : ""}
                     {m.balance.toFixed(2).replace(".", ",")}
                   </span>
-                  <span className="text-[11px] text-pm-gray-light">{isExpanded ? "▲" : "▼"}</span>
+                  <span className="text-[11px] text-brand-gray-light">{isExpanded ? "▲" : "▼"}</span>
                 </div>
               </button>
 
               {isExpanded && (
-                <div className="border-t border-pm-border bg-black/[0.01]">
+                <div className="border-t border-brand-border bg-black/[0.01]">
                   {entries.length === 0 ? (
-                    <p className="px-4 py-3 text-center text-[12px] text-pm-gray">
+                    <p className="px-4 py-3 text-center text-[12px] text-brand-gray">
                       Nessun movimento
                     </p>
                   ) : (
                     entries.map((entry) => (
                       <div key={entry.entryId}>
-                        <div className="px-4 pt-2 font-mono text-[10px] text-pm-gray-light">
+                        <div className="px-4 pt-2 font-mono text-[10px] text-brand-gray-light">
                           {entry.entryDate ? formatDate(entry.entryDate) : "—"}
                         </div>
                         <LedgerEntryRow entry={entry} />
@@ -433,7 +433,7 @@ export function CassaInlineList({
           );
         })}
         {filtered.length === 0 && (
-          <p className="px-4 py-6 text-center text-[12px] text-pm-gray">
+          <p className="px-4 py-6 text-center text-[12px] text-brand-gray">
             Nessun socio trovato
           </p>
         )}

@@ -87,16 +87,16 @@ export function CatalogProductForm({
   }
 
   const inputCls =
-    "w-full rounded-lg border border-pm-border px-3 py-2 text-[13px] text-pm-near-black focus:outline-none focus:ring-2 focus:ring-pm-teal/30";
-  const labelCls = "mb-1 block text-[11px] font-semibold uppercase tracking-wide text-pm-gray";
+    "w-full rounded-lg border border-brand-border px-3 py-2 text-[13px] text-brand-near-black focus:outline-none focus:ring-2 focus:ring-brand-teal/30";
+  const labelCls = "mb-1 block text-[11px] font-semibold uppercase tracking-wide text-brand-gray";
 
   return (
-    <form onSubmit={handleSubmit} className="mb-4 rounded-xl border border-pm-border bg-white p-4 shadow-sm">
+    <form onSubmit={handleSubmit} className="mb-4 rounded-xl border border-brand-border bg-white p-4 shadow-sm">
       <div className="mb-4 flex items-center justify-between">
-        <h4 className="text-[14px] font-bold text-pm-near-black">
+        <h4 className="text-[14px] font-bold text-brand-near-black">
           {product ? "Modifica Prodotto" : "Nuovo Prodotto"}
         </h4>
-        <button type="button" onClick={onClose} className="text-[12px] text-pm-gray hover:text-pm-near-black">
+        <button type="button" onClick={onClose} className="text-[12px] text-brand-gray hover:text-brand-near-black">
           Annulla
         </button>
       </div>
@@ -170,7 +170,7 @@ export function CatalogProductForm({
         </div>
         <div className="col-span-2">
           <label className={labelCls}>
-            Prezzo / kg <span className="ml-1 text-pm-gray-light normal-case">(opzionale)</span>
+            Prezzo / kg <span className="ml-1 text-brand-gray-light normal-case">(opzionale)</span>
             <FieldHelp text={HELP.prezzoKg} />
           </label>
           <input
@@ -208,7 +208,7 @@ export function CatalogProductForm({
       <button
         type="submit"
         disabled={isPending}
-        className="mt-4 w-full rounded-xl bg-pm-teal py-2 text-[13px] font-bold text-white disabled:opacity-60"
+        className="mt-4 w-full rounded-xl bg-brand-teal py-2 text-[13px] font-bold text-white disabled:opacity-60"
       >
         {isPending ? "Salvataggio…" : product ? "Salva Modifiche" : "Crea Prodotto"}
       </button>
@@ -315,13 +315,13 @@ export function CatalogCsvActions({ supplierId }: { supplierId: string }) {
         onClick={downloadTemplate}
         disabled={downloading}
         title="Scarica il modello Excel da compilare"
-        className={`${btnBase} border-pm-border bg-white text-pm-teal hover:bg-pm-warm-white/50`}
+        className={`${btnBase} border-brand-border bg-white text-brand-teal hover:bg-brand-warm-white/50`}
       >
         {downloading ? "Generazione…" : "↓ Template"}
       </button>
       <label
         title="Carica un file Excel/CSV già nel formato del template"
-        className={`${btnBase} cursor-pointer border-pm-border bg-white text-pm-teal hover:bg-pm-warm-white/50 ${
+        className={`${btnBase} cursor-pointer border-brand-border bg-white text-brand-teal hover:bg-brand-warm-white/50 ${
           isPending || !supplierId ? "opacity-60" : ""
         }`}
       >
@@ -337,7 +337,7 @@ export function CatalogCsvActions({ supplierId }: { supplierId: string }) {
       <button
         onClick={() => setWizardOpen(true)}
         title="Import guidato da un listino fornitore in formato libero"
-        className={`${btnBase} border-pm-orange/30 bg-pm-orange-light text-pm-orange hover:opacity-90`}
+        className={`${btnBase} border-brand-orange/30 bg-brand-orange-light text-brand-orange hover:opacity-90`}
       >
         ✨ Import guidato
       </button>
@@ -387,37 +387,37 @@ export function CatalogLoadForm({
   }
 
   return (
-    <div className="rounded-xl border border-pm-border bg-white p-4 shadow-sm">
+    <div className="rounded-xl border border-brand-border bg-white p-4 shadow-sm">
       <div className="mb-3 flex items-center justify-between">
-        <p className="text-[13px] font-bold text-pm-near-black">Carica da catalogo fornitore</p>
+        <p className="text-[13px] font-bold text-brand-near-black">Carica da catalogo fornitore</p>
         <button
           onClick={() => setSelected(new Set(catalogProducts.map((p) => p.catalogProductId)))}
-          className="text-[11px] font-semibold text-pm-teal"
+          className="text-[11px] font-semibold text-brand-teal"
         >
           Seleziona tutti
         </button>
       </div>
 
-      <div className="mb-3 max-h-60 overflow-y-auto rounded-lg border border-pm-border p-2">
+      <div className="mb-3 max-h-60 overflow-y-auto rounded-lg border border-brand-border p-2">
         {catalogProducts.map((p) => (
           <label
             key={p.catalogProductId}
-            className="flex cursor-pointer items-center gap-3 rounded-md px-2 py-1.5 hover:bg-pm-warm-white/50"
+            className="flex cursor-pointer items-center gap-3 rounded-md px-2 py-1.5 hover:bg-brand-warm-white/50"
           >
             <input
               type="checkbox"
               checked={selected.has(p.catalogProductId)}
               onChange={() => toggle(p.catalogProductId)}
-              className="rounded border-pm-border text-pm-teal focus:ring-pm-teal"
+              className="rounded border-brand-border text-brand-teal focus:ring-brand-teal"
             />
-            <div className="flex-1 text-[13px] text-pm-near-black">
+            <div className="flex-1 text-[13px] text-brand-near-black">
               {p.name}
-              {p.variant && <span className="ml-1 text-[12px] text-pm-gray">{p.variant}</span>}
+              {p.variant && <span className="ml-1 text-[12px] text-brand-gray">{p.variant}</span>}
               {p.format && (
-                <span className="ml-1 font-mono text-[10px] text-pm-gray-light">({p.format})</span>
+                <span className="ml-1 font-mono text-[10px] text-brand-gray-light">({p.format})</span>
               )}
             </div>
-            <div className="font-mono text-[12px] font-semibold text-pm-near-black">
+            <div className="font-mono text-[12px] font-semibold text-brand-near-black">
               {formatEur(parseFloat(p.unitPrice))}
             </div>
           </label>
@@ -427,7 +427,7 @@ export function CatalogLoadForm({
       <button
         onClick={handleLoad}
         disabled={isPending || selected.size === 0}
-        className="w-full rounded-xl bg-pm-teal py-2 text-[13px] font-bold text-white disabled:opacity-60"
+        className="w-full rounded-xl bg-brand-teal py-2 text-[13px] font-bold text-white disabled:opacity-60"
       >
         {isPending ? "Caricamento…" : `Carica ${selected.size} prodotti`}
       </button>
@@ -491,14 +491,14 @@ export function EditCycleProductForm({
   }
 
   const inputCls =
-    "w-full rounded-lg border border-pm-border px-3 py-2 text-[13px] text-pm-near-black focus:outline-none focus:ring-2 focus:ring-pm-teal/30";
-  const labelCls = "mb-1 block text-[11px] font-semibold uppercase tracking-wide text-pm-gray";
+    "w-full rounded-lg border border-brand-border px-3 py-2 text-[13px] text-brand-near-black focus:outline-none focus:ring-2 focus:ring-brand-teal/30";
+  const labelCls = "mb-1 block text-[11px] font-semibold uppercase tracking-wide text-brand-gray";
 
   return (
-    <form onSubmit={handleSubmit} className="my-2 rounded-lg border border-pm-border bg-[#fdfdfd] p-3 shadow-sm">
+    <form onSubmit={handleSubmit} className="my-2 rounded-lg border border-brand-border bg-[#fdfdfd] p-3 shadow-sm">
       <div className="mb-2 flex items-center justify-between">
-        <p className="text-[12px] font-bold text-pm-near-black">Modifica prodotto</p>
-        <button type="button" onClick={onClose} className="text-[11px] text-pm-gray">
+        <p className="text-[12px] font-bold text-brand-near-black">Modifica prodotto</p>
+        <button type="button" onClick={onClose} className="text-[11px] text-brand-gray">
           ✕ Annulla
         </button>
       </div>
@@ -574,7 +574,7 @@ export function EditCycleProductForm({
       <button
         type="submit"
         disabled={isPending}
-        className="mt-3 w-full rounded-lg bg-pm-teal py-1.5 text-[12px] font-bold text-white disabled:opacity-60"
+        className="mt-3 w-full rounded-lg bg-brand-teal py-1.5 text-[12px] font-bold text-white disabled:opacity-60"
       >
         {isPending ? "Salvataggio…" : "Salva modifiche"}
       </button>
@@ -610,36 +610,36 @@ export function ProductListItem({
   const emoji = product.name ? getProductEmoji(product.name) : "📦";
 
   return (
-    <div className="flex items-center gap-3 px-4 py-2.5 hover:bg-pm-warm-white/50 group">
-      <span className="w-6 shrink-0 font-mono text-[11px] text-pm-gray-light">
+    <div className="flex items-center gap-3 px-4 py-2.5 hover:bg-brand-warm-white/50 group">
+      <span className="w-6 shrink-0 font-mono text-[11px] text-brand-gray-light">
         {index + 1}
       </span>
       <span className="shrink-0 text-[16px] leading-none">{emoji}</span>
       <div className="min-w-0 flex-1">
-        <span className="text-[13px] font-medium text-pm-near-black">{product.name}</span>
+        <span className="text-[13px] font-medium text-brand-near-black">{product.name}</span>
         {product.variant && (
-          <span className="ml-1.5 text-[12px] text-pm-gray">{product.variant}</span>
+          <span className="ml-1.5 text-[12px] text-brand-gray">{product.variant}</span>
         )}
         {product.format && (
-          <span className="ml-1.5 font-mono text-[10px] text-pm-gray-light">
+          <span className="ml-1.5 font-mono text-[10px] text-brand-gray-light">
             {product.format}
           </span>
         )}
       </div>
       <div className="flex items-center gap-3">
         <div className="shrink-0 text-right">
-          <div className="font-mono text-[13px] font-bold text-pm-near-black">
+          <div className="font-mono text-[13px] font-bold text-brand-near-black">
             {formatEur(parseFloat(product.unitPrice))}
           </div>
           {product.pricePerKg && (
-            <div className="font-mono text-[10px] text-pm-gray-light">
+            <div className="font-mono text-[10px] text-brand-gray-light">
               ({formatEur(parseFloat(product.pricePerKg))}/kg)
             </div>
           )}
         </div>
         <button
           onClick={() => setIsEditing(true)}
-          className="rounded-full bg-white px-2 py-1 text-[11px] font-bold text-pm-teal shadow-sm ring-1 ring-inset ring-pm-teal/20 hover:bg-pm-teal hover:text-white transition-colors opacity-0 group-hover:opacity-100"
+          className="rounded-full bg-white px-2 py-1 text-[11px] font-bold text-brand-teal shadow-sm ring-1 ring-inset ring-brand-teal/20 hover:bg-brand-teal hover:text-white transition-colors opacity-0 group-hover:opacity-100"
         >
           Modifica
         </button>
@@ -688,17 +688,17 @@ export function CatalogManager({
   }
 
   return (
-    <div className="space-y-4 rounded-xl border border-pm-border bg-[#fdfdfd] p-4 shadow-sm">
+    <div className="space-y-4 rounded-xl border border-brand-border bg-[#fdfdfd] p-4 shadow-sm">
       <div className="flex items-center justify-between">
         <div>
-          <h3 className="text-[14px] font-bold text-pm-near-black">{supplierName}</h3>
-          <p className="text-[11px] text-pm-gray">{products.length} prodotti a catalogo</p>
+          <h3 className="text-[14px] font-bold text-brand-near-black">{supplierName}</h3>
+          <p className="text-[11px] text-brand-gray">{products.length} prodotti a catalogo</p>
         </div>
         <div className="flex gap-2">
           <CatalogCsvActions supplierId={supplierId} />
           <button
             onClick={() => setShowAdd(true)}
-            className="rounded-lg bg-pm-teal px-3 py-1.5 text-[11px] font-bold text-white transition-transform active:scale-95"
+            className="rounded-lg bg-brand-teal px-3 py-1.5 text-[11px] font-bold text-white transition-transform active:scale-95"
           >
             + Aggiungi Prodotto
           </button>
@@ -718,45 +718,45 @@ export function CatalogManager({
       )}
 
       {products.length > 0 ? (
-        <div className="divide-y divide-pm-border rounded-lg border border-pm-border bg-white overflow-hidden shadow-sm">
+        <div className="divide-y divide-brand-border rounded-lg border border-brand-border bg-white overflow-hidden shadow-sm">
           {products.map((p) => (
             <div
               key={p.catalogProductId}
-              className={`flex items-center gap-3 p-3 transition-colors hover:bg-pm-warm-white/30 ${
+              className={`flex items-center gap-3 p-3 transition-colors hover:bg-brand-warm-white/30 ${
                 !p.active ? "opacity-50 grayscale" : ""
               }`}
             >
               <span className="shrink-0 text-[18px]">{p.emoji || getProductEmoji(p.name)}</span>
               <div className="min-w-0 flex-1">
                 <div className="flex items-center gap-2">
-                  <span className="truncate text-[13px] font-medium text-pm-near-black">{p.name}</span>
-                  {!p.active && <span className="rounded bg-pm-gray-light px-1 py-0.5 text-[9px] font-bold uppercase text-pm-gray">Archiviato</span>}
+                  <span className="truncate text-[13px] font-medium text-brand-near-black">{p.name}</span>
+                  {!p.active && <span className="rounded bg-brand-gray-light px-1 py-0.5 text-[9px] font-bold uppercase text-brand-gray">Archiviato</span>}
                 </div>
-                <div className="flex items-center gap-2 text-[11px] text-pm-gray">
+                <div className="flex items-center gap-2 text-[11px] text-brand-gray">
                   {p.variant && <span>{p.variant}</span>}
-                  {p.format && <span className="font-mono text-[10px] text-pm-gray-light">({p.format})</span>}
-                  {p.category && <span className="rounded-full bg-pm-teal-light px-2 text-pm-teal">{p.category}</span>}
+                  {p.format && <span className="font-mono text-[10px] text-brand-gray-light">({p.format})</span>}
+                  {p.category && <span className="rounded-full bg-brand-teal-light px-2 text-brand-teal">{p.category}</span>}
                 </div>
               </div>
               <div className="text-right">
-                <div className="font-mono text-[13px] font-bold text-pm-near-black">
+                <div className="font-mono text-[13px] font-bold text-brand-near-black">
                   {formatEur(parseFloat(p.unitPrice))}
                 </div>
                 {p.pricePerKg && (
-                  <div className="font-mono text-[10px] text-pm-gray-light">
+                  <div className="font-mono text-[10px] text-brand-gray-light">
                     ({formatEur(parseFloat(p.pricePerKg))}/kg)
                   </div>
                 )}
                 <div className="mt-1 flex justify-end gap-2">
                   <button
                     onClick={() => setEditingId(p.catalogProductId)}
-                    className="text-[10px] font-bold text-pm-teal hover:underline"
+                    className="text-[10px] font-bold text-brand-teal hover:underline"
                   >
                     Modifica
                   </button>
                   <button
                     onClick={() => handleArchive(p.catalogProductId, !p.active)}
-                    className="text-[10px] font-bold text-pm-gray hover:text-pm-near-black hover:underline"
+                    className="text-[10px] font-bold text-brand-gray hover:text-brand-near-black hover:underline"
                   >
                     {p.active ? "Archivia" : "Ripristina"}
                   </button>
@@ -766,7 +766,7 @@ export function CatalogManager({
           ))}
         </div>
       ) : (
-        <div className="rounded-lg border border-dashed border-pm-border py-8 text-center text-[12px] text-pm-gray">
+        <div className="rounded-lg border border-dashed border-brand-border py-8 text-center text-[12px] text-brand-gray">
           Nessun prodotto per questo fornitore.
         </div>
       )}

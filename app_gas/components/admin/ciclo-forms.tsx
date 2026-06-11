@@ -52,34 +52,34 @@ export function OpenCycleCard({
   const [importingListing, setImportingListing] = useState(false);
 
   return (
-    <Card className="mb-4 border-l-4 border-l-pm-teal">
+    <Card className="mb-4 border-l-4 border-l-brand-teal">
       {/* The title stacks above a wrapping button row so the five actions
           always wrap within the card instead of overflowing — the app caps at
           640px, too narrow to ever fit them on one line beside the title. */}
       <CardHeader className="flex flex-col items-start gap-3">
         <div>
-          <span className="mb-1 inline-flex items-center gap-1.5 rounded-full bg-pm-teal-light px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-pm-teal">
-            <span className="h-1.5 w-1.5 rounded-full bg-pm-teal" />
+          <span className="mb-1 inline-flex items-center gap-1.5 rounded-full bg-brand-teal-light px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-brand-teal">
+            <span className="h-1.5 w-1.5 rounded-full bg-brand-teal" />
             Aperto
           </span>
-          <h3 className="mt-1 text-[15px] font-bold text-pm-near-black">{cycle.title}</h3>
+          <h3 className="mt-1 text-[15px] font-bold text-brand-near-black">{cycle.title}</h3>
         </div>
         <div className="flex w-full flex-wrap gap-2">
           <button
             onClick={() => setManagingProducts((v) => !v)}
-            className="rounded-xl border border-pm-teal/30 bg-pm-teal-light px-3 py-1.5 text-[11px] font-bold text-pm-teal"
+            className="rounded-xl border border-brand-teal/30 bg-brand-teal-light px-3 py-1.5 text-[11px] font-bold text-brand-teal"
           >
             {managingProducts ? "Chiudi Prodotti" : "Gestisci Prodotti"}
           </button>
           <button
             onClick={() => setImportingListing(true)}
-            className="rounded-xl border border-pm-orange/30 bg-pm-orange-light px-3 py-1.5 text-[11px] font-bold text-pm-orange"
+            className="rounded-xl border border-brand-orange/30 bg-brand-orange-light px-3 py-1.5 text-[11px] font-bold text-brand-orange"
           >
             📥 Importa listino
           </button>
           <button
             onClick={() => setEditing((v) => !v)}
-            className="rounded-xl border border-pm-border px-3 py-1.5 text-[11px] font-semibold text-pm-gray"
+            className="rounded-xl border border-brand-border px-3 py-1.5 text-[11px] font-semibold text-brand-gray"
           >
             {editing ? "Annulla" : "Modifica"}
           </button>
@@ -94,27 +94,27 @@ export function OpenCycleCard({
       ) : (
         <CardBody>
           <div className="grid grid-cols-2 gap-3">
-            <div className="rounded-lg bg-pm-orange-light px-3 py-2">
-              <div className="font-mono text-[11px] text-pm-gray">Ordini</div>
-              <div className="text-[20px] font-bold text-pm-near-black">{stats.orderCount}</div>
+            <div className="rounded-lg bg-brand-orange-light px-3 py-2">
+              <div className="font-mono text-[11px] text-brand-gray">Ordini</div>
+              <div className="text-[20px] font-bold text-brand-near-black">{stats.orderCount}</div>
             </div>
-            <div className="rounded-lg bg-pm-teal-light px-3 py-2">
-              <div className="font-mono text-[11px] text-pm-gray">Totale</div>
-              <div className="text-[20px] font-bold text-pm-near-black">
+            <div className="rounded-lg bg-brand-teal-light px-3 py-2">
+              <div className="font-mono text-[11px] text-brand-gray">Totale</div>
+              <div className="text-[20px] font-bold text-brand-near-black">
                 {formatEur(stats.grandTotal)}
               </div>
             </div>
           </div>
-          <div className="mt-3 space-y-1 text-[12px] text-pm-gray">
+          <div className="mt-3 space-y-1 text-[12px] text-brand-gray">
             {cycle.isOverdue && (
-              <div className="rounded-lg border border-pm-red/30 bg-pm-red-light p-3 text-pm-red">
+              <div className="rounded-lg border border-brand-red/30 bg-brand-red-light p-3 text-brand-red">
                 Notifica admin: la data di chiusura e&apos; passata. Controlla il recap e chiudi il ciclo.
               </div>
             )}
             {cycle.orderCloseAt && (
               <div>
                 Chiusura ordini:{" "}
-                <span className="font-semibold text-pm-near-black">
+                <span className="font-semibold text-brand-near-black">
                   {new Date(cycle.orderCloseAt).toLocaleString("it-IT", {
                     day: "numeric",
                     month: "short",
@@ -127,7 +127,7 @@ export function OpenCycleCard({
             {cycle.pickupDate && (
               <div>
                 {cycle.pickup2Date ? "Ritiro 1: " : "Ritiro: "}
-                <span className="font-semibold text-pm-near-black">
+                <span className="font-semibold text-brand-near-black">
                   {new Date(cycle.pickupDate).toLocaleString("it-IT", {
                     day: "numeric",
                     month: "short",
@@ -141,7 +141,7 @@ export function OpenCycleCard({
             {cycle.pickup2Date && (
               <div>
                 Ritiro 2:{" "}
-                <span className="font-semibold text-pm-near-black">
+                <span className="font-semibold text-brand-near-black">
                   {new Date(cycle.pickup2Date).toLocaleString("it-IT", {
                     day: "numeric",
                     month: "short",
@@ -157,7 +157,7 @@ export function OpenCycleCard({
               parseFloat(cycle.shippingTotal) > 0 && (
                 <div>
                   Spedizione:{" "}
-                  <span className="font-semibold text-pm-near-black">
+                  <span className="font-semibold text-brand-near-black">
                     {parseFloat(cycle.shippingTotal).toFixed(2).replace(".", ",")} € totali (proporzionale al valore ordine)
                   </span>
                 </div>
@@ -167,7 +167,7 @@ export function OpenCycleCard({
               parseFloat(cycle.shippingCostPerMember) > 0 && (
                 <div>
                   Spedizione:{" "}
-                  <span className="font-semibold text-pm-near-black">
+                  <span className="font-semibold text-brand-near-black">
                     {parseFloat(cycle.shippingCostPerMember).toFixed(2).replace(".", ",")} €/socio
                   </span>
                 </div>
@@ -181,7 +181,7 @@ export function OpenCycleCard({
             />
           </div>
           {managingProducts && (
-            <div className="mt-6 border-t border-pm-border pt-4">
+            <div className="mt-6 border-t border-brand-border pt-4">
               <CycleProductPicker cycleId={cycle.cycleId} suppliers={suppliers} />
             </div>
           )}
@@ -204,9 +204,9 @@ function buildDateTime(date: string, time: string): string {
   return `${date}T${time || "00:00"}`;
 }
 
-const inputCls = "rounded-lg border border-pm-border px-2 py-2 text-[13px] text-pm-near-black focus:outline-none focus:ring-2 focus:ring-pm-orange/30";
-const labelCls = "mb-1 block text-[11px] font-semibold uppercase tracking-wide text-pm-gray";
-const miniLabelCls = "shrink-0 text-[11px] font-medium text-pm-gray";
+const inputCls = "rounded-lg border border-brand-border px-2 py-2 text-[13px] text-brand-near-black focus:outline-none focus:ring-2 focus:ring-brand-orange/30";
+const labelCls = "mb-1 block text-[11px] font-semibold uppercase tracking-wide text-brand-gray";
+const miniLabelCls = "shrink-0 text-[11px] font-medium text-brand-gray";
 
 // 15-minute time slots from 06:00 to 22:00. A <select> of these replaces the
 // native <input type="time">: it is unambiguous on mobile and cannot produce an
@@ -255,7 +255,7 @@ function PickupRow({
 }) {
   return (
     <div className="flex flex-wrap items-center gap-x-2 gap-y-1.5">
-      <span className="w-[46px] shrink-0 text-[12px] font-semibold text-pm-near-black">{label}</span>
+      <span className="w-[46px] shrink-0 text-[12px] font-semibold text-brand-near-black">{label}</span>
       <input
         name={`${prefix}DateOnly`}
         type="date"
@@ -316,7 +316,7 @@ function PickupSection({
             <button
               type="button"
               onClick={() => setShowPickup2(false)}
-              className="text-[11px] font-semibold text-pm-gray hover:text-pm-red"
+              className="text-[11px] font-semibold text-brand-gray hover:text-brand-red"
             >
               ✕ Rimuovi secondo ritiro
             </button>
@@ -325,7 +325,7 @@ function PickupSection({
           <button
             type="button"
             onClick={() => setShowPickup2(true)}
-            className="text-[12px] font-semibold text-pm-orange hover:underline"
+            className="text-[12px] font-semibold text-brand-orange hover:underline"
           >
             ➕ Aggiungi secondo ritiro
           </button>
@@ -364,8 +364,8 @@ function ShippingModeFields({
             onClick={() => onModeChange(opt.v)}
             className={`flex-1 rounded-md py-1.5 text-[11px] font-semibold transition-colors ${
               mode === opt.v
-                ? "bg-white text-pm-near-black shadow-sm"
-                : "bg-transparent text-pm-gray"
+                ? "bg-white text-brand-near-black shadow-sm"
+                : "bg-transparent text-brand-gray"
             }`}
           >
             {opt.label}
@@ -383,7 +383,7 @@ function ShippingModeFields({
             placeholder="0.00"
             className={`w-full ${inputCls}`}
           />
-          <p className="mt-1 text-[10px] text-pm-gray-light">
+          <p className="mt-1 text-[10px] text-brand-gray-light">
             Importo addebitato a ogni socio con un ordine.
           </p>
           {/* Hidden so the form data shape stays uniform across modes. */}
@@ -400,7 +400,7 @@ function ShippingModeFields({
             placeholder="0.00"
             className={`w-full ${inputCls}`}
           />
-          <p className="mt-1 text-[10px] text-pm-gray-light">
+          <p className="mt-1 text-[10px] text-brand-gray-light">
             Costo totale spedizione: viene diviso tra i soci in proporzione al valore del loro ordine.
           </p>
           <input type="hidden" name="shippingCostPerMember" value="" />
@@ -483,7 +483,7 @@ export function EditCycleForm({
   return (
     <form onSubmit={handleSubmit} className="space-y-3">
       {isClosed && (
-        <div className="rounded-lg border border-pm-orange/30 bg-pm-orange-light px-3 py-2 text-[12px] leading-snug text-pm-near-black">
+        <div className="rounded-lg border border-brand-orange/30 bg-brand-orange-light px-3 py-2 text-[12px] leading-snug text-brand-near-black">
           <strong>Stai modificando un ciclo gia&apos; chiuso.</strong> Le modifiche
           alle spese di spedizione ricalcoleranno gli addebiti dei soci e
           invieranno una notifica di rettifica. Chiusura ordini, fornitore e
@@ -516,9 +516,9 @@ export function EditCycleForm({
       {shippingMode === "manual" ? (
         <div>
           <label className={labelCls}>Spedizione</label>
-          <div className="rounded-xl border border-pm-orange/30 bg-pm-orange-light p-3 text-[12px] text-pm-near-black">
-            <div className="font-bold text-pm-orange">Gestita manualmente per socio</div>
-            <p className="mt-1 text-pm-gray">
+          <div className="rounded-xl border border-brand-orange/30 bg-brand-orange-light p-3 text-[12px] text-brand-near-black">
+            <div className="font-bold text-brand-orange">Gestita manualmente per socio</div>
+            <p className="mt-1 text-brand-gray">
               Le quote di spedizione sono state importate dalla distinta fornitore e variano per socio.
               Le voci nel saldo dei soci restano invariate finché non carichi una nuova distinta.
             </p>
@@ -588,7 +588,7 @@ export function EditCycleForm({
       <button
         type="submit"
         disabled={isPending}
-        className="w-full rounded-xl bg-pm-orange py-2 text-[13px] font-bold text-white disabled:opacity-60"
+        className="w-full rounded-xl bg-brand-orange py-2 text-[13px] font-bold text-white disabled:opacity-60"
       >
         {isPending ? "Salvataggio…" : "Salva modifiche"}
       </button>
@@ -637,7 +637,7 @@ export function CreateCycleForm({ suppliers }: { suppliers: Supplier[] }) {
     return (
       <button
         onClick={() => setOpen(true)}
-        className="w-full rounded-xl border-2 border-dashed border-pm-orange/40 py-3 text-[13px] font-semibold text-pm-orange"
+        className="w-full rounded-xl border-2 border-dashed border-brand-orange/40 py-3 text-[13px] font-semibold text-brand-orange"
       >
         + Crea nuovo ciclo
       </button>
@@ -645,8 +645,8 @@ export function CreateCycleForm({ suppliers }: { suppliers: Supplier[] }) {
   }
 
   return (
-    <form onSubmit={handleSubmit} className="rounded-xl border border-pm-border bg-white p-4 shadow-sm">
-      <p className="mb-3 text-[13px] font-bold text-pm-near-black">Crea nuovo ciclo</p>
+    <form onSubmit={handleSubmit} className="rounded-xl border border-brand-border bg-white p-4 shadow-sm">
+      <p className="mb-3 text-[13px] font-bold text-brand-near-black">Crea nuovo ciclo</p>
       <div className="space-y-3">
         <div>
           <label className={labelCls}>Titolo *</label>
@@ -711,14 +711,14 @@ export function CreateCycleForm({ suppliers }: { suppliers: Supplier[] }) {
         <button
           type="submit"
           disabled={isPending}
-          className="flex-1 rounded-xl bg-pm-orange py-2 text-[13px] font-bold text-white disabled:opacity-60"
+          className="flex-1 rounded-xl bg-brand-orange py-2 text-[13px] font-bold text-white disabled:opacity-60"
         >
           {isPending ? "Creazione…" : "Crea ciclo"}
         </button>
         <button
           type="button"
           onClick={() => setOpen(false)}
-          className="rounded-xl border border-pm-border px-4 py-2 text-[13px] font-semibold text-pm-gray"
+          className="rounded-xl border border-brand-border px-4 py-2 text-[13px] font-semibold text-brand-gray"
         >
           Annulla
         </button>
@@ -753,7 +753,7 @@ export function CloseCycleButton({ cycleId, cycleTitle }: { cycleId: string; cyc
     <button
       onClick={handleClose}
       disabled={isPending}
-      className="rounded-xl border border-pm-red/30 bg-pm-red-light px-4 py-2 text-[12px] font-bold text-pm-red disabled:opacity-60"
+      className="rounded-xl border border-brand-red/30 bg-brand-red-light px-4 py-2 text-[12px] font-bold text-brand-red disabled:opacity-60"
     >
       {isPending ? "Chiusura…" : "Chiudi ciclo"}
     </button>
@@ -834,25 +834,25 @@ export function CycleProductPicker({
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <h4 className="text-[13px] font-bold text-pm-near-black">Prodotti in questo ciclo</h4>
-        <div className="text-[11px] text-pm-gray">{currentProducts.length} prodotti</div>
+        <h4 className="text-[13px] font-bold text-brand-near-black">Prodotti in questo ciclo</h4>
+        <div className="text-[11px] text-brand-gray">{currentProducts.length} prodotti</div>
       </div>
 
       {currentProducts.length > 0 ? (
         <div className="space-y-4">
           {Array.from(new Set(currentProducts.map(p => p.supplierName || "Altro"))).map(sName => (
             <div key={sName} className="space-y-1">
-              <div className="px-1 text-[10px] font-bold uppercase tracking-wider text-pm-gray-light">
+              <div className="px-1 text-[10px] font-bold uppercase tracking-wider text-brand-gray-light">
                 {sName}
               </div>
-              <div className="divide-y divide-pm-border rounded-lg border border-pm-border bg-white overflow-hidden shadow-sm">
+              <div className="divide-y divide-brand-border rounded-lg border border-brand-border bg-white overflow-hidden shadow-sm">
                 {currentProducts.filter(p => (p.supplierName || "Altro") === sName).map((p) => (
-                  <div key={p.productId} className="flex items-center justify-between p-2.5 hover:bg-pm-warm-white/30">
+                  <div key={p.productId} className="flex items-center justify-between p-2.5 hover:bg-brand-warm-white/30">
                     <div className="min-w-0 flex-1">
-                      <div className="truncate text-[12px] font-medium text-pm-near-black">{p.name}</div>
-                      <div className="flex items-center gap-2 text-[10px] text-pm-gray">
+                      <div className="truncate text-[12px] font-medium text-brand-near-black">{p.name}</div>
+                      <div className="flex items-center gap-2 text-[10px] text-brand-gray">
                         <span>{p.variant} {p.format && `(${p.format})`}</span>
-                        <span className="font-mono font-bold text-pm-orange">
+                        <span className="font-mono font-bold text-brand-orange">
                           {formatEur(parseFloat(p.unitPrice))}
                         </span>
                       </div>
@@ -870,17 +870,17 @@ export function CycleProductPicker({
           ))}
         </div>
       ) : (
-        <div className="rounded-lg border border-dashed border-pm-border py-4 text-center text-[12px] text-pm-gray">
+        <div className="rounded-lg border border-dashed border-brand-border py-4 text-center text-[12px] text-brand-gray">
           Nessun prodotto selezionato per questo ciclo.
         </div>
       )}
 
-      <div className="mt-6 border-t border-pm-border pt-4">
-        <h4 className="mb-3 text-[13px] font-bold text-pm-near-black">Aggiungi dal Catalogo</h4>
+      <div className="mt-6 border-t border-brand-border pt-4">
+        <h4 className="mb-3 text-[13px] font-bold text-brand-near-black">Aggiungi dal Catalogo</h4>
         <select
           value={selectedSupplierId}
           onChange={(e) => setSelectedSupplierId(e.target.value)}
-          className="mb-4 w-full rounded-lg border border-pm-border px-3 py-2 text-[13px] text-pm-near-black focus:outline-none focus:ring-2 focus:ring-pm-teal/30"
+          className="mb-4 w-full rounded-lg border border-brand-border px-3 py-2 text-[13px] text-brand-near-black focus:outline-none focus:ring-2 focus:ring-brand-teal/30"
         >
           <option value="">— seleziona fornitore —</option>
           {suppliers.map((s) => (
@@ -893,23 +893,23 @@ export function CycleProductPicker({
         {selectedSupplierId && (
           <div className="space-y-2">
             {loading ? (
-              <div className="text-center py-4 text-pm-gray text-[12px]">Caricamento catalogo...</div>
+              <div className="text-center py-4 text-brand-gray text-[12px]">Caricamento catalogo...</div>
             ) : catalog.length > 0 ? (
-              <div className="max-h-[300px] overflow-y-auto divide-y divide-pm-border rounded-lg border border-pm-border bg-[#fdfdfd]">
+              <div className="max-h-[300px] overflow-y-auto divide-y divide-brand-border rounded-lg border border-brand-border bg-[#fdfdfd]">
                 {catalog.filter(cp => !currentProducts.some(p => p.name === cp.name && p.variant === cp.variant && p.format === cp.format)).map((cp) => (
-                  <div key={cp.catalogProductId} className="flex items-center justify-between p-2.5 hover:bg-pm-warm-white/50">
+                  <div key={cp.catalogProductId} className="flex items-center justify-between p-2.5 hover:bg-brand-warm-white/50">
                     <div className="min-w-0 flex-1">
-                      <div className="truncate text-[12px] font-medium text-pm-near-black">{cp.name}</div>
-                      <div className="flex items-center gap-2 text-[10px] text-pm-gray">
+                      <div className="truncate text-[12px] font-medium text-brand-near-black">{cp.name}</div>
+                      <div className="flex items-center gap-2 text-[10px] text-brand-gray">
                         <span>{cp.variant} {cp.format && `(${cp.format})`}</span>
-                        <span className="font-mono font-bold text-pm-orange">
+                        <span className="font-mono font-bold text-brand-orange">
                           {formatEur(parseFloat(cp.unitPrice))}
                         </span>
                       </div>
                     </div>
                     <button
                       onClick={() => handleAdd(cp.catalogProductId)}
-                      className="ml-2 rounded-lg bg-pm-teal px-3 py-1 text-[10px] font-bold text-white hover:bg-pm-teal-dark"
+                      className="ml-2 rounded-lg bg-brand-teal px-3 py-1 text-[10px] font-bold text-white hover:bg-brand-teal-dark"
                     >
                       Aggiungi
                     </button>
@@ -917,7 +917,7 @@ export function CycleProductPicker({
                 ))}
               </div>
             ) : (
-              <div className="text-center py-4 text-pm-gray text-[12px]">Nessun prodotto trovato a catalogo per questo fornitore.</div>
+              <div className="text-center py-4 text-brand-gray text-[12px]">Nessun prodotto trovato a catalogo per questo fornitore.</div>
             )}
           </div>
         )}
@@ -957,7 +957,7 @@ export function SupplierActionsButton({
         onClick={() => setOpen(true)}
         disabled={!!disabledReason}
         title={disabledReason ?? undefined}
-        className="rounded-lg bg-pm-teal/10 px-3 py-1 text-[11px] font-bold text-pm-teal hover:bg-pm-teal/20 disabled:cursor-not-allowed disabled:opacity-50"
+        className="rounded-lg bg-brand-teal/10 px-3 py-1 text-[11px] font-bold text-brand-teal hover:bg-brand-teal/20 disabled:cursor-not-allowed disabled:opacity-50"
       >
         🤝 Fornitore
       </button>
@@ -990,7 +990,7 @@ export function ClosedCycleEditButton({
     return (
       <button
         onClick={() => setOpen(true)}
-        className="rounded-lg bg-pm-orange/10 px-3 py-1 text-[11px] font-bold text-pm-orange hover:bg-pm-orange/20"
+        className="rounded-lg bg-brand-orange/10 px-3 py-1 text-[11px] font-bold text-brand-orange hover:bg-brand-orange/20"
       >
         ✎ Modifica
       </button>
@@ -998,17 +998,17 @@ export function ClosedCycleEditButton({
   }
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
-      <div className="flex max-h-[92vh] w-full max-w-[600px] flex-col rounded-2xl bg-pm-warm-white shadow-2xl">
-        <div className="flex items-center justify-between border-b border-pm-border p-5">
+      <div className="flex max-h-[92vh] w-full max-w-[600px] flex-col rounded-2xl bg-brand-warm-white shadow-2xl">
+        <div className="flex items-center justify-between border-b border-brand-border p-5">
           <div>
-            <div className="font-mono text-[10px] uppercase tracking-[0.13em] text-pm-orange">
+            <div className="font-mono text-[10px] uppercase tracking-[0.13em] text-brand-orange">
               Ciclo chiuso
             </div>
-            <h3 className="mt-1 text-[16px] font-black text-pm-near-black">{cycle.title}</h3>
+            <h3 className="mt-1 text-[16px] font-black text-brand-near-black">{cycle.title}</h3>
           </div>
           <button
             onClick={() => setOpen(false)}
-            className="rounded-full bg-pm-border p-2 text-pm-gray hover:bg-pm-gray-light"
+            className="rounded-full bg-brand-border p-2 text-brand-gray hover:bg-brand-gray-light"
             aria-label="Chiudi"
           >
             ✕

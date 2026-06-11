@@ -31,9 +31,9 @@ export async function TabOrdini({ cycleId, memberId }: Props) {
         <OrdiniFilters allCycles={filterCycles} allMembers={filterMembers} />
 
         {selectedMember && (
-          <div className="rounded-xl border border-pm-border bg-white px-4 py-3 shadow-sm">
-            <div className="text-[13px] font-bold text-pm-near-black">{selectedMember.fullName}</div>
-            <div className="mt-0.5 font-mono text-[10px] text-pm-gray-light">
+          <div className="rounded-xl border border-brand-border bg-white px-4 py-3 shadow-sm">
+            <div className="text-[13px] font-bold text-brand-near-black">{selectedMember.fullName}</div>
+            <div className="mt-0.5 font-mono text-[10px] text-brand-gray-light">
               {selectedMember.email} · {orders.length} cicl{orders.length === 1 ? "o" : "i"} ·{" "}
               {formatEur(orders.reduce((s, o) => s + o.total, 0))} totale
             </div>
@@ -41,7 +41,7 @@ export async function TabOrdini({ cycleId, memberId }: Props) {
         )}
 
         {orders.length === 0 ? (
-          <div className="rounded-xl border border-dashed border-pm-border p-6 text-center text-[13px] text-pm-gray">
+          <div className="rounded-xl border border-dashed border-brand-border p-6 text-center text-[13px] text-brand-gray">
             Nessun ordine registrato.
           </div>
         ) : (
@@ -50,9 +50,9 @@ export async function TabOrdini({ cycleId, memberId }: Props) {
               <Card key={cycle.cycleId}>
                 <CardHeader className="flex items-center justify-between">
                   <div>
-                    <div className="text-[13px] font-bold text-pm-near-black">{cycle.cycleTitle}</div>
+                    <div className="text-[13px] font-bold text-brand-near-black">{cycle.cycleTitle}</div>
                     {cycle.pickupDate && (
-                      <div className="mt-0.5 font-mono text-[10px] text-pm-gray-light">
+                      <div className="mt-0.5 font-mono text-[10px] text-brand-gray-light">
                         Ritiro: {formatDate(cycle.pickupDate)}
                       </div>
                     )}
@@ -61,31 +61,31 @@ export async function TabOrdini({ cycleId, memberId }: Props) {
                     <span
                       className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${
                         cycle.cycleStatus === "open"
-                          ? "bg-pm-teal-light text-pm-teal"
-                          : "bg-black/[0.05] text-pm-gray"
+                          ? "bg-brand-teal-light text-brand-teal"
+                          : "bg-black/[0.05] text-brand-gray"
                       }`}
                     >
                       {cycle.cycleStatus === "open" ? "Aperto" : "Chiuso"}
                     </span>
-                    <span className="font-mono text-[13px] font-bold text-pm-near-black">
+                    <span className="font-mono text-[13px] font-bold text-brand-near-black">
                       {formatEur(cycle.total)}
                     </span>
                   </div>
                 </CardHeader>
-                <div className="divide-y divide-pm-border">
+                <div className="divide-y divide-brand-border">
                   {cycle.lines.map((line, i) => (
                     <div key={i} className="flex items-center justify-between px-4 py-2.5">
-                      <span className="flex items-center gap-2 text-[13px] text-pm-near-black">
+                      <span className="flex items-center gap-2 text-[13px] text-brand-near-black">
                         <span className="text-[16px] leading-none">{getProductEmoji(line.productName)}</span>
                         {line.productName}
                         {line.variant && (
-                          <span className="text-pm-gray">· {line.variant}</span>
+                          <span className="text-brand-gray">· {line.variant}</span>
                         )}
-                        <span className="font-mono text-[11px] text-pm-gray-light">
+                        <span className="font-mono text-[11px] text-brand-gray-light">
                           ×{line.quantity}
                         </span>
                       </span>
-                      <span className="font-mono text-[12px] text-pm-near-black">
+                      <span className="font-mono text-[12px] text-brand-near-black">
                         {formatEur(line.lineTotal)}
                       </span>
                     </div>
@@ -106,7 +106,7 @@ export async function TabOrdini({ cycleId, memberId }: Props) {
     return (
       <div className="space-y-4">
         <OrdiniFilters allCycles={filterCycles} allMembers={filterMembers} />
-        <div className="rounded-xl border border-dashed border-pm-border p-8 text-center text-[13px] text-pm-gray">
+        <div className="rounded-xl border border-dashed border-brand-border p-8 text-center text-[13px] text-brand-gray">
           Nessun ciclo disponibile.
         </div>
       </div>
@@ -124,17 +124,17 @@ export async function TabOrdini({ cycleId, memberId }: Props) {
 
       {/* Stats */}
       <div className="grid grid-cols-2 gap-3">
-        <div className="rounded-xl bg-pm-orange-light px-4 py-3">
-          <div className="font-mono text-[10px] uppercase text-pm-gray">Soci</div>
-          <div className="text-[24px] font-bold text-pm-near-black">{summary.orderCount}</div>
+        <div className="rounded-xl bg-brand-orange-light px-4 py-3">
+          <div className="font-mono text-[10px] uppercase text-brand-gray">Soci</div>
+          <div className="text-[24px] font-bold text-brand-near-black">{summary.orderCount}</div>
         </div>
-        <div className="rounded-xl bg-pm-teal-light px-4 py-3">
-          <div className="font-mono text-[10px] uppercase text-pm-gray">Totale</div>
-          <div className="text-[24px] font-bold text-pm-near-black">
+        <div className="rounded-xl bg-brand-teal-light px-4 py-3">
+          <div className="font-mono text-[10px] uppercase text-brand-gray">Totale</div>
+          <div className="text-[24px] font-bold text-brand-near-black">
             {formatEur(summary.grandTotal)}
           </div>
           {summary.shippingTotal > 0 && (
-            <div className="mt-0.5 font-mono text-[10px] text-pm-gray-light">
+            <div className="mt-0.5 font-mono text-[10px] text-brand-gray-light">
               prodotti {formatEur(summary.productsTotal)} + spedizione {formatEur(summary.shippingTotal)}
             </div>
           )}
@@ -142,7 +142,7 @@ export async function TabOrdini({ cycleId, memberId }: Props) {
       </div>
 
       {summary.orderCount === 0 ? (
-        <div className="rounded-xl border border-dashed border-pm-border p-6 text-center text-[13px] text-pm-gray">
+        <div className="rounded-xl border border-dashed border-brand-border p-6 text-center text-[13px] text-brand-gray">
           Nessun ordine per questo ciclo.
         </div>
       ) : (
@@ -150,12 +150,12 @@ export async function TabOrdini({ cycleId, memberId }: Props) {
           {/* By member */}
           <Card>
             <CardHeader className="flex items-center justify-between">
-              <h3 className="text-[13px] font-bold text-pm-near-black">Per socio</h3>
+              <h3 className="text-[13px] font-bold text-brand-near-black">Per socio</h3>
               <CsvExportButton cycleId={selectedId} cycleTitle={selectedCycle?.title ?? selectedId} />
             </CardHeader>
             <OrdiniByMember byMember={summary.byMember} />
-            <CardBody className="border-t border-pm-border py-2.5">
-              <div className="flex justify-between text-[13px] font-bold text-pm-near-black">
+            <CardBody className="border-t border-brand-border py-2.5">
+              <div className="flex justify-between text-[13px] font-bold text-brand-near-black">
                 <span>Totale</span>
                 <span className="font-mono">{formatEur(summary.grandTotal)}</span>
               </div>
@@ -165,36 +165,36 @@ export async function TabOrdini({ cycleId, memberId }: Props) {
           {/* By product */}
           <Card>
             <CardHeader>
-              <h3 className="text-[13px] font-bold text-pm-near-black">Per prodotto</h3>
-              <p className="mt-0.5 text-[11px] text-pm-gray">
+              <h3 className="text-[13px] font-bold text-brand-near-black">Per prodotto</h3>
+              <p className="mt-0.5 text-[11px] text-brand-gray">
                 Totali al netto delle rettifiche di peso. La spedizione è esclusa
                 perché non è legata a un prodotto.
               </p>
             </CardHeader>
-            <div className="divide-y divide-pm-border">
+            <div className="divide-y divide-brand-border">
               {summary.byProduct.map((p) => (
                 <div key={p.productId} className="flex items-center justify-between px-4 py-2.5">
                   <div className="flex items-center gap-2">
                     <span className="text-[16px] leading-none">{getProductEmoji(p.name)}</span>
-                    <span className="text-[13px] font-medium text-pm-near-black">
+                    <span className="text-[13px] font-medium text-brand-near-black">
                       {p.name}
-                      {p.unit && <span className="ml-1 font-mono text-[10px] text-pm-gray-light">/{p.unit}</span>}
+                      {p.unit && <span className="ml-1 font-mono text-[10px] text-brand-gray-light">/{p.unit}</span>}
                     </span>
                     {p.variant && (
-                      <span className="text-[12px] text-pm-gray">{p.variant}</span>
+                      <span className="text-[12px] text-brand-gray">{p.variant}</span>
                     )}
                   </div>
                   <div className="flex items-center gap-3">
-                    <span className="font-mono text-[12px] text-pm-gray">×{p.totalQty}</span>
-                    <span className="font-mono text-[13px] font-bold text-pm-near-black">
+                    <span className="font-mono text-[12px] text-brand-gray">×{p.totalQty}</span>
+                    <span className="font-mono text-[13px] font-bold text-brand-near-black">
                       {formatEur(p.totalAmount)}
                     </span>
                   </div>
                 </div>
               ))}
             </div>
-            <CardBody className="border-t border-pm-border py-2.5">
-              <div className="flex justify-between text-[13px] font-bold text-pm-near-black">
+            <CardBody className="border-t border-brand-border py-2.5">
+              <div className="flex justify-between text-[13px] font-bold text-brand-near-black">
                 <span>Totale prodotti</span>
                 <span className="font-mono">{formatEur(summary.productsTotal)}</span>
               </div>

@@ -160,18 +160,18 @@ export function ImportListingWizard({ open, onClose, cycleId, cycleTitle }: Prop
 
   return (
     <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
-      <div className="flex max-h-[92vh] w-full max-w-[820px] flex-col rounded-2xl bg-pm-warm-white shadow-2xl">
-        <header className="flex items-start justify-between gap-3 border-b border-pm-border p-5">
+      <div className="flex max-h-[92vh] w-full max-w-[820px] flex-col rounded-2xl bg-brand-warm-white shadow-2xl">
+        <header className="flex items-start justify-between gap-3 border-b border-brand-border p-5">
           <div>
-            <div className="font-mono text-[10px] uppercase tracking-[0.13em] text-pm-orange">
+            <div className="font-mono text-[10px] uppercase tracking-[0.13em] text-brand-orange">
               {cycleTitle ? `${cycleTitle} · ` : ""}Importa listino fornitore · Passo {step}/3
             </div>
-            <h3 className="mt-1 text-[16px] font-black text-pm-near-black">
+            <h3 className="mt-1 text-[16px] font-black text-brand-near-black">
               {step === 1 && "Carica il file del fornitore"}
               {step === 2 && "Mappa le colonne"}
               {step === 3 && "Conferma prodotti e icone"}
             </h3>
-            <p className="mt-1 text-[11px] leading-snug text-pm-gray">
+            <p className="mt-1 text-[11px] leading-snug text-brand-gray">
               {step === 1 && "Excel o CSV con una riga per prodotto. Il sistema riconoscerà automaticamente colonne e fornitore."}
               {step === 2 && "Abbina le colonne del file ai campi della scheda prodotto. Nome e Prezzo sono obbligatori."}
               {step === 3 && "Controlla le righe da importare e l’icona suggerita. Le voci senza match automatico sono evidenziate."}
@@ -179,7 +179,7 @@ export function ImportListingWizard({ open, onClose, cycleId, cycleTitle }: Prop
           </div>
           <button
             onClick={onClose}
-            className="rounded-full bg-pm-border p-2 text-pm-gray"
+            className="rounded-full bg-brand-border p-2 text-brand-gray"
             aria-label="Chiudi"
           >
             ✕
@@ -223,11 +223,11 @@ export function ImportListingWizard({ open, onClose, cycleId, cycleTitle }: Prop
           )}
         </div>
 
-        <footer className="flex items-center justify-between gap-3 border-t border-pm-border p-4">
-          <div className="text-[11px] text-pm-gray">
+        <footer className="flex items-center justify-between gap-3 border-t border-brand-border p-4">
+          <div className="text-[11px] text-brand-gray">
             {step === 1 && filename && `File: ${filename}`}
             {step === 2 && !requiredMapped && (
-              <span className="text-pm-red">Mappa almeno Nome e Prezzo per continuare.</span>
+              <span className="text-brand-red">Mappa almeno Nome e Prezzo per continuare.</span>
             )}
             {step === 3 && (
               <>Selezionati {selectedIndexes.size} / {sheet?.rows.length ?? 0} prodotti.</>
@@ -301,7 +301,7 @@ function Step1Upload({
 }) {
   return (
     <div className="space-y-5">
-      <label className="block rounded-xl border-2 border-dashed border-pm-border bg-white p-6 text-center">
+      <label className="block rounded-xl border-2 border-dashed border-brand-border bg-white p-6 text-center">
         <input
           type="file"
           accept=".xlsx,.xls,.csv"
@@ -311,17 +311,17 @@ function Step1Upload({
             if (f) onFile(f);
           }}
         />
-        <div className="text-[13px] font-semibold text-pm-near-black">
+        <div className="text-[13px] font-semibold text-brand-near-black">
           {pending ? "Lettura in corso…" : filename ? `📄 ${filename} (clicca per cambiare)` : "📎 Clicca qui o trascina un .xlsx / .csv"}
         </div>
-        <div className="mt-1 text-[11px] text-pm-gray">
+        <div className="mt-1 text-[11px] text-brand-gray">
           Una riga per prodotto. Non importa l’ordine delle colonne, lo mappiamo al passo successivo.
         </div>
       </label>
 
       {inspection && inspection.inspection.sheets.length > 1 && (
         <div>
-          <div className="mb-1 text-[11px] font-semibold uppercase tracking-wider text-pm-gray">
+          <div className="mb-1 text-[11px] font-semibold uppercase tracking-wider text-brand-gray">
             Foglio da importare
           </div>
           <div className="flex flex-wrap gap-2">
@@ -331,8 +331,8 @@ function Step1Upload({
                 onClick={() => setSheetIdx(i)}
                 className={`rounded-full border px-3 py-1 text-[12px] ${
                   i === sheetIdx
-                    ? "border-pm-orange bg-pm-orange-light text-pm-near-black"
-                    : "border-pm-border bg-white text-pm-gray"
+                    ? "border-brand-orange bg-brand-orange-light text-brand-near-black"
+                    : "border-brand-border bg-white text-brand-gray"
                 }`}
               >
                 {s.sheetName} ({s.rows.length})
@@ -344,7 +344,7 @@ function Step1Upload({
 
       {inspection && (
         <div>
-          <div className="mb-1 text-[11px] font-semibold uppercase tracking-wider text-pm-gray">
+          <div className="mb-1 text-[11px] font-semibold uppercase tracking-wider text-brand-gray">
             Fornitore
           </div>
           <div className="flex gap-2">
@@ -352,8 +352,8 @@ function Step1Upload({
               onClick={() => setSupplierMode("existing")}
               className={`flex-1 rounded-lg border px-3 py-2 text-[12px] ${
                 supplierMode === "existing"
-                  ? "border-pm-orange bg-pm-orange-light"
-                  : "border-pm-border bg-white"
+                  ? "border-brand-orange bg-brand-orange-light"
+                  : "border-brand-border bg-white"
               }`}
             >
               Esistente
@@ -362,8 +362,8 @@ function Step1Upload({
               onClick={() => setSupplierMode("new")}
               className={`flex-1 rounded-lg border px-3 py-2 text-[12px] ${
                 supplierMode === "new"
-                  ? "border-pm-orange bg-pm-orange-light"
-                  : "border-pm-border bg-white"
+                  ? "border-brand-orange bg-brand-orange-light"
+                  : "border-brand-border bg-white"
               }`}
             >
               Crea nuovo
@@ -373,7 +373,7 @@ function Step1Upload({
             <select
               value={existingSupplierId}
               onChange={(e) => setExistingSupplierId(e.target.value)}
-              className="mt-2 w-full rounded-lg border border-pm-border bg-white px-3 py-2 text-[13px]"
+              className="mt-2 w-full rounded-lg border border-brand-border bg-white px-3 py-2 text-[13px]"
             >
               <option value="">— seleziona —</option>
               {inspection.suppliers.map((s) => (
@@ -388,11 +388,11 @@ function Step1Upload({
               value={newSupplierName}
               onChange={(e) => setNewSupplierName(e.target.value)}
               placeholder="Nome del nuovo fornitore"
-              className="mt-2 w-full rounded-lg border border-pm-border bg-white px-3 py-2 text-[13px]"
+              className="mt-2 w-full rounded-lg border border-brand-border bg-white px-3 py-2 text-[13px]"
             />
           )}
           {inspection.inspection.supplierHints.length > 0 && supplierMode === "existing" && (
-            <div className="mt-2 text-[11px] text-pm-gray">
+            <div className="mt-2 text-[11px] text-brand-gray">
               💡 Suggerito dal file: <strong>{inspection.inspection.supplierHints[0].text}</strong>
               {inspection.suggestedSupplierId === "" || !inspection.suggestedSupplierId
                 ? " — nessun match. Considera “Crea nuovo”."
@@ -404,7 +404,7 @@ function Step1Upload({
 
       {inspection && (
         <div>
-          <div className="mb-1 text-[11px] font-semibold uppercase tracking-wider text-pm-gray">
+          <div className="mb-1 text-[11px] font-semibold uppercase tracking-wider text-brand-gray">
             Anteprima ({inspection.inspection.sheets[sheetIdx]?.rows.length ?? 0} righe)
           </div>
           <PreviewTable
@@ -437,10 +437,10 @@ function Step2Mapping({
           const required = REQUIRED_FIELDS.includes(field);
           const value = mapping[field];
           return (
-            <label key={field} className="flex items-center gap-2 rounded-lg border border-pm-border bg-white px-3 py-2 text-[12px]">
-              <span className="w-24 shrink-0 font-semibold text-pm-near-black">
+            <label key={field} className="flex items-center gap-2 rounded-lg border border-brand-border bg-white px-3 py-2 text-[12px]">
+              <span className="w-24 shrink-0 font-semibold text-brand-near-black">
                 {TARGET_LABEL[field]}
-                {required && <span className="text-pm-red"> *</span>}
+                {required && <span className="text-brand-red"> *</span>}
               </span>
               <select
                 value={value === undefined ? "" : String(value)}
@@ -451,7 +451,7 @@ function Step2Mapping({
                   else next[field] = Number(v);
                   setMapping(next);
                 }}
-                className="flex-1 rounded border border-pm-border bg-white px-2 py-1 text-[12px]"
+                className="flex-1 rounded border border-brand-border bg-white px-2 py-1 text-[12px]"
               >
                 <option value="">(ignora)</option>
                 {sheet.columns.map((c, i) => (
@@ -465,7 +465,7 @@ function Step2Mapping({
         })}
       </div>
       <div>
-        <div className="mb-1 text-[11px] font-semibold uppercase tracking-wider text-pm-gray">
+        <div className="mb-1 text-[11px] font-semibold uppercase tracking-wider text-brand-gray">
           Anteprima
         </div>
         <PreviewTable columns={sheet.columns} rows={sheet.rows.slice(0, 5)} highlightMap={mapping} />
@@ -534,7 +534,7 @@ function Step3Review({
 
   return (
     <div className="space-y-3">
-      <div className="flex flex-wrap items-center gap-3 rounded-lg bg-pm-orange-light px-3 py-2 text-[12px]">
+      <div className="flex flex-wrap items-center gap-3 rounded-lg bg-brand-orange-light px-3 py-2 text-[12px]">
         <label className="flex items-center gap-2">
           <input
             type="checkbox"
@@ -554,15 +554,15 @@ function Step3Review({
           </label>
         )}
         {unmatchedEmojiCount > 0 && (
-          <span className="ml-auto text-pm-red">
+          <span className="ml-auto text-brand-red">
             ⚠ {unmatchedEmojiCount} icone non riconosciute — scegline una qui sotto
           </span>
         )}
       </div>
 
-      <div className="overflow-x-auto rounded-lg border border-pm-border bg-white">
+      <div className="overflow-x-auto rounded-lg border border-brand-border bg-white">
         <table className="w-full text-[12px]">
-          <thead className="border-b border-pm-border bg-pm-warm-white">
+          <thead className="border-b border-brand-border bg-brand-warm-white">
             <tr>
               <th className="p-2 text-left">
                 <input
@@ -590,7 +590,7 @@ function Step3Review({
               const fileCategory = cell(i, "category");
               const guessedCategory = fileCategory || (name ? guessProductCategory(name) : null);
               return (
-                <tr key={i} className={`border-b border-pm-border ${selected ? "" : "opacity-40"}`}>
+                <tr key={i} className={`border-b border-brand-border ${selected ? "" : "opacity-40"}`}>
                   <td className="p-2 align-middle">
                     <input type="checkbox" checked={selected} onChange={() => toggle(i)} />
                   </td>
@@ -601,24 +601,24 @@ function Step3Review({
                       onChange={(v) => setEmojiOverrides({ ...emojiOverrides, [i]: v })}
                     />
                     {!override && !auto && (
-                      <div className="text-[9px] text-pm-red">non auto</div>
+                      <div className="text-[9px] text-brand-red">non auto</div>
                     )}
                   </td>
-                  <td className="p-2 align-middle font-semibold">{name || <em className="text-pm-red">vuoto</em>}</td>
-                  <td className="p-2 align-middle text-pm-gray">{cell(i, "variant")}</td>
-                  <td className="p-2 align-middle text-pm-gray">
+                  <td className="p-2 align-middle font-semibold">{name || <em className="text-brand-red">vuoto</em>}</td>
+                  <td className="p-2 align-middle text-brand-gray">{cell(i, "variant")}</td>
+                  <td className="p-2 align-middle text-brand-gray">
                     {guessedCategory ? (
                       <span>
                         {guessedCategory}
-                        {!fileCategory && <span className="ml-1 text-[9px] text-pm-orange">auto</span>}
+                        {!fileCategory && <span className="ml-1 text-[9px] text-brand-orange">auto</span>}
                       </span>
                     ) : (
-                      <span className="text-pm-gray-light">—</span>
+                      <span className="text-brand-gray-light">—</span>
                     )}
                   </td>
-                  <td className="p-2 align-middle text-pm-gray">{cell(i, "format")}</td>
+                  <td className="p-2 align-middle text-brand-gray">{cell(i, "format")}</td>
                   <td className="p-2 text-right align-middle font-mono">{cell(i, "unitPrice")}</td>
-                  <td className="p-2 text-right align-middle font-mono text-pm-gray">{cell(i, "pricePerKg")}</td>
+                  <td className="p-2 text-right align-middle font-mono text-brand-gray">{cell(i, "pricePerKg")}</td>
                 </tr>
               );
             })}
@@ -651,20 +651,20 @@ function PreviewTable({
     return m;
   }, [highlightMap]);
 
-  if (!columns.length) return <div className="text-[11px] text-pm-gray">Nessuna colonna rilevata.</div>;
+  if (!columns.length) return <div className="text-[11px] text-brand-gray">Nessuna colonna rilevata.</div>;
 
   return (
-    <div className="overflow-x-auto rounded-lg border border-pm-border bg-white">
+    <div className="overflow-x-auto rounded-lg border border-brand-border bg-white">
       <table className="w-full text-[11px]">
-        <thead className="border-b border-pm-border bg-pm-warm-white">
+        <thead className="border-b border-brand-border bg-brand-warm-white">
           <tr>
             {columns.map((c, i) => {
               const hi = highlights.get(i);
               return (
                 <th key={i} className="p-2 text-left">
-                  <div className="font-semibold text-pm-near-black">{c || `Col ${i + 1}`}</div>
+                  <div className="font-semibold text-brand-near-black">{c || `Col ${i + 1}`}</div>
                   {hi && (
-                    <div className="font-mono text-[9px] uppercase text-pm-orange">
+                    <div className="font-mono text-[9px] uppercase text-brand-orange">
                       → {TARGET_LABEL[hi as TargetField]}
                     </div>
                   )}
@@ -675,9 +675,9 @@ function PreviewTable({
         </thead>
         <tbody>
           {rows.map((r, i) => (
-            <tr key={i} className="border-b border-pm-border">
+            <tr key={i} className="border-b border-brand-border">
               {columns.map((_, ci) => (
-                <td key={ci} className="p-2 text-pm-gray">
+                <td key={ci} className="p-2 text-brand-gray">
                   {r[ci] ?? ""}
                 </td>
               ))}

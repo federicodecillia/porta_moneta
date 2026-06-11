@@ -154,15 +154,15 @@ export function OrderForm({
       {/* Cycle header */}
       <div className="mb-1">
         <div className="flex items-center justify-between">
-          <h1 className="text-[20px] font-black tracking-[-0.03em] text-pm-near-black">
+          <h1 className="text-[20px] font-black tracking-[-0.03em] text-brand-near-black">
             Il tuo ordine
           </h1>
-          <span className="inline-flex items-center gap-1.5 rounded-full border border-pm-teal/20 bg-pm-teal-light px-2.5 py-0.5 font-mono text-[10px] font-semibold text-pm-teal">
-            <span className="h-1.5 w-1.5 rounded-full bg-pm-teal opacity-75" />
+          <span className="inline-flex items-center gap-1.5 rounded-full border border-brand-teal/20 bg-brand-teal-light px-2.5 py-0.5 font-mono text-[10px] font-semibold text-brand-teal">
+            <span className="h-1.5 w-1.5 rounded-full bg-brand-teal opacity-75" />
             Aperto
           </span>
         </div>
-        <p className="font-mono text-[10px] text-pm-gray mt-[3px]">
+        <p className="font-mono text-[10px] text-brand-gray mt-[3px]">
           {cycleTitle}
           {orderCloseAt ? " · Chiude " + formatDateTime(orderCloseAt) : ""}
         </p>
@@ -175,7 +175,7 @@ export function OrderForm({
           type="button"
           onClick={handlePrefillFromLast}
           disabled={isPending}
-          className="mt-3 inline-flex w-full items-center justify-center gap-1.5 rounded-full border border-pm-teal/30 bg-pm-teal-light px-4 py-2 text-[12px] font-semibold text-pm-teal disabled:opacity-50"
+          className="mt-3 inline-flex w-full items-center justify-center gap-1.5 rounded-full border border-brand-teal/30 bg-brand-teal-light px-4 py-2 text-[12px] font-semibold text-brand-teal disabled:opacity-50"
         >
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
             <path d="M3 12a9 9 0 1 0 3-6.7" />
@@ -189,7 +189,7 @@ export function OrderForm({
       {groups.map(({ category, products: prods }) => (
         <div key={category}>
           {category && (
-            <div className="pt-4 pb-2 font-mono text-[9px] uppercase tracking-[0.10em] text-pm-gray-light">
+            <div className="pt-4 pb-2 font-mono text-[9px] uppercase tracking-[0.10em] text-brand-gray-light">
               {category}
             </div>
           )}
@@ -199,21 +199,21 @@ export function OrderForm({
             return (
               <div
                 key={p.productId}
-                className="flex items-center justify-between border-b border-pm-border py-3 last:border-none"
+                className="flex items-center justify-between border-b border-brand-border py-3 last:border-none"
               >
                 <div className="mr-3 flex min-w-0 flex-1 items-start gap-2">
                   <span className="mt-[1px] shrink-0 text-[22px] leading-none">
                     {getProductEmoji(p.name)}
                   </span>
                   <div className="min-w-0 flex-1">
-                    <div className="text-[14px] font-medium text-pm-near-black">{p.name}</div>
+                    <div className="text-[14px] font-medium text-brand-near-black">{p.name}</div>
                     <div className="mt-[2px] flex flex-wrap items-center gap-x-2 gap-y-0.5">
-                      {meta && <span className="font-mono text-[11px] text-pm-gray">{meta}</span>}
-                      <span className="font-mono text-[11px] font-semibold text-pm-orange">
+                      {meta && <span className="font-mono text-[11px] text-brand-gray">{meta}</span>}
+                      <span className="font-mono text-[11px] font-semibold text-brand-orange">
                         {formatEur(parseFloat(p.unitPrice))}
                       </span>
                       {p.pricePerKg && (
-                        <span className="font-mono text-[10px] text-pm-gray-light">
+                        <span className="font-mono text-[10px] text-brand-gray-light">
                           ({formatEur(parseFloat(p.pricePerKg))}/kg)
                         </span>
                       )}
@@ -225,27 +225,27 @@ export function OrderForm({
                     <button
                       onClick={() => changeQty(p.productId, 1)}
                       aria-label="Aggiungi"
-                      className="flex h-8 w-8 items-center justify-center rounded-full text-[18px] font-light text-pm-gray"
+                      className="flex h-8 w-8 items-center justify-center rounded-full text-[18px] font-light text-brand-gray"
                     >
                       +
                     </button>
                   </div>
                 ) : (
-                  <div className="flex flex-shrink-0 items-center rounded-full bg-pm-orange-light p-0.5">
+                  <div className="flex flex-shrink-0 items-center rounded-full bg-brand-orange-light p-0.5">
                     <button
                       onClick={() => changeQty(p.productId, -1)}
                       aria-label="Meno"
-                      className="flex h-8 w-8 items-center justify-center rounded-full text-[18px] font-light text-pm-gray"
+                      className="flex h-8 w-8 items-center justify-center rounded-full text-[18px] font-light text-brand-gray"
                     >
                       −
                     </button>
-                    <span className="min-w-[22px] text-center font-mono text-[13px] font-bold text-pm-near-black">
+                    <span className="min-w-[22px] text-center font-mono text-[13px] font-bold text-brand-near-black">
                       {qty}
                     </span>
                     <button
                       onClick={() => changeQty(p.productId, 1)}
                       aria-label="Più"
-                      className="flex h-8 w-8 items-center justify-center rounded-full bg-pm-orange text-[18px] font-light text-white"
+                      className="flex h-8 w-8 items-center justify-center rounded-full bg-brand-orange text-[18px] font-light text-white"
                     >
                       +
                     </button>
@@ -263,23 +263,23 @@ export function OrderForm({
       {/* Sticky footer — fixed above bottom nav */}
       {hasOrder && (
         <div className="fixed bottom-[82px] inset-x-0 z-10">
-          <div className="mx-auto max-w-[480px] border-t border-pm-border bg-pm-warm-white/97 px-5 py-3.5 backdrop-blur-sm">
+          <div className="mx-auto max-w-[480px] border-t border-brand-border bg-brand-warm-white/97 px-5 py-3.5 backdrop-blur-sm">
             <div className="mb-3 flex items-end justify-between">
               <div>
-                <div className="font-mono text-[9px] uppercase tracking-[0.09em] text-pm-gray-light">
+                <div className="font-mono text-[9px] uppercase tracking-[0.09em] text-brand-gray-light">
                   Totale ordine
                 </div>
-                <div className="mt-[2px] text-[24px] font-black tracking-[-0.03em] text-pm-near-black">
+                <div className="mt-[2px] text-[24px] font-black tracking-[-0.03em] text-brand-near-black">
                   {formatEur(orderTotal)}
                 </div>
               </div>
               <div className="text-right">
-                <div className="font-mono text-[9px] uppercase tracking-[0.09em] text-pm-gray-light">
+                <div className="font-mono text-[9px] uppercase tracking-[0.09em] text-brand-gray-light">
                   Saldo dopo
                 </div>
                 <div
                   className={`mt-[2px] font-mono text-[14px] font-bold ${
-                    afterBalance < 0 ? "text-pm-red" : "text-pm-teal"
+                    afterBalance < 0 ? "text-brand-red" : "text-brand-teal"
                   }`}
                 >
                   {formatEur(afterBalance)}
@@ -289,7 +289,7 @@ export function OrderForm({
             <button
               onClick={handleSave}
               disabled={isPending}
-              className="w-full rounded-full bg-pm-orange px-[22px] py-[14px] text-sm font-bold text-white transition-[opacity,transform] duration-150 active:scale-[0.98] disabled:opacity-40 disabled:cursor-not-allowed"
+              className="w-full rounded-full bg-brand-orange px-[22px] py-[14px] text-sm font-bold text-white transition-[opacity,transform] duration-150 active:scale-[0.98] disabled:opacity-40 disabled:cursor-not-allowed"
             >
               {isPending ? "Salvataggio..." : "Conferma ordine"}
             </button>

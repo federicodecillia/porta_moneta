@@ -37,7 +37,7 @@ export function CycleReviewCloseButton({ cycleId, cycleTitle }: Props) {
     <>
       <button
         onClick={() => setOpen(true)}
-        className="rounded-xl border border-pm-orange/30 bg-pm-orange-light px-4 py-2 text-[12px] font-bold text-pm-orange disabled:opacity-60"
+        className="rounded-xl border border-brand-orange/30 bg-brand-orange-light px-4 py-2 text-[12px] font-bold text-brand-orange disabled:opacity-60"
       >
         Chiudi con rettifiche
       </button>
@@ -149,24 +149,24 @@ function CycleReviewModal({
       onClick={onClose}
     >
       <div
-        className="flex h-[92vh] w-full max-w-[640px] flex-col overflow-hidden rounded-t-2xl bg-pm-warm-white shadow-2xl sm:h-[88vh] sm:rounded-2xl"
+        className="flex h-[92vh] w-full max-w-[640px] flex-col overflow-hidden rounded-t-2xl bg-brand-warm-white shadow-2xl sm:h-[88vh] sm:rounded-2xl"
         onClick={(e) => e.stopPropagation()}
       >
-        <header className="flex items-center justify-between border-b border-pm-border px-5 py-4">
+        <header className="flex items-center justify-between border-b border-brand-border px-5 py-4">
           <div>
-            <h2 className="text-[15px] font-bold text-pm-near-black">Rettifica e chiudi</h2>
-            <p className="mt-0.5 text-[11px] text-pm-gray">{cycleTitle}</p>
+            <h2 className="text-[15px] font-bold text-brand-near-black">Rettifica e chiudi</h2>
+            <p className="mt-0.5 text-[11px] text-brand-gray">{cycleTitle}</p>
           </div>
           <button
             onClick={onClose}
             aria-label="Chiudi"
-            className="rounded-lg px-2 py-1 text-pm-gray hover:bg-black/5"
+            className="rounded-lg px-2 py-1 text-brand-gray hover:bg-black/5"
           >
             ✕
           </button>
         </header>
 
-        <p className="border-b border-pm-border bg-pm-orange-light/40 px-5 py-2 text-[11px] text-pm-gray">
+        <p className="border-b border-brand-border bg-brand-orange-light/40 px-5 py-2 text-[11px] text-brand-gray">
           Modifica il prezzo unitario dei prodotti per cui il peso effettivo
           differisce da quello ordinato. Il totale degli ordini di ogni socio
           verrà ricalcolato e gli addebiti generati con i nuovi prezzi.
@@ -174,7 +174,7 @@ function CycleReviewModal({
 
         <div className="flex-1 overflow-y-auto px-3 py-3">
           {loading ? (
-            <div className="py-12 text-center text-[12px] text-pm-gray">Caricamento prodotti…</div>
+            <div className="py-12 text-center text-[12px] text-brand-gray">Caricamento prodotti…</div>
           ) : rows && rows.length > 0 ? (
             <ul className="space-y-1">
               {rows.map((r) => {
@@ -189,8 +189,8 @@ function CycleReviewModal({
                     key={r.productId}
                     className={`rounded-lg border bg-white px-3 py-2.5 ${
                       Math.abs(next - r.unitPrice) > 0.001
-                        ? "border-pm-orange/40"
-                        : "border-pm-border"
+                        ? "border-brand-orange/40"
+                        : "border-brand-border"
                     } ${noOrders ? "opacity-60" : ""}`}
                   >
                     <div className="flex items-start gap-2">
@@ -198,27 +198,27 @@ function CycleReviewModal({
                         {r.emoji || getProductEmoji(r.name)}
                       </span>
                       <div className="min-w-0 flex-1">
-                        <div className="text-[13px] font-semibold text-pm-near-black">
+                        <div className="text-[13px] font-semibold text-brand-near-black">
                           {r.name}
                         </div>
-                        {meta && <div className="text-[11px] text-pm-gray">{meta}</div>}
-                        <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] text-pm-gray">
+                        {meta && <div className="text-[11px] text-brand-gray">{meta}</div>}
+                        <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] text-brand-gray">
                           <span>
                             Ordinato:{" "}
-                            <span className="font-mono font-bold text-pm-near-black">
+                            <span className="font-mono font-bold text-brand-near-black">
                               {r.totalQty}
                             </span>
                           </span>
                           <span>
                             Tot. attuale:{" "}
-                            <span className="font-mono font-bold text-pm-near-black">
+                            <span className="font-mono font-bold text-brand-near-black">
                               {formatEur(r.totalAmount)}
                             </span>
                           </span>
                         </div>
                       </div>
                       <div className="shrink-0 text-right">
-                        <label className="block text-[9px] uppercase tracking-wide text-pm-gray-light">
+                        <label className="block text-[9px] uppercase tracking-wide text-brand-gray-light">
                           € finale
                         </label>
                         <input
@@ -230,12 +230,12 @@ function CycleReviewModal({
                           onChange={(e) =>
                             setEdits((prev) => ({ ...prev, [r.productId]: e.target.value }))
                           }
-                          className="w-[88px] rounded-lg border border-pm-border px-2 py-1.5 text-right text-[13px] text-pm-near-black focus:outline-none focus:ring-2 focus:ring-pm-orange/30"
+                          className="w-[88px] rounded-lg border border-brand-border px-2 py-1.5 text-right text-[13px] text-brand-near-black focus:outline-none focus:ring-2 focus:ring-brand-orange/30"
                         />
                         {Math.abs(next - r.unitPrice) > 0.001 && (
                           <div
                             className={`mt-1 text-[10px] font-semibold ${
-                              delta >= 0 ? "text-pm-orange" : "text-pm-teal"
+                              delta >= 0 ? "text-brand-orange" : "text-brand-teal"
                             }`}
                           >
                             {delta >= 0 ? "+" : ""}
@@ -249,30 +249,30 @@ function CycleReviewModal({
               })}
             </ul>
           ) : (
-            <div className="py-12 text-center text-[12px] text-pm-gray">
+            <div className="py-12 text-center text-[12px] text-brand-gray">
               Nessun prodotto in questo ciclo.
             </div>
           )}
         </div>
 
-        <footer className="border-t border-pm-border bg-white px-5 py-3.5">
+        <footer className="border-t border-brand-border bg-white px-5 py-3.5">
           <div className="mb-3 flex items-end justify-between text-[12px]">
             <div>
-              <div className="font-mono text-[9px] uppercase tracking-wide text-pm-gray-light">
+              <div className="font-mono text-[9px] uppercase tracking-wide text-brand-gray-light">
                 Totale ordini
               </div>
-              <div className="font-mono text-[15px] font-bold text-pm-near-black">
+              <div className="font-mono text-[15px] font-bold text-brand-near-black">
                 {formatEur(newGrandTotal)}
               </div>
             </div>
             {Math.abs(totalDelta) > 0.005 && (
               <div className="text-right">
-                <div className="font-mono text-[9px] uppercase tracking-wide text-pm-gray-light">
+                <div className="font-mono text-[9px] uppercase tracking-wide text-brand-gray-light">
                   Variazione
                 </div>
                 <div
                   className={`font-mono text-[13px] font-bold ${
-                    totalDelta >= 0 ? "text-pm-orange" : "text-pm-teal"
+                    totalDelta >= 0 ? "text-brand-orange" : "text-brand-teal"
                   }`}
                 >
                   {totalDelta >= 0 ? "+" : ""}
@@ -284,14 +284,14 @@ function CycleReviewModal({
           <div className="flex gap-2">
             <button
               onClick={onClose}
-              className="flex-1 rounded-xl border border-pm-border bg-white px-4 py-2.5 text-[13px] font-semibold text-pm-gray"
+              className="flex-1 rounded-xl border border-brand-border bg-white px-4 py-2.5 text-[13px] font-semibold text-brand-gray"
             >
               Annulla
             </button>
             <button
               onClick={handleConfirm}
               disabled={isPending || loading}
-              className="flex-[2] rounded-xl bg-pm-orange px-4 py-2.5 text-[13px] font-bold text-white disabled:opacity-60"
+              className="flex-[2] rounded-xl bg-brand-orange px-4 py-2.5 text-[13px] font-bold text-white disabled:opacity-60"
             >
               {isPending
                 ? "Chiusura…"

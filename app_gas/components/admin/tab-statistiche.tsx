@@ -57,10 +57,10 @@ export async function TabStatistiche({ cycleIds, supplierIds, memberIds }: Props
           <CardBody>
             <div className="py-12 text-center">
               <div className="mb-2 text-4xl">📊</div>
-              <h2 className="text-[15px] font-bold text-pm-near-black">
+              <h2 className="text-[15px] font-bold text-brand-near-black">
                 {hasFilters ? "Nessun dato per questo filtro" : "Nessun dato disponibile"}
               </h2>
-              <p className="mt-1 text-[12px] text-pm-gray">
+              <p className="mt-1 text-[12px] text-brand-gray">
                 {hasFilters
                   ? "Prova a cambiare o rimuovere i filtri in alto."
                   : "Le statistiche compariranno qui dopo la chiusura del primo ciclo."}
@@ -128,21 +128,21 @@ function OverviewCards({
           key={c.label}
           className={`rounded-xl p-3 ${
             c.tone === "orange"
-              ? "border border-pm-orange-mid bg-pm-orange-light"
-              : "border border-pm-teal/20 bg-pm-teal-light"
+              ? "border border-brand-orange-mid bg-brand-orange-light"
+              : "border border-brand-teal/20 bg-brand-teal-light"
           }`}
         >
           <div className="mb-1 flex items-center justify-between">
-            <span className="font-mono text-[9px] uppercase tracking-wide text-pm-gray">
+            <span className="font-mono text-[9px] uppercase tracking-wide text-brand-gray">
               {c.label}
             </span>
             <span className="text-[16px] leading-none">{c.icon}</span>
           </div>
-          <div className="truncate text-[18px] font-black tracking-[-0.02em] text-pm-near-black">
+          <div className="truncate text-[18px] font-black tracking-[-0.02em] text-brand-near-black">
             {c.value}
           </div>
           {c.hint && (
-            <div className="mt-0.5 truncate font-mono text-[9px] text-pm-gray-light">
+            <div className="mt-0.5 truncate font-mono text-[9px] text-brand-gray-light">
               {c.hint}
             </div>
           )}
@@ -164,16 +164,16 @@ function ProductRankingsCard({
   return (
     <Card>
       <CardHeader>
-        <h3 className="text-[13px] font-bold text-pm-near-black">
+        <h3 className="text-[13px] font-bold text-brand-near-black">
           Top 10 prodotti più ordinati
         </h3>
-        <p className="mt-0.5 text-[11px] text-pm-gray">
+        <p className="mt-0.5 text-[11px] text-brand-gray">
           Aggregato su tutti i cicli chiusi
         </p>
       </CardHeader>
       <CardBody>
         {rankings.length === 0 ? (
-          <p className="py-4 text-center text-[12px] text-pm-gray">
+          <p className="py-4 text-center text-[12px] text-brand-gray">
             Nessun prodotto ordinato.
           </p>
         ) : (
@@ -185,7 +185,7 @@ function ProductRankingsCard({
                 .join(" · ");
               return (
                 <li key={`${r.name}-${idx}`} className="flex items-center gap-3">
-                  <span className="w-5 shrink-0 text-right font-mono text-[10px] text-pm-gray-light">
+                  <span className="w-5 shrink-0 text-right font-mono text-[10px] text-brand-gray-light">
                     {idx + 1}
                   </span>
                   <span className="shrink-0 text-[16px] leading-none">
@@ -193,23 +193,23 @@ function ProductRankingsCard({
                   </span>
                   <div className="min-w-0 flex-1">
                     <div className="flex items-baseline justify-between gap-2">
-                      <span className="truncate text-[12px] font-semibold text-pm-near-black">
+                      <span className="truncate text-[12px] font-semibold text-brand-near-black">
                         {r.name}
                         {meta && (
-                          <span className="ml-1 font-normal text-pm-gray-light">{meta}</span>
+                          <span className="ml-1 font-normal text-brand-gray-light">{meta}</span>
                         )}
                       </span>
-                      <span className="shrink-0 font-mono text-[11px] font-bold text-pm-near-black">
+                      <span className="shrink-0 font-mono text-[11px] font-bold text-brand-near-black">
                         {r.totalQty}
                       </span>
                     </div>
                     <div className="mt-1 h-2 overflow-hidden rounded-full bg-black/[0.05]">
                       <div
-                        className="h-full rounded-full bg-pm-orange"
+                        className="h-full rounded-full bg-brand-orange"
                         style={{ width: `${widthPct}%` }}
                       />
                     </div>
-                    <div className="mt-0.5 flex justify-between font-mono text-[9px] text-pm-gray-light">
+                    <div className="mt-0.5 flex justify-between font-mono text-[9px] text-brand-gray-light">
                       <span>{r.cyclesCount} cicli</span>
                       <span>{formatEur(r.totalAmount)}</span>
                     </div>
@@ -265,10 +265,10 @@ function RevenueTrendCard({
       <CardHeader>
         <div className="flex items-start justify-between gap-3">
           <div>
-            <h3 className="text-[13px] font-bold text-pm-near-black">
+            <h3 className="text-[13px] font-bold text-brand-near-black">
               Trend spesa per ciclo
             </h3>
-            <p className="mt-0.5 text-[11px] text-pm-gray">
+            <p className="mt-0.5 text-[11px] text-brand-gray">
               Ultimi {trend.length} cicli chiusi
             </p>
           </div>
@@ -276,8 +276,8 @@ function RevenueTrendCard({
             <span
               className={`shrink-0 rounded-full px-2 py-0.5 font-mono text-[10px] font-bold ${
                 trendDelta >= 0
-                  ? "bg-pm-teal-light text-pm-teal"
-                  : "bg-pm-red-light text-pm-red"
+                  ? "bg-brand-teal-light text-brand-teal"
+                  : "bg-brand-red-light text-brand-red"
               }`}
             >
               {trendDelta >= 0 ? "+" : ""}
@@ -297,15 +297,15 @@ function RevenueTrendCard({
         >
           <defs>
             <linearGradient id="revenueGradient" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stopColor="var(--color-pm-orange)" stopOpacity="0.30" />
-              <stop offset="100%" stopColor="var(--color-pm-orange)" stopOpacity="0" />
+              <stop offset="0%" stopColor="var(--color-brand-orange)" stopOpacity="0.30" />
+              <stop offset="100%" stopColor="var(--color-brand-orange)" stopOpacity="0" />
             </linearGradient>
           </defs>
           <path d={areaPath} fill="url(#revenueGradient)" />
           <path
             d={linePath}
             fill="none"
-            stroke="var(--color-pm-orange)"
+            stroke="var(--color-brand-orange)"
             strokeWidth="2"
             strokeLinecap="round"
             strokeLinejoin="round"
@@ -316,7 +316,7 @@ function RevenueTrendCard({
               cx={p.x}
               cy={p.y}
               r="2.5"
-              fill="var(--color-pm-orange)"
+              fill="var(--color-brand-orange)"
             >
               <title>
                 {p.title}: {formatEur(p.total)} ({p.orderCount} soci)
@@ -324,26 +324,26 @@ function RevenueTrendCard({
             </circle>
           ))}
         </svg>
-        <div className="mt-2 flex justify-between font-mono text-[9px] text-pm-gray-light">
+        <div className="mt-2 flex justify-between font-mono text-[9px] text-brand-gray-light">
           <span>{trend[0].title}</span>
           <span>{trend[trend.length - 1].title}</span>
         </div>
         <div className="mt-2 grid grid-cols-3 gap-2 text-center">
           <div>
-            <div className="font-mono text-[9px] uppercase text-pm-gray-light">Ultimo</div>
-            <div className="font-mono text-[12px] font-bold text-pm-near-black">
+            <div className="font-mono text-[9px] uppercase text-brand-gray-light">Ultimo</div>
+            <div className="font-mono text-[12px] font-bold text-brand-near-black">
               {formatEur(lastPoint.total)}
             </div>
           </div>
           <div>
-            <div className="font-mono text-[9px] uppercase text-pm-gray-light">Massimo</div>
-            <div className="font-mono text-[12px] font-bold text-pm-near-black">
+            <div className="font-mono text-[9px] uppercase text-brand-gray-light">Massimo</div>
+            <div className="font-mono text-[12px] font-bold text-brand-near-black">
               {formatEur(maxVal)}
             </div>
           </div>
           <div>
-            <div className="font-mono text-[9px] uppercase text-pm-gray-light">Media</div>
-            <div className="font-mono text-[12px] font-bold text-pm-near-black">
+            <div className="font-mono text-[9px] uppercase text-brand-gray-light">Media</div>
+            <div className="font-mono text-[12px] font-bold text-brand-near-black">
               {formatEur(trend.reduce((s, p) => s + p.total, 0) / trend.length)}
             </div>
           </div>
@@ -367,8 +367,8 @@ function SupplierStatsCard({
   return (
     <Card>
       <CardHeader>
-        <h3 className="text-[13px] font-bold text-pm-near-black">Fornitori per spesa</h3>
-        <p className="mt-0.5 text-[11px] text-pm-gray">Cicli chiusi · prodotto più richiesto</p>
+        <h3 className="text-[13px] font-bold text-brand-near-black">Fornitori per spesa</h3>
+        <p className="mt-0.5 text-[11px] text-brand-gray">Cicli chiusi · prodotto più richiesto</p>
       </CardHeader>
       <CardBody>
         <ul className="space-y-2">
@@ -377,20 +377,20 @@ function SupplierStatsCard({
             return (
               <li key={s.supplierId}>
                 <div className="flex items-baseline justify-between gap-2">
-                  <span className="truncate text-[12px] font-semibold text-pm-near-black">
+                  <span className="truncate text-[12px] font-semibold text-brand-near-black">
                     {s.name}
                   </span>
-                  <span className="shrink-0 font-mono text-[11px] font-bold text-pm-near-black">
+                  <span className="shrink-0 font-mono text-[11px] font-bold text-brand-near-black">
                     {formatEur(s.totalRevenue)}
                   </span>
                 </div>
                 <div className="mt-1 h-2 overflow-hidden rounded-full bg-black/[0.05]">
                   <div
-                    className="h-full rounded-full bg-pm-teal"
+                    className="h-full rounded-full bg-brand-teal"
                     style={{ width: `${widthPct}%` }}
                   />
                 </div>
-                <div className="mt-0.5 flex justify-between font-mono text-[9px] text-pm-gray-light">
+                <div className="mt-0.5 flex justify-between font-mono text-[9px] text-brand-gray-light">
                   <span>{s.cyclesCount} cicli</span>
                   {s.topProductName && <span>Top: {s.topProductName}</span>}
                 </div>
@@ -420,47 +420,47 @@ function MemberParticipationCard({
   return (
     <Card>
       <CardHeader>
-        <h3 className="text-[13px] font-bold text-pm-near-black">Partecipazione soci</h3>
-        <p className="mt-0.5 text-[11px] text-pm-gray">
+        <h3 className="text-[13px] font-bold text-brand-near-black">Partecipazione soci</h3>
+        <p className="mt-0.5 text-[11px] text-brand-gray">
           Solo soci attivi · {members.length} totali
         </p>
       </CardHeader>
       <CardBody>
         <div className="mb-3 grid grid-cols-3 gap-2 text-center">
-          <div className="rounded-lg bg-pm-teal-light p-2">
-            <div className="font-mono text-[9px] uppercase text-pm-teal">Attivi</div>
-            <div className="text-[18px] font-black text-pm-near-black">{heavy.length}</div>
-            <div className="font-mono text-[9px] text-pm-gray-light">≥3 cicli</div>
+          <div className="rounded-lg bg-brand-teal-light p-2">
+            <div className="font-mono text-[9px] uppercase text-brand-teal">Attivi</div>
+            <div className="text-[18px] font-black text-brand-near-black">{heavy.length}</div>
+            <div className="font-mono text-[9px] text-brand-gray-light">≥3 cicli</div>
           </div>
-          <div className="rounded-lg bg-pm-orange-light p-2">
-            <div className="font-mono text-[9px] uppercase text-pm-orange">Occasionali</div>
-            <div className="text-[18px] font-black text-pm-near-black">{occasional.length}</div>
-            <div className="font-mono text-[9px] text-pm-gray-light">1-2 cicli</div>
+          <div className="rounded-lg bg-brand-orange-light p-2">
+            <div className="font-mono text-[9px] uppercase text-brand-orange">Occasionali</div>
+            <div className="text-[18px] font-black text-brand-near-black">{occasional.length}</div>
+            <div className="font-mono text-[9px] text-brand-gray-light">1-2 cicli</div>
           </div>
           <div className="rounded-lg bg-black/[0.05] p-2">
-            <div className="font-mono text-[9px] uppercase text-pm-gray">Dormienti</div>
-            <div className="text-[18px] font-black text-pm-near-black">{dormant.length}</div>
-            <div className="font-mono text-[9px] text-pm-gray-light">0 cicli</div>
+            <div className="font-mono text-[9px] uppercase text-brand-gray">Dormienti</div>
+            <div className="text-[18px] font-black text-brand-near-black">{dormant.length}</div>
+            <div className="font-mono text-[9px] text-brand-gray-light">0 cicli</div>
           </div>
         </div>
 
         <details className="text-[12px]">
-          <summary className="cursor-pointer font-semibold text-pm-gray hover:text-pm-near-black">
+          <summary className="cursor-pointer font-semibold text-brand-gray hover:text-brand-near-black">
             Dettaglio per socio
           </summary>
-          <ul className="mt-2 divide-y divide-pm-border rounded-lg border border-pm-border bg-white">
+          <ul className="mt-2 divide-y divide-brand-border rounded-lg border border-brand-border bg-white">
             {members.map((m) => (
               <li
                 key={m.memberId}
                 className="flex items-center justify-between gap-2 px-3 py-2"
               >
-                <span className="min-w-0 flex-1 truncate text-[12px] text-pm-near-black">
+                <span className="min-w-0 flex-1 truncate text-[12px] text-brand-near-black">
                   {m.fullName}
                 </span>
-                <span className="shrink-0 font-mono text-[10px] text-pm-gray">
+                <span className="shrink-0 font-mono text-[10px] text-brand-gray">
                   {m.cyclesOrdered} cicli
                 </span>
-                <span className="shrink-0 font-mono text-[11px] font-bold text-pm-near-black">
+                <span className="shrink-0 font-mono text-[11px] font-bold text-brand-near-black">
                   {formatEur(m.totalSpent)}
                 </span>
               </li>

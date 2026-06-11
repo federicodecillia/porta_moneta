@@ -135,23 +135,23 @@ export function EditClosedOrderModal({ cycleId, cycleTitle, mode, onClose, onSav
 
   return (
     <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
-      <div className="flex max-h-[92vh] w-full max-w-[600px] flex-col rounded-2xl bg-pm-warm-white shadow-2xl">
-        <div className="flex items-start justify-between gap-3 border-b border-pm-border p-5">
+      <div className="flex max-h-[92vh] w-full max-w-[600px] flex-col rounded-2xl bg-brand-warm-white shadow-2xl">
+        <div className="flex items-start justify-between gap-3 border-b border-brand-border p-5">
           <div>
-            <div className="font-mono text-[10px] uppercase tracking-[0.13em] text-pm-orange">
+            <div className="font-mono text-[10px] uppercase tracking-[0.13em] text-brand-orange">
               {cycleTitle} · {mode.kind === "create" ? "Nuovo ordine" : "Modifica ordine"}
             </div>
-            <h3 className="mt-1 text-[16px] font-black text-pm-near-black">
+            <h3 className="mt-1 text-[16px] font-black text-brand-near-black">
               {mode.kind === "edit" ? memberName : "Aggiungi ordine per un socio"}
             </h3>
-            <p className="mt-1 text-[11px] leading-snug text-pm-gray">
+            <p className="mt-1 text-[11px] leading-snug text-brand-gray">
               Le modifiche generano una <strong>voce di correzione</strong> nel saldo del socio
               e una notifica con il dettaglio. L&apos;ordine originale e l&apos;addebito esistente non vengono toccati.
             </p>
           </div>
           <button
             onClick={onClose}
-            className="rounded-full bg-pm-border p-2 text-pm-gray hover:bg-pm-gray-light"
+            className="rounded-full bg-brand-border p-2 text-brand-gray hover:bg-brand-gray-light"
             aria-label="Chiudi"
           >
             ✕
@@ -160,18 +160,18 @@ export function EditClosedOrderModal({ cycleId, cycleTitle, mode, onClose, onSav
 
         <div className="flex-1 overflow-y-auto p-5">
           {loading || !bootstrap ? (
-            <div className="py-20 text-center text-pm-gray">Caricamento…</div>
+            <div className="py-20 text-center text-brand-gray">Caricamento…</div>
           ) : (
             <>
               {mode.kind === "create" && (
-                <div className="mb-4 rounded-xl border border-pm-border bg-white p-3">
-                  <label className="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-pm-gray">
+                <div className="mb-4 rounded-xl border border-brand-border bg-white p-3">
+                  <label className="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-brand-gray">
                     Socio
                   </label>
                   <select
                     value={memberId}
                     onChange={(e) => setMemberId(e.target.value)}
-                    className="w-full rounded-lg border border-pm-border bg-white px-3 py-2 text-[13px] text-pm-near-black focus:outline-none focus:ring-2 focus:ring-pm-teal/30"
+                    className="w-full rounded-lg border border-brand-border bg-white px-3 py-2 text-[13px] text-brand-near-black focus:outline-none focus:ring-2 focus:ring-brand-teal/30"
                   >
                     <option value="">— Scegli un socio —</option>
                     {bootstrap.members.map((m) => (
@@ -184,16 +184,16 @@ export function EditClosedOrderModal({ cycleId, cycleTitle, mode, onClose, onSav
               )}
 
               {grouped.length === 0 ? (
-                <div className="py-12 text-center text-[13px] text-pm-gray">
+                <div className="py-12 text-center text-[13px] text-brand-gray">
                   Questo ciclo non ha prodotti attivi. Riattivane qualcuno per poter modificare l&apos;ordine.
                 </div>
               ) : (
                 grouped.map(([category, prods]) => (
                   <div key={category} className="mb-5">
-                    <div className="mb-2 font-mono text-[10px] font-bold uppercase tracking-[0.13em] text-pm-orange">
+                    <div className="mb-2 font-mono text-[10px] font-bold uppercase tracking-[0.13em] text-brand-orange">
                       {category}
                     </div>
-                    <div className="overflow-hidden rounded-xl border border-pm-border bg-white">
+                    <div className="overflow-hidden rounded-xl border border-brand-border bg-white">
                       {prods.map((p, i) => {
                         const qty = quantities[p.productId] ?? 0;
                         const meta = [p.variant, p.format].filter(Boolean).join(" · ");
@@ -201,7 +201,7 @@ export function EditClosedOrderModal({ cycleId, cycleTitle, mode, onClose, onSav
                           <div
                             key={p.productId}
                             className={`flex items-center justify-between gap-3 px-3 py-2.5 ${
-                              i < prods.length - 1 ? "border-b border-pm-border" : ""
+                              i < prods.length - 1 ? "border-b border-brand-border" : ""
                             }`}
                           >
                             <div className="flex min-w-0 flex-1 items-start gap-2">
@@ -209,16 +209,16 @@ export function EditClosedOrderModal({ cycleId, cycleTitle, mode, onClose, onSav
                                 {p.emoji || getProductEmoji(p.name)}
                               </span>
                               <div className="min-w-0">
-                                <div className="truncate text-[13px] font-medium text-pm-near-black">
+                                <div className="truncate text-[13px] font-medium text-brand-near-black">
                                   {p.name}
                                 </div>
-                                <div className="flex flex-wrap items-center gap-x-2 text-[11px] text-pm-gray">
+                                <div className="flex flex-wrap items-center gap-x-2 text-[11px] text-brand-gray">
                                   {meta && <span className="font-mono">{meta}</span>}
-                                  <span className="font-mono font-semibold text-pm-orange">
+                                  <span className="font-mono font-semibold text-brand-orange">
                                     {formatEur(parseFloat(p.unitPrice))}
                                   </span>
                                   {p.pricePerKg && (
-                                    <span className="font-mono text-[10px] text-pm-gray-light">
+                                    <span className="font-mono text-[10px] text-brand-gray-light">
                                       ({formatEur(parseFloat(p.pricePerKg))}/kg)
                                     </span>
                                   )}
@@ -229,28 +229,28 @@ export function EditClosedOrderModal({ cycleId, cycleTitle, mode, onClose, onSav
                               <button
                                 type="button"
                                 onClick={() => bump(p.productId, 1)}
-                                className="shrink-0 rounded-full bg-black/[0.06] px-3 py-1 text-[18px] font-light text-pm-gray"
+                                className="shrink-0 rounded-full bg-black/[0.06] px-3 py-1 text-[18px] font-light text-brand-gray"
                                 aria-label={`Aggiungi ${p.name}`}
                               >
                                 +
                               </button>
                             ) : (
-                              <div className="flex shrink-0 items-center gap-2 rounded-full bg-pm-orange/15 p-0.5">
+                              <div className="flex shrink-0 items-center gap-2 rounded-full bg-brand-orange/15 p-0.5">
                                 <button
                                   type="button"
                                   onClick={() => bump(p.productId, -1)}
-                                  className="flex h-7 w-7 items-center justify-center rounded-full text-[16px] font-light text-pm-orange"
+                                  className="flex h-7 w-7 items-center justify-center rounded-full text-[16px] font-light text-brand-orange"
                                   aria-label="Riduci"
                                 >
                                   −
                                 </button>
-                                <span className="min-w-[1.5ch] text-center font-mono text-[13px] font-bold text-pm-near-black">
+                                <span className="min-w-[1.5ch] text-center font-mono text-[13px] font-bold text-brand-near-black">
                                   {qty}
                                 </span>
                                 <button
                                   type="button"
                                   onClick={() => bump(p.productId, 1)}
-                                  className="flex h-7 w-7 items-center justify-center rounded-full text-[16px] font-light text-pm-orange"
+                                  className="flex h-7 w-7 items-center justify-center rounded-full text-[16px] font-light text-brand-orange"
                                   aria-label="Aggiungi"
                                 >
                                   +
@@ -265,8 +265,8 @@ export function EditClosedOrderModal({ cycleId, cycleTitle, mode, onClose, onSav
                 ))
               )}
 
-              <div className="mt-4 rounded-xl border border-pm-border bg-white p-3">
-                <label className="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-pm-gray">
+              <div className="mt-4 rounded-xl border border-brand-border bg-white p-3">
+                <label className="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-brand-gray">
                   Motivo (opzionale, mostrato al socio)
                 </label>
                 <input
@@ -274,42 +274,42 @@ export function EditClosedOrderModal({ cycleId, cycleTitle, mode, onClose, onSav
                   value={note}
                   onChange={(e) => setNote(e.target.value)}
                   placeholder='es. "Aggiunti i 6 uova dimenticati al ritiro"'
-                  className="w-full rounded-lg border border-pm-border px-3 py-2 text-[13px] text-pm-near-black focus:outline-none focus:ring-2 focus:ring-pm-teal/30"
+                  className="w-full rounded-lg border border-brand-border px-3 py-2 text-[13px] text-brand-near-black focus:outline-none focus:ring-2 focus:ring-brand-teal/30"
                 />
               </div>
             </>
           )}
         </div>
 
-        <div className="border-t border-pm-border bg-white p-4">
+        <div className="border-t border-brand-border bg-white p-4">
           <div className="mb-3 grid grid-cols-3 gap-2 text-center">
             <div>
-              <div className="font-mono text-[9px] uppercase tracking-wide text-pm-gray-light">
+              <div className="font-mono text-[9px] uppercase tracking-wide text-brand-gray-light">
                 Prima
               </div>
-              <div className="font-mono text-[13px] font-bold text-pm-gray">
+              <div className="font-mono text-[13px] font-bold text-brand-gray">
                 {formatEur(oldTotal)}
               </div>
             </div>
             <div>
-              <div className="font-mono text-[9px] uppercase tracking-wide text-pm-gray-light">
+              <div className="font-mono text-[9px] uppercase tracking-wide text-brand-gray-light">
                 Nuovo
               </div>
-              <div className="font-mono text-[13px] font-bold text-pm-near-black">
+              <div className="font-mono text-[13px] font-bold text-brand-near-black">
                 {formatEur(newTotal)}
               </div>
             </div>
             <div>
-              <div className="font-mono text-[9px] uppercase tracking-wide text-pm-gray-light">
+              <div className="font-mono text-[9px] uppercase tracking-wide text-brand-gray-light">
                 Delta
               </div>
               <div
                 className={`font-mono text-[13px] font-bold ${
                   Math.abs(delta) < 0.005
-                    ? "text-pm-gray"
+                    ? "text-brand-gray"
                     : delta > 0
-                      ? "text-pm-red"
-                      : "text-pm-teal"
+                      ? "text-brand-red"
+                      : "text-brand-teal"
                 }`}
               >
                 {Math.abs(delta) < 0.005
@@ -321,14 +321,14 @@ export function EditClosedOrderModal({ cycleId, cycleTitle, mode, onClose, onSav
           <div className="flex gap-2">
             <button
               onClick={onClose}
-              className="flex-1 rounded-xl border border-pm-border bg-white py-3 text-[13px] font-bold text-pm-gray"
+              className="flex-1 rounded-xl border border-brand-border bg-white py-3 text-[13px] font-bold text-brand-gray"
             >
               Annulla
             </button>
             <button
               onClick={handleSave}
               disabled={isPending || (mode.kind === "create" && !memberId)}
-              className="flex-1 rounded-xl bg-pm-orange py-3 text-[13px] font-bold text-white shadow-lg active:scale-95 disabled:opacity-50"
+              className="flex-1 rounded-xl bg-brand-orange py-3 text-[13px] font-bold text-white shadow-lg active:scale-95 disabled:opacity-50"
             >
               {isPending ? "Salvataggio…" : "Salva modifiche"}
             </button>

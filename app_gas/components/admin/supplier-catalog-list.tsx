@@ -88,24 +88,24 @@ export function SupplierCatalogList({
 
   return (
     <div className="space-y-5">
-      <section className="rounded-xl border border-pm-border bg-white p-4 shadow-sm">
+      <section className="rounded-xl border border-brand-border bg-white p-4 shadow-sm">
         <div className="mb-3 flex items-start justify-between gap-3">
           <div>
-            <h3 className="text-[14px] font-bold text-pm-near-black">Carica prodotti</h3>
-            <p className="text-[11px] text-pm-gray">
+            <h3 className="text-[14px] font-bold text-brand-near-black">Carica prodotti</h3>
+            <p className="text-[11px] text-brand-gray">
               Importa un listino una sola volta scegliendo il fornitore di destinazione.
             </p>
           </div>
         </div>
         <div className="space-y-3">
           <label className="block">
-            <span className="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-pm-gray">
+            <span className="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-brand-gray">
               Fornitore di destinazione
             </span>
             <select
               value={uploadSupplierId}
               onChange={(e) => setUploadSupplierId(e.target.value)}
-              className="w-full rounded-lg border border-pm-border px-3 py-2 text-[13px] text-pm-near-black focus:outline-none focus:ring-2 focus:ring-pm-teal/30"
+              className="w-full rounded-lg border border-brand-border px-3 py-2 text-[13px] text-brand-near-black focus:outline-none focus:ring-2 focus:ring-brand-teal/30"
             >
               {suppliers.length === 0 ? (
                 <option value="">Nessun fornitore disponibile</option>
@@ -122,18 +122,18 @@ export function SupplierCatalogList({
         </div>
       </section>
 
-      <section className="rounded-xl border border-pm-border bg-white p-4 shadow-sm">
+      <section className="rounded-xl border border-brand-border bg-white p-4 shadow-sm">
         <div className="mb-3 flex items-start justify-between gap-3">
           <div>
-            <h3 className="text-[14px] font-bold text-pm-near-black">Catalogo prodotti</h3>
-            <p className="text-[11px] text-pm-gray">
+            <h3 className="text-[14px] font-bold text-brand-near-black">Catalogo prodotti</h3>
+            <p className="text-[11px] text-brand-gray">
               {filtered.length} prodotti visibili su {allProducts.length}
             </p>
           </div>
           <button
             onClick={() => setAddingSupplierId(defaultAddSupplierId || suppliers[0]?.supplierId || null)}
             disabled={suppliers.length === 0}
-            className="rounded-lg bg-pm-teal px-3 py-1.5 text-[11px] font-bold text-white disabled:opacity-50"
+            className="rounded-lg bg-brand-teal px-3 py-1.5 text-[11px] font-bold text-white disabled:opacity-50"
           >
             + Aggiungi
           </button>
@@ -141,13 +141,13 @@ export function SupplierCatalogList({
 
         <div className="grid gap-3">
           <label className="block">
-            <span className="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-pm-gray">
+            <span className="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-brand-gray">
               Fornitore
             </span>
             <select
               value={supplierFilter}
               onChange={(e) => setSupplierFilter(e.target.value)}
-              className="w-full rounded-lg border border-pm-border px-3 py-2 text-[13px] text-pm-near-black focus:outline-none focus:ring-2 focus:ring-pm-teal/30"
+              className="w-full rounded-lg border border-brand-border px-3 py-2 text-[13px] text-brand-near-black focus:outline-none focus:ring-2 focus:ring-brand-teal/30"
             >
               <option value={ALL}>Tutti i fornitori</option>
               {suppliers.map((supplier) => (
@@ -160,13 +160,13 @@ export function SupplierCatalogList({
 
           <div className="grid gap-3 sm:grid-cols-2">
             <label className="block">
-              <span className="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-pm-gray">
+              <span className="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-brand-gray">
                 Categoria
               </span>
               <select
                 value={categoryFilter}
                 onChange={(e) => setCategoryFilter(e.target.value)}
-                className="w-full rounded-lg border border-pm-border px-3 py-2 text-[13px] text-pm-near-black focus:outline-none focus:ring-2 focus:ring-pm-teal/30"
+                className="w-full rounded-lg border border-brand-border px-3 py-2 text-[13px] text-brand-near-black focus:outline-none focus:ring-2 focus:ring-brand-teal/30"
               >
                 <option value={ALL}>Tutte le categorie</option>
                 {categories.map((category) => (
@@ -178,13 +178,13 @@ export function SupplierCatalogList({
             </label>
 
             <label className="block">
-              <span className="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-pm-gray">
+              <span className="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-brand-gray">
                 Raggruppa per
               </span>
               <select
                 value={groupBy}
                 onChange={(e) => setGroupBy(e.target.value as GroupBy)}
-                className="w-full rounded-lg border border-pm-border px-3 py-2 text-[13px] text-pm-near-black focus:outline-none focus:ring-2 focus:ring-pm-teal/30"
+                className="w-full rounded-lg border border-brand-border px-3 py-2 text-[13px] text-brand-near-black focus:outline-none focus:ring-2 focus:ring-brand-teal/30"
               >
                 <option value="category">Categoria</option>
                 <option value="supplier">Fornitore</option>
@@ -208,16 +208,16 @@ export function SupplierCatalogList({
       {grouped.length > 0 ? (
         <div className="space-y-5">
           {grouped.map(([groupName, products]) => (
-            <section key={groupName} className="overflow-hidden rounded-xl border border-pm-border bg-white shadow-sm">
-              <div className="flex items-center justify-between border-b border-pm-border bg-pm-warm-white px-4 py-3">
-                <h3 className="text-[13px] font-bold text-pm-near-black">{groupName}</h3>
-                <span className="font-mono text-[10px] text-pm-gray">{products.length}</span>
+            <section key={groupName} className="overflow-hidden rounded-xl border border-brand-border bg-white shadow-sm">
+              <div className="flex items-center justify-between border-b border-brand-border bg-brand-warm-white px-4 py-3">
+                <h3 className="text-[13px] font-bold text-brand-near-black">{groupName}</h3>
+                <span className="font-mono text-[10px] text-brand-gray">{products.length}</span>
               </div>
-              <div className="divide-y divide-pm-border">
+              <div className="divide-y divide-brand-border">
                 {products.map((product) => (
                   <div
                     key={product.catalogProductId}
-                    className={`flex items-start gap-3 px-4 py-3 hover:bg-pm-warm-white/40 ${
+                    className={`flex items-start gap-3 px-4 py-3 hover:bg-brand-warm-white/40 ${
                       !product.active ? "opacity-50 grayscale" : ""
                     }`}
                   >
@@ -226,42 +226,42 @@ export function SupplierCatalogList({
                     </span>
                     <div className="min-w-0 flex-1">
                       <div className="flex flex-wrap items-center gap-2">
-                        <span className="text-[13px] font-bold text-pm-near-black">{product.name}</span>
+                        <span className="text-[13px] font-bold text-brand-near-black">{product.name}</span>
                         {!product.active && (
-                          <span className="rounded bg-pm-gray-light px-1 py-0.5 text-[9px] font-bold uppercase text-pm-gray">
+                          <span className="rounded bg-brand-gray-light px-1 py-0.5 text-[9px] font-bold uppercase text-brand-gray">
                             Archiviato
                           </span>
                         )}
                       </div>
-                      <div className="mt-1 flex flex-wrap gap-x-3 gap-y-1 text-[11px] text-pm-gray">
+                      <div className="mt-1 flex flex-wrap gap-x-3 gap-y-1 text-[11px] text-brand-gray">
                         <span>{product.supplierName}</span>
                         {product.category && <span>{product.category}</span>}
                         {product.variant && <span>{product.variant}</span>}
                         {product.format && <span>{product.format}</span>}
                       </div>
                       {product.notes && (
-                        <div className="mt-1 text-[11px] text-pm-gray-light">{product.notes}</div>
+                        <div className="mt-1 text-[11px] text-brand-gray-light">{product.notes}</div>
                       )}
                     </div>
                     <div className="shrink-0 text-right">
-                      <div className="font-mono text-[13px] font-bold text-pm-near-black">
+                      <div className="font-mono text-[13px] font-bold text-brand-near-black">
                         {formatEur(parseFloat(product.unitPrice))}
                       </div>
                       {product.pricePerKg && (
-                        <div className="font-mono text-[10px] text-pm-gray-light">
+                        <div className="font-mono text-[10px] text-brand-gray-light">
                           ({formatEur(parseFloat(product.pricePerKg))}/kg)
                         </div>
                       )}
                       <div className="mt-2 flex justify-end gap-2">
                         <button
                           onClick={() => setEditingId(product.catalogProductId)}
-                          className="text-[10px] font-bold text-pm-teal hover:underline"
+                          className="text-[10px] font-bold text-brand-teal hover:underline"
                         >
                           Modifica
                         </button>
                         <button
                           onClick={() => handleArchive(product.catalogProductId, !product.active)}
-                          className="text-[10px] font-bold text-pm-gray hover:text-pm-near-black hover:underline"
+                          className="text-[10px] font-bold text-brand-gray hover:text-brand-near-black hover:underline"
                         >
                           {product.active ? "Archivia" : "Ripristina"}
                         </button>
@@ -274,7 +274,7 @@ export function SupplierCatalogList({
           ))}
         </div>
       ) : (
-        <div className="rounded-xl border border-dashed border-pm-border p-8 text-center text-[13px] text-pm-gray">
+        <div className="rounded-xl border border-dashed border-brand-border p-8 text-center text-[13px] text-brand-gray">
           Nessun prodotto trovato con questi filtri.
         </div>
       )}

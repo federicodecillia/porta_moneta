@@ -194,11 +194,11 @@ export function SupplierActionsDialog({
     });
   }
 
-  const labelCls = "block text-[10px] font-semibold uppercase tracking-wide text-pm-gray";
+  const labelCls = "block text-[10px] font-semibold uppercase tracking-wide text-brand-gray";
   const inputCls =
-    "w-full rounded-lg border border-pm-border bg-white px-2.5 py-1.5 text-[12px] font-mono text-pm-near-black focus:outline-none focus:ring-2 focus:ring-pm-orange/30 disabled:bg-pm-warm-white";
-  const sectionTitleCls = "flex items-center gap-2 text-[13px] font-bold text-pm-near-black";
-  const sectionDescCls = "mb-2 text-[11px] text-pm-gray";
+    "w-full rounded-lg border border-brand-border bg-white px-2.5 py-1.5 text-[12px] font-mono text-brand-near-black focus:outline-none focus:ring-2 focus:ring-brand-orange/30 disabled:bg-brand-warm-white";
+  const sectionTitleCls = "flex items-center gap-2 text-[13px] font-bold text-brand-near-black";
+  const sectionDescCls = "mb-2 text-[11px] text-brand-gray";
 
   return (
     <Dialog.Root open={open} onOpenChange={onOpenChange}>
@@ -206,18 +206,18 @@ export function SupplierActionsDialog({
         <Dialog.Overlay className="fixed inset-0 z-[150] bg-black/30 backdrop-blur-[4px] data-[state=open]:animate-in data-[state=open]:fade-in-0 data-[state=closed]:animate-out data-[state=closed]:fade-out-0" />
         <Dialog.Content
           aria-describedby={undefined}
-          className="fixed left-1/2 top-1/2 z-[151] flex max-h-[92vh] w-[94%] max-w-[560px] -translate-x-1/2 -translate-y-1/2 flex-col overflow-hidden rounded-2xl border border-pm-border bg-white shadow-[0_8px_32px_rgba(45,43,41,0.15)] data-[state=open]:animate-in data-[state=open]:zoom-in-95 data-[state=closed]:animate-out data-[state=closed]:zoom-out-95"
+          className="fixed left-1/2 top-1/2 z-[151] flex max-h-[92vh] w-[94%] max-w-[560px] -translate-x-1/2 -translate-y-1/2 flex-col overflow-hidden rounded-2xl border border-brand-border bg-white shadow-[0_8px_32px_rgba(45,43,41,0.15)] data-[state=open]:animate-in data-[state=open]:zoom-in-95 data-[state=closed]:animate-out data-[state=closed]:zoom-out-95"
         >
-          <div className="flex items-center justify-between border-b border-pm-border p-5">
+          <div className="flex items-center justify-between border-b border-brand-border p-5">
             <div>
-              <Dialog.Title className="text-[15px] font-bold text-pm-near-black">
+              <Dialog.Title className="text-[15px] font-bold text-brand-near-black">
                 Fornitore{supplierName ? ` — ${supplierName}` : ""}
               </Dialog.Title>
-              <p className="mt-0.5 text-[11px] text-pm-gray">Ciclo: {cycleTitle}</p>
+              <p className="mt-0.5 text-[11px] text-brand-gray">Ciclo: {cycleTitle}</p>
             </div>
             <button
               onClick={() => onOpenChange(false)}
-              className="rounded-full bg-pm-border p-2 text-pm-gray hover:bg-pm-gray-light"
+              className="rounded-full bg-brand-border p-2 text-brand-gray hover:bg-brand-gray-light"
             >
               ✕
             </button>
@@ -233,13 +233,13 @@ export function SupplierActionsDialog({
               <button
                 onClick={handleDownload}
                 disabled={downloading}
-                className="w-full rounded-xl border border-pm-teal/30 bg-pm-teal-light py-2.5 text-[13px] font-bold text-pm-teal active:scale-95 disabled:opacity-50"
+                className="w-full rounded-xl border border-brand-teal/30 bg-brand-teal-light py-2.5 text-[13px] font-bold text-brand-teal active:scale-95 disabled:opacity-50"
               >
                 {downloading ? "Generazione…" : "Scarica Excel"}
               </button>
             </section>
 
-            <div className="border-t border-pm-border" />
+            <div className="border-t border-brand-border" />
 
             {/* ── Invia mail ────────────────────────────────── */}
             <section>
@@ -248,7 +248,7 @@ export function SupplierActionsDialog({
                 Manda l&apos;Excel via Resend. Modifica i campi qui sotto se serve per questa singola spedizione.
               </p>
               {defaultsLoading ? (
-                <div className="py-4 text-center text-[12px] text-pm-gray">Caricamento default…</div>
+                <div className="py-4 text-center text-[12px] text-brand-gray">Caricamento default…</div>
               ) : (
                 <div className="space-y-2.5">
                   <div>
@@ -271,7 +271,7 @@ export function SupplierActionsDialog({
                       placeholder="default da MAIL_FROM"
                       className={inputCls}
                     />
-                    <p className="mt-0.5 text-[10px] text-pm-gray-light">
+                    <p className="mt-0.5 text-[10px] text-brand-gray-light">
                       Deve essere un indirizzo di un dominio verificato in Resend.
                     </p>
                   </div>
@@ -298,7 +298,7 @@ export function SupplierActionsDialog({
                   <button
                     onClick={handleSendMail}
                     disabled={defaultsLoading || sending}
-                    className="w-full rounded-xl bg-pm-near-black py-2.5 text-[13px] font-bold text-white shadow-lg active:scale-95 disabled:opacity-50"
+                    className="w-full rounded-xl bg-brand-near-black py-2.5 text-[13px] font-bold text-white shadow-lg active:scale-95 disabled:opacity-50"
                   >
                     {sending ? "Invio…" : "Invia ora"}
                   </button>
@@ -306,7 +306,7 @@ export function SupplierActionsDialog({
               )}
             </section>
 
-            <div className="border-t border-pm-border" />
+            <div className="border-t border-brand-border" />
 
             {/* ── Carica distinta ───────────────────────────── */}
             <section>
@@ -318,17 +318,17 @@ export function SupplierActionsDialog({
                 type="file"
                 accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
                 onChange={onFileChange}
-                className="block w-full cursor-pointer rounded-xl border border-dashed border-pm-orange/40 bg-white px-3 py-2 text-[12px] file:mr-3 file:rounded-lg file:border-0 file:bg-pm-orange file:px-3 file:py-1.5 file:text-[11px] file:font-bold file:text-white"
+                className="block w-full cursor-pointer rounded-xl border border-dashed border-brand-orange/40 bg-white px-3 py-2 text-[12px] file:mr-3 file:rounded-lg file:border-0 file:bg-brand-orange file:px-3 file:py-1.5 file:text-[11px] file:font-bold file:text-white"
               />
               {fileName && (
-                <p className="mt-1 text-[11px] text-pm-gray">
-                  File: <span className="font-mono text-pm-near-black">{fileName}</span>
+                <p className="mt-1 text-[11px] text-brand-gray">
+                  File: <span className="font-mono text-brand-near-black">{fileName}</span>
                 </p>
               )}
               <button
                 onClick={handlePreview}
                 disabled={!fileBase64 || previewing}
-                className="mt-2 w-full rounded-xl bg-pm-orange py-2.5 text-[13px] font-bold text-white disabled:opacity-50"
+                className="mt-2 w-full rounded-xl bg-brand-orange py-2.5 text-[13px] font-bold text-white disabled:opacity-50"
               >
                 {previewing ? "Lettura in corso…" : "Anteprima modifiche"}
               </button>
@@ -336,7 +336,7 @@ export function SupplierActionsDialog({
               {preview && (
                 <div className="mt-3 space-y-3">
                   {preview.errors.length > 0 && (
-                    <div className="rounded-lg border border-pm-red/30 bg-pm-red-light p-3 text-[12px] text-pm-red">
+                    <div className="rounded-lg border border-brand-red/30 bg-brand-red-light p-3 text-[12px] text-brand-red">
                       <div className="mb-1 font-bold">Errori — niente verrà salvato:</div>
                       <ul className="list-disc pl-4">
                         {preview.errors.map((e, i) => (
@@ -371,8 +371,8 @@ export function SupplierActionsDialog({
                   />
 
                   {preview.warnings.length > 0 && (
-                    <div className="rounded-lg border border-pm-orange/30 bg-pm-orange-light p-3 text-[12px] text-pm-near-black">
-                      <div className="mb-1 font-bold text-pm-orange">Avvisi</div>
+                    <div className="rounded-lg border border-brand-orange/30 bg-brand-orange-light p-3 text-[12px] text-brand-near-black">
+                      <div className="mb-1 font-bold text-brand-orange">Avvisi</div>
                       <ul className="list-disc pl-4">
                         {preview.warnings.map((w, i) => (
                           <li key={i}>{w}</li>
@@ -388,7 +388,7 @@ export function SupplierActionsDialog({
                       (preview.corrections.length === 0 && preview.shippingChanges.length === 0) ||
                       applying
                     }
-                    className="w-full rounded-xl bg-pm-near-black py-2.5 text-[13px] font-bold text-white shadow-lg active:scale-95 disabled:opacity-50"
+                    className="w-full rounded-xl bg-brand-near-black py-2.5 text-[13px] font-bold text-white shadow-lg active:scale-95 disabled:opacity-50"
                   >
                     {applying ? "Applicazione in corso…" : "Applica modifiche"}
                   </button>
@@ -412,23 +412,23 @@ function PreviewSection({
   rows: Array<{ key: string; left: string; oldVal: number; newVal: number; delta: number }>;
 }) {
   return (
-    <div className="overflow-hidden rounded-lg border border-pm-border bg-white">
-      <div className="border-b border-pm-border bg-black/[0.02] px-3 py-1.5 text-[11px] font-bold text-pm-near-black">
-        {title} <span className="font-normal text-pm-gray">({rows.length})</span>
+    <div className="overflow-hidden rounded-lg border border-brand-border bg-white">
+      <div className="border-b border-brand-border bg-black/[0.02] px-3 py-1.5 text-[11px] font-bold text-brand-near-black">
+        {title} <span className="font-normal text-brand-gray">({rows.length})</span>
       </div>
       {rows.length === 0 ? (
-        <div className="px-3 py-2 text-[11px] text-pm-gray">{empty}</div>
+        <div className="px-3 py-2 text-[11px] text-brand-gray">{empty}</div>
       ) : (
-        <ul className="divide-y divide-pm-border">
+        <ul className="divide-y divide-brand-border">
           {rows.map((r) => (
             <li key={r.key} className="flex items-center justify-between px-3 py-1.5 text-[12px]">
-              <span className="truncate pr-2 text-pm-near-black">{r.left}</span>
+              <span className="truncate pr-2 text-brand-near-black">{r.left}</span>
               <span className="shrink-0 font-mono text-[11px]">
-                <span className="text-pm-gray-light line-through">{formatEur(r.oldVal)}</span>
-                <span className="mx-1 text-pm-gray">→</span>
-                <span className="font-bold text-pm-near-black">{formatEur(r.newVal)}</span>
+                <span className="text-brand-gray-light line-through">{formatEur(r.oldVal)}</span>
+                <span className="mx-1 text-brand-gray">→</span>
+                <span className="font-bold text-brand-near-black">{formatEur(r.newVal)}</span>
                 <span
-                  className={`ml-2 ${r.delta > 0 ? "text-pm-red" : r.delta < 0 ? "text-pm-teal" : "text-pm-gray"}`}
+                  className={`ml-2 ${r.delta > 0 ? "text-brand-red" : r.delta < 0 ? "text-brand-teal" : "text-brand-gray"}`}
                 >
                   ({r.delta > 0 ? "+" : ""}
                   {formatEur(r.delta)})

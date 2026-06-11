@@ -42,31 +42,31 @@ export function SociForm({ member, onClose }: { member?: Member; onClose?: () =>
   }
 
   return (
-    <form onSubmit={handleSubmit} className="rounded-xl border border-pm-border bg-white p-4 shadow-sm">
+    <form onSubmit={handleSubmit} className="rounded-xl border border-brand-border bg-white p-4 shadow-sm">
       <div className="mb-3 flex items-center justify-between">
-        <p className="text-[13px] font-bold text-pm-near-black">
+        <p className="text-[13px] font-bold text-brand-near-black">
           {isEdit ? `Modifica: ${member.fullName}` : "Aggiungi socio"}
         </p>
         {isEdit && onClose && (
-          <button type="button" onClick={onClose} className="text-[11px] text-pm-gray">
+          <button type="button" onClick={onClose} className="text-[11px] text-brand-gray">
             ✕ Annulla
           </button>
         )}
       </div>
       <div className="space-y-3">
         <div>
-          <label className="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-pm-gray">
+          <label className="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-brand-gray">
             Nome *
           </label>
           <input
             name="fullName"
             required
             defaultValue={member?.fullName}
-            className="w-full rounded-lg border border-pm-border px-3 py-2 text-[13px] text-pm-near-black focus:outline-none focus:ring-2 focus:ring-pm-orange/30"
+            className="w-full rounded-lg border border-brand-border px-3 py-2 text-[13px] text-brand-near-black focus:outline-none focus:ring-2 focus:ring-brand-orange/30"
           />
         </div>
         <div>
-          <label className="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-pm-gray">
+          <label className="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-brand-gray">
             Email *
           </label>
           <input
@@ -74,31 +74,31 @@ export function SociForm({ member, onClose }: { member?: Member; onClose?: () =>
             type="email"
             required
             defaultValue={member?.email}
-            className="w-full rounded-lg border border-pm-border px-3 py-2 text-[13px] text-pm-near-black focus:outline-none focus:ring-2 focus:ring-pm-orange/30"
+            className="w-full rounded-lg border border-brand-border px-3 py-2 text-[13px] text-brand-near-black focus:outline-none focus:ring-2 focus:ring-brand-orange/30"
           />
         </div>
         <div>
-          <label className="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-pm-gray">
+          <label className="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-brand-gray">
             Email secondaria
-            <span className="ml-1 font-normal normal-case text-pm-gray-light">(alias login)</span>
+            <span className="ml-1 font-normal normal-case text-brand-gray-light">(alias login)</span>
           </label>
           <input
             name="aliasEmail"
             type="email"
             defaultValue={member?.aliasEmail ?? ""}
             placeholder="es. nome@gmail.com"
-            className="w-full rounded-lg border border-pm-border px-3 py-2 text-[13px] text-pm-near-black focus:outline-none focus:ring-2 focus:ring-pm-orange/30"
+            className="w-full rounded-lg border border-brand-border px-3 py-2 text-[13px] text-brand-near-black focus:outline-none focus:ring-2 focus:ring-brand-orange/30"
           />
         </div>
         <div className="grid grid-cols-2 gap-3">
           <div>
-            <label className="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-pm-gray">
+            <label className="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-brand-gray">
               Ruolo
             </label>
             <select
               name="role"
               defaultValue={member?.role ?? "socio"}
-              className="w-full rounded-lg border border-pm-border px-3 py-2 text-[13px] text-pm-near-black focus:outline-none focus:ring-2 focus:ring-pm-orange/30"
+              className="w-full rounded-lg border border-brand-border px-3 py-2 text-[13px] text-brand-near-black focus:outline-none focus:ring-2 focus:ring-brand-orange/30"
             >
               <option value="admin">Admin</option>
               <option value="attivo">Socio</option>
@@ -106,13 +106,13 @@ export function SociForm({ member, onClose }: { member?: Member; onClose?: () =>
             </select>
           </div>
           <div>
-            <label className="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-pm-gray">
+            <label className="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-brand-gray">
               Stato
             </label>
             <select
               name="active"
               defaultValue={String(member?.active ?? true)}
-              className="w-full rounded-lg border border-pm-border px-3 py-2 text-[13px] text-pm-near-black focus:outline-none focus:ring-2 focus:ring-pm-orange/30"
+              className="w-full rounded-lg border border-brand-border px-3 py-2 text-[13px] text-brand-near-black focus:outline-none focus:ring-2 focus:ring-brand-orange/30"
             >
               <option value="true">Attivo</option>
               <option value="false">Inattivo</option>
@@ -123,7 +123,7 @@ export function SociForm({ member, onClose }: { member?: Member; onClose?: () =>
       <button
         type="submit"
         disabled={isPending}
-        className="mt-4 w-full rounded-xl bg-pm-orange py-2 text-[13px] font-bold text-white disabled:opacity-60"
+        className="mt-4 w-full rounded-xl bg-brand-orange py-2 text-[13px] font-bold text-white disabled:opacity-60"
       >
         {isPending ? "Salvataggio…" : isEdit ? "Aggiorna" : "Aggiungi socio"}
       </button>
@@ -171,10 +171,10 @@ export function SociList({ members }: { members: Member[] }) {
     if (list.length === 0) return null;
     return (
       <div className="mb-4">
-        <p className="mb-1 px-1 font-mono text-[10px] uppercase tracking-wider text-pm-gray-light">
+        <p className="mb-1 px-1 font-mono text-[10px] uppercase tracking-wider text-brand-gray-light">
           {label} ({list.length})
         </p>
-        <div className="divide-y divide-pm-border rounded-xl border border-pm-border bg-white shadow-sm">
+        <div className="divide-y divide-brand-border rounded-xl border border-brand-border bg-white shadow-sm">
           {list.map((m) =>
             editingId === m.memberId ? (
               <div key={m.memberId} className="p-4">
@@ -184,17 +184,17 @@ export function SociList({ members }: { members: Member[] }) {
               <div key={m.memberId} className="flex items-center justify-between px-4 py-3">
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-2">
-                    <span className="text-[13px] font-medium text-pm-near-black">{m.fullName}</span>
+                    <span className="text-[13px] font-medium text-brand-near-black">{m.fullName}</span>
                     {!m.active && (
-                      <span className="rounded-full bg-pm-red-light px-1.5 py-0.5 text-[9px] font-bold text-pm-red">
+                      <span className="rounded-full bg-brand-red-light px-1.5 py-0.5 text-[9px] font-bold text-brand-red">
                         inattivo
                       </span>
                     )}
                   </div>
-                  <div className="font-mono text-[10px] text-pm-gray-light">
+                  <div className="font-mono text-[10px] text-brand-gray-light">
                     {m.email}
                     {m.aliasEmail && (
-                      <span className="ml-1 text-pm-teal">· {m.aliasEmail}</span>
+                      <span className="ml-1 text-brand-teal">· {m.aliasEmail}</span>
                     )}
                   </div>
                 </div>
@@ -204,14 +204,14 @@ export function SociList({ members }: { members: Member[] }) {
                   </span>
                   <button
                     onClick={() => setEditingId(m.memberId)}
-                    className="rounded-full border border-pm-border px-2.5 py-1 text-[10px] font-semibold text-pm-gray"
+                    className="rounded-full border border-brand-border px-2.5 py-1 text-[10px] font-semibold text-brand-gray"
                   >
                     Modifica
                   </button>
                   <button
                     onClick={() => handleDelete(m)}
                     disabled={deletingId}
-                    className="rounded-full border border-pm-red/30 px-2.5 py-1 text-[10px] font-semibold text-pm-red disabled:opacity-40"
+                    className="rounded-full border border-brand-red/30 px-2.5 py-1 text-[10px] font-semibold text-brand-red disabled:opacity-40"
                   >
                     ✕
                   </button>
@@ -232,14 +232,14 @@ export function SociList({ members }: { members: Member[] }) {
           placeholder="Cerca per nome o email…"
           value={filter}
           onChange={(e) => setFilter(e.target.value)}
-          className="w-full rounded-xl border border-pm-border bg-white px-4 py-2.5 text-[13px] text-pm-near-black placeholder:text-pm-gray-light focus:outline-none focus:ring-2 focus:ring-pm-orange/30"
+          className="w-full rounded-xl border border-brand-border bg-white px-4 py-2.5 text-[13px] text-brand-near-black placeholder:text-brand-gray-light focus:outline-none focus:ring-2 focus:ring-brand-orange/30"
         />
       </div>
-      {renderGroup("Admin", admins, "bg-pm-orange-light text-pm-orange")}
-      {renderGroup("Soci", soci, "bg-pm-teal-light text-pm-teal")}
-      {renderGroup("Utenti", utenti, "bg-black/[0.05] text-pm-gray")}
+      {renderGroup("Admin", admins, "bg-brand-orange-light text-brand-orange")}
+      {renderGroup("Soci", soci, "bg-brand-teal-light text-brand-teal")}
+      {renderGroup("Utenti", utenti, "bg-black/[0.05] text-brand-gray")}
       {visible.length === 0 && (
-        <div className="py-6 text-center text-[12px] text-pm-gray">Nessun risultato</div>
+        <div className="py-6 text-center text-[12px] text-brand-gray">Nessun risultato</div>
       )}
     </div>
   );

@@ -102,7 +102,7 @@ export function CategorySelect({ name, value, extra = [], placeholder = "Scegli 
   }
 
   const triggerCls =
-    "flex w-full items-center justify-between rounded-lg border border-pm-border bg-white px-3 py-2 text-left text-[13px] text-pm-near-black focus:outline-none focus:ring-2 focus:ring-pm-teal/30";
+    "flex w-full items-center justify-between rounded-lg border border-brand-border bg-white px-3 py-2 text-left text-[13px] text-brand-near-black focus:outline-none focus:ring-2 focus:ring-brand-teal/30";
 
   return (
     <div ref={rootRef} className="relative">
@@ -115,16 +115,16 @@ export function CategorySelect({ name, value, extra = [], placeholder = "Scegli 
         aria-expanded={open}
         className={triggerCls}
       >
-        <span className={selected ? "" : "text-pm-gray-light"}>
+        <span className={selected ? "" : "text-brand-gray-light"}>
           {selected || placeholder}
         </span>
-        <span className="ml-2 text-pm-gray-light">▾</span>
+        <span className="ml-2 text-brand-gray-light">▾</span>
       </button>
 
       {open && (
         <div
           role="listbox"
-          className="absolute left-0 right-0 z-50 mt-1 max-h-[260px] overflow-y-auto rounded-lg border border-pm-border bg-white shadow-lg"
+          className="absolute left-0 right-0 z-50 mt-1 max-h-[260px] overflow-y-auto rounded-lg border border-brand-border bg-white shadow-lg"
         >
           {options.map((opt) => (
             <button
@@ -133,17 +133,17 @@ export function CategorySelect({ name, value, extra = [], placeholder = "Scegli 
               role="option"
               aria-selected={opt === selected}
               onClick={() => pick(opt)}
-              className={`flex w-full items-center justify-between px-3 py-1.5 text-left text-[13px] transition hover:bg-pm-teal-light ${
-                opt === selected ? "bg-pm-teal-light font-semibold text-pm-teal" : "text-pm-near-black"
+              className={`flex w-full items-center justify-between px-3 py-1.5 text-left text-[13px] transition hover:bg-brand-teal-light ${
+                opt === selected ? "bg-brand-teal-light font-semibold text-brand-teal" : "text-brand-near-black"
               }`}
             >
               <span>{opt}</span>
-              {opt === selected && <span className="text-[11px] text-pm-teal">✓</span>}
+              {opt === selected && <span className="text-[11px] text-brand-teal">✓</span>}
             </button>
           ))}
 
           {/* "+ aggiungi nuova" row */}
-          <div className="border-t border-pm-border bg-pm-warm-white">
+          <div className="border-t border-brand-border bg-brand-warm-white">
             {adding ? (
               <div className="flex items-center gap-1 p-2">
                 <input
@@ -158,12 +158,12 @@ export function CategorySelect({ name, value, extra = [], placeholder = "Scegli 
                     }
                   }}
                   placeholder="Nuova categoria…"
-                  className="flex-1 rounded-md border border-pm-border bg-white px-2 py-1 text-[12px] focus:outline-none focus:ring-2 focus:ring-pm-teal/30"
+                  className="flex-1 rounded-md border border-brand-border bg-white px-2 py-1 text-[12px] focus:outline-none focus:ring-2 focus:ring-brand-teal/30"
                 />
                 <button
                   type="button"
                   onClick={confirmAdd}
-                  className="rounded-md bg-pm-teal px-2 py-1 text-[11px] font-bold text-white"
+                  className="rounded-md bg-brand-teal px-2 py-1 text-[11px] font-bold text-white"
                 >
                   OK
                 </button>
@@ -173,7 +173,7 @@ export function CategorySelect({ name, value, extra = [], placeholder = "Scegli 
                     setAdding(false);
                     setNewCat("");
                   }}
-                  className="rounded-md px-2 py-1 text-[11px] text-pm-gray"
+                  className="rounded-md px-2 py-1 text-[11px] text-brand-gray"
                 >
                   ✕
                 </button>
@@ -182,7 +182,7 @@ export function CategorySelect({ name, value, extra = [], placeholder = "Scegli 
               <button
                 type="button"
                 onClick={() => setAdding(true)}
-                className="flex w-full items-center gap-1.5 px-3 py-2 text-left text-[12px] font-semibold text-pm-teal hover:bg-pm-teal-light"
+                className="flex w-full items-center gap-1.5 px-3 py-2 text-left text-[12px] font-semibold text-brand-teal hover:bg-brand-teal-light"
               >
                 <span aria-hidden>+</span> Aggiungi nuova categoria
               </button>

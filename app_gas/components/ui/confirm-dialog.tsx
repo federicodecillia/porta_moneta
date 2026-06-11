@@ -60,13 +60,13 @@ export function ConfirmDialogProvider() {
         <Dialog.Overlay className="fixed inset-0 z-[150] bg-black/30 backdrop-blur-[4px] data-[state=open]:animate-in data-[state=open]:fade-in-0 data-[state=closed]:animate-out data-[state=closed]:fade-out-0" />
         <Dialog.Content
           aria-describedby={undefined}
-          className="fixed left-1/2 top-1/2 z-[151] w-[90%] max-w-[340px] -translate-x-1/2 -translate-y-1/2 rounded-3xl border border-pm-border bg-white p-8 text-center shadow-[0_8px_32px_rgba(45,43,41,0.15)] data-[state=open]:animate-in data-[state=open]:zoom-in-95 data-[state=closed]:animate-out data-[state=closed]:zoom-out-95"
+          className="fixed left-1/2 top-1/2 z-[151] w-[90%] max-w-[340px] -translate-x-1/2 -translate-y-1/2 rounded-3xl border border-brand-border bg-white p-8 text-center shadow-[0_8px_32px_rgba(45,43,41,0.15)] data-[state=open]:animate-in data-[state=open]:zoom-in-95 data-[state=closed]:animate-out data-[state=closed]:zoom-out-95"
         >
-          <Dialog.Title className="mb-3 text-lg font-bold text-pm-near-black">
+          <Dialog.Title className="mb-3 text-lg font-bold text-brand-near-black">
             {request?.title}
           </Dialog.Title>
           {request?.message && (
-            <Dialog.Description className="mb-5 text-[15px] text-pm-gray">
+            <Dialog.Description className="mb-5 text-[15px] text-brand-gray">
               {request.message}
             </Dialog.Description>
           )}
