@@ -71,6 +71,29 @@ npm run db:studio    # Drizzle Studio (visual DB browser)
 
 **Vercel Root Directory**: `app_gas` (set in project settings)
 
+## Two environments: production + demo
+
+This repo deploys to **two** Vercel projects from the same `main` branch,
+differing only by environment variables:
+
+- **Production** — `gas.portamoneta.org`, real members, no `DEMO_MODE`.
+- **Public demo** — `porta-moneta-demo.vercel.app`, fake data, `DEMO_MODE=true`,
+  reseeded nightly.
+
+Demo behaviour lives behind the `DEMO_MODE` flag (the `demo-login` provider in
+`auth.ts`, the banner in `components/demo-banner.tsx`, the email short-circuit in
+`lib/email/resend.ts`) — it is **not** a separate branch. A merge to `main`
+rebuilds both deployments. Schema changes must be pushed to **both** databases,
+and demo-only changes go in a separate changelog section.
+
+```bash
+npm run db:seed:demo   # reseed the demo DB (reads .env.demo.local)
+```
+
+See [`docs/operating-two-environments.md`](./docs/operating-two-environments.md)
+for the full model: env matrix, migration steps, changelog split, and link
+privacy (gas.portamoneta.org is private; only the demo URL is for public use).
+
 ## Documentation conventions
 
 The repository is public and used as a portfolio piece. Keep contributor-
