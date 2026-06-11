@@ -1,28 +1,19 @@
 import type { MetadataRoute } from "next";
+import { brand } from "@/lib/brand";
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: "Porta Moneta GAS",
-    short_name: "PM GAS",
-    description: "Ordini settimanali del Gruppo di Acquisto Solidale",
+    name: brand.appName,
+    short_name: brand.shortName,
+    description: brand.description,
     start_url: "/",
     display: "standalone",
-    background_color: "#faf8f5",
-    theme_color: "#f5a623",
+    background_color: brand.theme.background ?? "#faf8f5",
+    theme_color: brand.theme.primary ?? "#f5a623",
     orientation: "portrait",
     icons: [
-      {
-        src: "/logo.png",
-        sizes: "any",
-        type: "image/png",
-        purpose: "any",
-      },
-      {
-        src: "/logo.png",
-        sizes: "any",
-        type: "image/png",
-        purpose: "maskable",
-      },
+      { src: brand.logoUrl, sizes: "any", type: "image/png", purpose: "any" },
+      { src: brand.logoUrl, sizes: "any", type: "image/png", purpose: "maskable" },
     ],
   };
 }

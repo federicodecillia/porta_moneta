@@ -5,6 +5,26 @@ import { Toaster } from "@/components/providers/toaster";
 import { ConfirmDialogProvider } from "@/components/ui/confirm-dialog";
 import { Analytics } from "@vercel/analytics/next";
 import { SpeedInsights } from "@vercel/speed-insights/next";
+import { brand } from "@/lib/brand";
+import type { BrandTheme } from "@/lib/brand";
+
+const THEME_VAR_MAP: Record<keyof BrandTheme, string[]> = {
+  primary: ["--orange"],
+  primaryLight: ["--orange-l"],
+  accent: ["--teal"],
+  accentLight: ["--teal-l"],
+  background: ["--background", "--warm-wh"],
+  frame: ["--frame"],
+};
+
+function themeStyle(): React.CSSProperties {
+  const style: Record<string, string> = {};
+  for (const [key, vars] of Object.entries(THEME_VAR_MAP)) {
+    const value = brand.theme[key as keyof BrandTheme];
+    if (value) for (const v of vars) style[v] = value;
+  }
+  return style as React.CSSProperties;
+}
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -18,18 +38,16 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: {
-    default: "Porta Moneta GAS",
-    template: "%s · PM GAS",
+    default: brand.appName,
+    template: `%s · ${brand.shortName}`,
   },
-  description: "Ordini settimanali del Gruppo di Acquisto Solidale Porta Moneta",
+  description: brand.description,
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
-    title: "PM GAS",
+    title: brand.shortName,
   },
-  formatDetection: {
-    telephone: false,
-  },
+  formatDetection: { telephone: false },
 };
 
 export const viewport: Viewport = {
@@ -37,7 +55,7 @@ export const viewport: Viewport = {
   initialScale: 1,
   maximumScale: 1,
   userScalable: false,
-  themeColor: "#f5a623",
+  themeColor: brand.theme.primary ?? "#f5a623",
 };
 
 export default function RootLayout({
@@ -47,8 +65,9 @@ export default function RootLayout({
 }>) {
   return (
     <html
-      lang="it"
+      lang={brand.locale}
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
+      style={themeStyle()}
     >
       <head>
         <link rel="apple-touch-icon" href="/logo.png" />
