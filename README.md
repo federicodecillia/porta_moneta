@@ -5,12 +5,60 @@ food cooperative (GAS — *Gruppo di Acquisto Solidale*). Members log in with
 Google, place orders inside a time-boxed cycle, and track a running ledger
 balance. Admins manage cycles, products, suppliers, top-ups, and analytics.
 
-**Live:** [gas.portamoneta.org](https://gas.portamoneta.org)
-**Try it now:** [porta-moneta-demo.vercel.app](https://porta-moneta-demo.vercel.app) — one-click demo login (Socio or Admin), fake data, nightly reset
-**Changelog:** [English](./app_gas/CHANGELOG.md) · [Italiano](./app_gas/CHANGELOG.it.md)
+| | |
+|---|---|
+| 🧪 **Try the public demo** | **[porta-moneta-demo.vercel.app](https://porta-moneta-demo.vercel.app)** — one-click login, fake data |
+| 🟢 **Live site (members only)** | [gas.portamoneta.org](https://gas.portamoneta.org) |
+| 📋 **Changelog** | [English](./app_gas/CHANGELOG.md) · [Italiano](./app_gas/CHANGELOG.it.md) |
 
-The UI is in Italian because that's the target audience. Code, identifiers,
-and documentation are in English.
+![Porta Moneta GAS — member and admin walkthrough](./docs/demo.gif)
+
+---
+
+## What is this?
+
+Porta Moneta GAS is the real tool a Rome-based food co-op uses **every week** to
+run group orders of fruit and vegetables: members place orders within a weekly
+window, the system tracks each member's prepaid balance like a ledger, and an
+admin closes the cycle, charges everyone, splits shipping, and emails the order
+to the supplier.
+
+It is also a complete, real-world **reference implementation** of a modern
+Next.js app: App Router, React Server Components, Server Actions, Auth.js v5,
+Drizzle ORM on serverless Postgres, deployed on Vercel — with real concurrency
+control and money math, not a toy demo.
+
+**Who it's for:**
+
+- **Co-ops, GAS groups, buying clubs** that need a simple ordering + balance tool
+  and want to run, fork, or commission their own instance.
+- **Developers** looking for a production-grade Next.js 15 / Server Actions /
+  Drizzle / Neon example to learn from.
+- **Anyone evaluating the work** — recruiters, collaborators, potential clients.
+
+The UI is in Italian (the co-op's members are Italian); all code, identifiers,
+comments, and docs are in English.
+
+---
+
+## Try the demo
+
+[**porta-moneta-demo.vercel.app**](https://porta-moneta-demo.vercel.app) is a
+fully interactive demo running on fake data:
+
+1. **One-click login, no signup.** Choose **"Entra come Socio"** for the member
+   view, or **"Entra come Admin"** for the admin panel.
+2. **As a member:** place an order in the open cycle, then browse your balance,
+   order history, ledger movements, and notifications.
+3. **As an admin:** manage the cycle and products, record a top-up in the Cassa
+   tab, review members, and open the analytics dashboard.
+
+Data is **fake and reset automatically every night**, so click around freely —
+nothing you do is permanent.
+
+> The production site ([gas.portamoneta.org](https://gas.portamoneta.org)) is
+> **private**: login is restricted to the co-op's members and holds real data.
+> Use the demo to explore the app.
 
 ---
 
