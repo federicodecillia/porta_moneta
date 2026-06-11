@@ -1,5 +1,6 @@
 import { and, eq, sql } from "drizzle-orm";
 import ExcelJS from "exceljs";
+import { brand } from "@/lib/brand";
 import { getDb } from "@/lib/db/client";
 import {
   ledgerEntries,
@@ -194,7 +195,7 @@ export async function buildSupplierDistinta(cycleId: string): Promise<DistintaBu
 
   // ── Workbook ──
   const wb = new ExcelJS.Workbook();
-  wb.creator = "Porta Moneta GAS";
+  wb.creator = brand.appName;
   wb.created = new Date();
 
   // ── Distinta sheet ──

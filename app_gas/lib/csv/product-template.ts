@@ -1,4 +1,5 @@
 import ExcelJS from "exceljs";
+import { brand } from "@/lib/brand";
 
 const FILL_HEADER = "FF2D2B29";
 const FILL_EXAMPLE = "FFFAF8F5";
@@ -39,7 +40,7 @@ const EXAMPLES: Array<{
 
 export async function buildProductTemplate(): Promise<Buffer> {
   const wb = new ExcelJS.Workbook();
-  wb.creator = "Porta Moneta GAS";
+  wb.creator = brand.appName;
   wb.created = new Date();
 
   const ws = wb.addWorksheet("Prodotti");

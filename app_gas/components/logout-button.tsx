@@ -1,5 +1,6 @@
 "use client";
 
+import { brand } from "@/lib/brand";
 import { Button } from "@/components/ui/button";
 import { confirm } from "@/components/ui/confirm-dialog";
 
@@ -11,7 +12,7 @@ export function LogoutButton({ action }: Props) {
   async function handleClick() {
     const ok = await confirm({
       title: "Uscire?",
-      message: "Verrai disconnesso da Porta Moneta.",
+      message: `Verrai disconnesso da ${brand.appName}.`,
       confirmLabel: "Esci",
       cancelLabel: "Annulla",
     });

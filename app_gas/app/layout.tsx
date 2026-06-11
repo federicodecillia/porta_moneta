@@ -70,7 +70,7 @@ export default function RootLayout({
       style={themeStyle()}
     >
       <head>
-        <link rel="apple-touch-icon" href="/logo.png" />
+        <link rel="apple-touch-icon" href={brand.logoUrl} />
       </head>
       <body className="text-pm-near-black flex min-h-full flex-col">
         {children}

@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { brand } from "@/lib/brand";
 import { AppShell } from "@/components/app-shell";
 import { FaqAccordion } from "@/components/ui/faq-accordion";
 import { getUserRole, requireUserSession } from "@/lib/auth/session";
@@ -177,20 +178,20 @@ export default async function GuidaPage() {
         <div className="mb-[10px] text-[32px]">📬</div>
         <div className="mb-[6px] text-[15px] font-bold text-pm-near-black">Hai altre domande?</div>
         <p className="mb-4 text-[13px] text-pm-gray">
-          Scrivici o parla con la tesoriera al ritiro. Per problemi tecnici contatta il team IT di Porta Moneta.
+          Scrivici o parla con la tesoriera al ritiro. Per problemi tecnici contatta il team IT di {brand.appName}.
         </p>
         <div className="flex flex-col gap-3">
           <a
-            href="mailto:info@portamoneta.org"
+            href={`mailto:${brand.supportEmail}`}
             className="inline-flex items-center justify-center rounded-full bg-pm-orange px-[22px] py-[12px] text-sm font-bold text-white no-underline transition-transform active:scale-95"
           >
-            Email Associazione
+            {brand.supportEmail}
           </a>
           <a
-            href="mailto:it@portamoneta.org"
+            href={`mailto:${brand.techEmail}`}
             className="inline-flex items-center justify-center rounded-full bg-pm-near-black px-[22px] py-[12px] text-sm font-bold text-white no-underline transition-transform active:scale-95"
           >
-            Contatta Team IT
+            {brand.techEmail}
           </a>
         </div>
       </div>

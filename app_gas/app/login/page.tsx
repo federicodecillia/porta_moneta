@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 import { auth, signIn } from "@/auth";
+import { brand } from "@/lib/brand";
 import { Button } from "@/components/ui/button";
 import { DemoBanner } from "@/components/demo-banner";
 
@@ -24,7 +25,7 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
     <main className="mx-auto flex min-h-screen w-full max-w-[480px] flex-col items-center justify-center p-6">
       <DemoBanner />
       <div className="w-full rounded-lg border border-pm-border bg-white p-6 shadow-sm">
-        <h1 className="text-xl font-semibold">Porta Moneta - GAS</h1>
+        <h1 className="text-xl font-semibold">{brand.appName}</h1>
         <p className="text-pm-gray mt-2 text-sm">
           {isDemo
             ? "Demo pubblica: entra con un click, senza registrazione."

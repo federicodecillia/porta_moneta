@@ -1,3 +1,5 @@
+import { brand } from "@/lib/brand";
+
 type SupplierEmailInput = {
   cycleTitle: string;
   pickupDate: Date | null;
@@ -22,13 +24,13 @@ export function supplierOrderEmail(input: SupplierEmailInput): {
   text: string;
 } {
   const { cycleTitle, pickupDate, grandTotal, productCount, memberCount } = input;
-  const subject = `Ordine GAS Porta Moneta — ${cycleTitle}`;
+  const subject = `${brand.appName} — ${cycleTitle}`;
   const pickupLine = pickupDate
     ? `Data ritiro prevista: ${formatPickup(pickupDate)}.`
     : "Data ritiro: da concordare.";
   const text = `Buongiorno,
 
-in allegato la distinta dell'ordine del GAS Porta Moneta per il ciclo "${cycleTitle}".
+in allegato la distinta dell'ordine di ${brand.appName} per il ciclo "${cycleTitle}".
 
 Il file Excel ha una riga per ogni prodotto e una colonna per ogni socio. Le celle gialle sono già pre-compilate con il preventivo: dopo la pesata, modifichi solo le celle dove il costo effettivo è diverso (lasciando le altre invariate). La riga "Spedizione" indica la quota per socio (anche questa modificabile se varia). I totali per socio e per prodotto si ricalcolano da soli.
 
@@ -40,7 +42,7 @@ ${pickupLine}
 Il file è in formato .xlsx, si apre con Excel, LibreOffice e Google Sheets senza problemi.
 
 Grazie,
-APS Porta Moneta — GAS frutta e verdura
+${brand.orgName}
 `;
   return { subject, text };
 }

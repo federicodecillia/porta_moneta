@@ -1,7 +1,7 @@
-import Image from "next/image";
 import Link from "next/link";
 import type { ReactNode } from "react";
 import { signOut } from "@/auth";
+import { brand } from "@/lib/brand";
 import { BottomNav } from "@/components/bottom-nav";
 import { DemoBanner } from "@/components/demo-banner";
 import { LogoutButton } from "@/components/logout-button";
@@ -25,15 +25,11 @@ export async function AppShell({ children, email, isAdmin, memberId }: AppShellP
         <header className="border-b border-pm-border px-5 py-4">
           <div className="flex items-start justify-between gap-3">
             <div>
-              <Link href="/" aria-label="Home" className="inline-block">
-                <Image
-                  src="/logo.png"
-                  alt="Porta Moneta"
-                  height={26}
-                  width={120}
-                  priority
-                  className="h-[26px] w-auto"
-                />
+              <Link href="/" aria-label="Home" className="inline-flex items-center gap-2">
+                <img src={brand.logoUrl} alt={brand.appName} className="h-[26px] w-auto" />
+                {brand.headerShowName && (
+                  <span className="text-[15px] font-semibold text-pm-near-black">{brand.appName}</span>
+                )}
               </Link>
             </div>
             <div className="flex items-center gap-2">

@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { eq, and, sql, inArray } from "drizzle-orm";
 import { auth } from "@/auth";
+import { brand } from "@/lib/brand";
 import { getDb } from "@/lib/db/client";
 import { auditLog, ledgerEntries, members, notifications, orderCycles, orders, products, suppliers, supplierProducts } from "@/lib/db/schema";
 import { upsertCycleProducts } from "@/lib/db/cycle-products";
@@ -782,8 +783,6 @@ export async function adminRecordTopup(
 
 // ── Supplier email ───────────────────────────────────────────────────────────
 
-const ARCHIVE_CC = "gas@portamoneta.org";
-
 // Returns the defaults the supplier-email dialog needs to pre-fill its
 // fields (To / From / CC / Subject). Used by the client before the admin
 // hits "Invia ora" so they can review and tweak any field.
@@ -829,8 +828,8 @@ export async function adminGetSupplierEmailDefaults(cycleId: string): Promise<
       ok: true,
       to: cycle.supplierEmail ?? "",
       from,
-      cc: Array.from(new Set([admin.email, ARCHIVE_CC])),
-      subject: `Ordine GAS Porta Moneta — ${cycle.title}`,
+      cc: Array.from(new Set([admin.email, ...(brand.archiveCcEmail ? [brand.archiveCcEmail] : [])])),
+      subject: `${brand.appName} — ${cycle.title}`,
       supplierName: cycle.supplierName,
     };
   } catch (e) {
@@ -902,7 +901,7 @@ export async function adminSendSupplierEmail(
     // admin's email is the archive itself.
     const cc = overrides?.cc
       ? Array.from(new Set(overrides.cc.map((e) => e.trim()).filter(Boolean)))
-      : Array.from(new Set([admin.email, ARCHIVE_CC]));
+      : Array.from(new Set([admin.email, ...(brand.archiveCcEmail ? [brand.archiveCcEmail] : [])]));
 
     const { sendMail } = await import("@/lib/email/resend");
     const result = await sendMail({
