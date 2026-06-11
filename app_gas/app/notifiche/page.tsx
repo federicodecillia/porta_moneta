@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 import { AppShell } from "@/components/app-shell";
+import { t } from "@/lib/i18n";
 import { getUserRole, requireUserSession } from "@/lib/auth/session";
 import { getMemberNotifications } from "@/lib/db/queries";
 import { markAllNotificationsRead, markNotificationRead } from "@/lib/actions/notifications";
@@ -18,7 +19,7 @@ export default async function NotifichePage() {
     <AppShell email={session.user.email} isAdmin={role === "admin"} memberId={memberId}>
       <div className="flex items-center justify-between mb-5">
         <h1 className="text-[20px] font-black tracking-[-0.03em] text-brand-near-black">
-          Notifiche
+          {t.notifications.title}
         </h1>
         {unreadCount > 0 && (
           <form
@@ -31,7 +32,7 @@ export default async function NotifichePage() {
               type="submit"
               className="rounded-full border border-brand-border px-[13px] py-[5px] font-mono text-[11px] font-bold uppercase tracking-widest text-brand-near-black"
             >
-              Segna tutte ✓
+              {t.notifications.markAllRead}
             </button>
           </form>
         )}
@@ -40,9 +41,9 @@ export default async function NotifichePage() {
       {notifications.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-16 text-center">
           <span className="mb-4 text-4xl">🔔</span>
-          <p className="text-[15px] font-bold text-brand-near-black">Nessuna notifica</p>
+          <p className="text-[15px] font-bold text-brand-near-black">{t.notifications.noNotifications}</p>
           <p className="mt-1 text-[13px] text-brand-gray">
-            Ti avviseremo quando ci sono novità sull&apos;ordine o sul saldo.
+            {t.notifications.noNotificationsHint}
           </p>
         </div>
       ) : (
@@ -65,7 +66,7 @@ export default async function NotifichePage() {
                   className={`mt-[5px] h-2 w-2 shrink-0 rounded-full ${
                     n.readAt ? "bg-transparent" : "bg-brand-orange"
                   }`}
-                  aria-label={n.readAt ? undefined : "Non letta"}
+                  aria-label={n.readAt ? undefined : t.notifications.unreadLabel}
                 />
                 <div className="min-w-0 flex-1">
                   <div

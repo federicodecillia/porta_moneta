@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { auth, signIn } from "@/auth";
 import { brand } from "@/lib/brand";
+import { t } from "@/lib/i18n";
 import { Button } from "@/components/ui/button";
 import { DemoBanner } from "@/components/demo-banner";
 
@@ -27,18 +28,16 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
       <div className="w-full rounded-lg border border-brand-border bg-white p-6 shadow-sm">
         <h1 className="text-xl font-semibold">{brand.appName}</h1>
         <p className="text-brand-gray mt-2 text-sm">
-          {isDemo
-            ? "Demo pubblica: entra con un click, senza registrazione."
-            : "Accedi con Google per continuare."}
+          {isDemo ? t.login.demoMessage : t.login.continueMessage}
         </p>
         {showAccessDenied ? (
           <p className="mt-3 rounded-md border border-red-300 bg-red-50 p-2 text-sm text-red-700">
-            Accesso negato: la tua email non risulta tra i soci attivi.
+            {t.login.accessDenied}
           </p>
         ) : null}
         {showConfigError ? (
           <p className="mt-3 rounded-md border border-red-300 bg-red-50 p-2 text-sm text-red-700">
-            Configurazione login incompleta. Controlla le variabili in .env.local.
+            {t.login.configError}
           </p>
         ) : null}
         <div className="mt-6 space-y-3">
@@ -50,7 +49,7 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
               }}
             >
               <Button type="submit" variant="teal" block>
-                Login con Google
+                {t.login.googleLogin}
               </Button>
             </form>
           ) : null}
@@ -62,7 +61,7 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
               }}
             >
               <Button type="submit" variant="orange" block>
-                Login locale
+                {t.login.devLogin}
               </Button>
             </form>
           ) : null}
@@ -75,7 +74,7 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
                 }}
               >
                 <Button type="submit" variant="teal" block>
-                  Entra come Socio (demo)
+                  {t.login.memberLogin}
                 </Button>
               </form>
               <form
@@ -85,14 +84,14 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
                 }}
               >
                 <Button type="submit" variant="orange" block>
-                  Entra come Admin (demo)
+                  {t.login.adminLogin}
                 </Button>
               </form>
             </>
           ) : null}
           {!hasGoogleAuth && !hasDevLogin && !isDemo ? (
             <p className="rounded-md border border-brand-border bg-brand-warm-white p-2 text-sm text-brand-gray">
-              Aggiungi le variabili auth in .env.local per abilitare il login locale.
+              {t.login.configMissing}
             </p>
           ) : null}
         </div>

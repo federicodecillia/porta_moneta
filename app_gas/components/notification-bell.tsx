@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { t } from "@/lib/i18n";
 
 type NotificationBellProps = {
   unreadCount: number;
@@ -9,7 +10,7 @@ export function NotificationBell({ unreadCount }: NotificationBellProps) {
     <Link
       href="/notifiche"
       className="relative flex h-8 w-8 items-center justify-center rounded-full text-brand-gray transition-colors hover:text-brand-near-black"
-      aria-label={unreadCount > 0 ? `${unreadCount} notifiche non lette` : "Notifiche"}
+      aria-label={unreadCount > 0 ? `${unreadCount} ${t.notifications.unreadLabel}` : t.notifications.title}
     >
       <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="2">
         <path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9" />

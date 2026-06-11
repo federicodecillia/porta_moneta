@@ -2,6 +2,7 @@ import Link from "next/link";
 import { AppShell } from "@/components/app-shell";
 import { CycleCountdown } from "@/components/home/cycle-countdown";
 import { NextPickupCard } from "@/components/home/next-pickup-card";
+import { t } from "@/lib/i18n";
 import { getUserRole, requireUserSession } from "@/lib/auth/session";
 import {
   getCycleProducts,
@@ -58,7 +59,7 @@ export default async function HomePage() {
             isNegative ? "text-brand-red" : "text-brand-orange"
           }`}
         >
-          Il tuo saldo
+          {t.home.balanceTitle}
         </div>
         <div className="mb-[16px] flex items-baseline gap-[6px]">
           <span className="text-[28px] font-bold leading-none text-brand-near-black/25">€</span>
@@ -77,7 +78,7 @@ export default async function HomePage() {
         >
           <div className="flex-1 bg-white/60 p-[9px_13px]">
             <div className="mb-[3px] font-mono text-[9px] uppercase tracking-[0.07em] text-[#a07020]">
-              Questo ordine
+              {t.home.thisOrder}
             </div>
             <div className="font-mono text-[13px] font-bold text-brand-near-black">
               {formatEur(globalOrderTotal)}
@@ -89,7 +90,7 @@ export default async function HomePage() {
             }`}
           >
             <div className="mb-[3px] font-mono text-[9px] uppercase tracking-[0.07em] text-[#a07020]">
-              Dopo ordine
+              {t.home.afterOrder}
             </div>
             <div
               className={`font-mono text-[13px] font-bold ${
@@ -107,7 +108,7 @@ export default async function HomePage() {
               href="/storico"
               className="flex w-full items-center justify-center rounded-full bg-brand-red px-4 py-[10px] text-[13px] font-bold text-white"
             >
-              Ricarica il saldo →
+              {t.home.rechargeButton}
             </Link>
           </div>
         )}
@@ -138,13 +139,13 @@ export default async function HomePage() {
                 <div className="overflow-hidden rounded-[18px] border border-brand-border bg-white shadow-[0_1px_2px_rgba(0,0,0,0.04)]">
                   <div className="flex items-center justify-between border-b border-brand-border px-4 py-[14px]">
                     <span className="font-mono text-[9px] uppercase tracking-[0.1em] text-brand-gray">
-                      Il tuo ordine
+                      {t.home.yourOrder}
                     </span>
                     <Link
                       href={`/ordine?cycleId=${cycle.cycleId}`}
                       className="rounded-full border border-brand-border px-[13px] py-[5px] font-mono text-[11px] font-bold uppercase tracking-widest text-brand-near-black"
                     >
-                      Modifica
+                      {t.home.editButton}
                     </Link>
                   </div>
                   {myLines.map((line) => {
@@ -175,7 +176,7 @@ export default async function HomePage() {
                     );
                   })}
                   <div className="flex items-center justify-between rounded-b-[18px] border-t border-brand-border bg-[#f5f1ec] px-4 py-[12px]">
-                    <span className="text-[13px] font-extrabold text-brand-near-black">Totale</span>
+                    <span className="text-[13px] font-extrabold text-brand-near-black">{t.home.totalLabel}</span>
                     <span className="font-mono text-[13px] font-bold text-brand-near-black">
                       {formatEur(orderTotal)}
                     </span>
@@ -183,12 +184,12 @@ export default async function HomePage() {
                 </div>
               ) : (
                 <div className="flex items-center justify-between rounded-[18px] border border-brand-border bg-white p-[18px] shadow-[0_1px_2px_rgba(0,0,0,0.04)]">
-                  <span className="text-[14px] text-brand-gray">Non hai ancora ordinato</span>
+                  <span className="text-[14px] text-brand-gray">{t.home.noOrdersYet}</span>
                   <Link
                     href={`/ordine?cycleId=${cycle.cycleId}`}
                     className="rounded-full bg-brand-orange px-4 py-[10px] text-[13px] font-bold text-white"
                   >
-                    Ordina →
+                    {t.home.orderButton}
                   </Link>
                 </div>
               )}
@@ -198,13 +199,13 @@ export default async function HomePage() {
       ) : (
         <div className="mb-[14px] flex items-center justify-between rounded-[18px] border border-brand-border bg-white p-[18px] shadow-[0_1px_2px_rgba(0,0,0,0.04)]">
           <div>
-            <div className="text-[15px] font-bold">Nessun ordine aperto</div>
+            <div className="text-[15px] font-bold">{t.home.noOpenOrders}</div>
             <div className="font-mono text-[10px] text-brand-gray-light">
-              Torna quando ci sarà un nuovo ciclo
+              {t.home.noOpenOrdersHint}
             </div>
           </div>
           <span className="rounded-full bg-black/[0.06] px-2.5 py-1 font-mono text-[10px] text-brand-gray">
-            Chiuso
+            {t.home.closed}
           </span>
         </div>
       )}
@@ -214,13 +215,13 @@ export default async function HomePage() {
         <div className="mt-[4px]">
           <div className="mb-[10px] flex items-center justify-between">
             <span className="font-mono text-[9px] uppercase tracking-[0.1em] text-brand-gray">
-              Ultimi movimenti
+              {t.home.recentMovements}
             </span>
             <Link
               href="/storico"
               className="font-mono text-[10px] font-bold text-brand-orange"
             >
-              Vedi tutto →
+              {t.home.seeAll}
             </Link>
           </div>
           {recentMovements.map((e) => {

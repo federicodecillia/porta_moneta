@@ -1,5 +1,6 @@
 import { AppShell } from "@/components/app-shell";
 import { OrderForm } from "./order-form";
+import { t } from "@/lib/i18n";
 import { getUserRole, requireUserSession } from "@/lib/auth/session";
 import {
   getCycleProducts,
@@ -43,9 +44,9 @@ export default async function OrdinePage({
       <AppShell email={session.user.email} isAdmin={role === "admin"} memberId={memberId}>
         <div className="flex flex-col items-center justify-center py-16 text-center">
           <span className="mb-4 text-4xl">🛒</span>
-          <h2 className="text-[18px] font-bold text-brand-near-black">Nessun ordine aperto</h2>
+          <h2 className="text-[18px] font-bold text-brand-near-black">{t.order.noOpenOrders}</h2>
           <p className="mt-2 text-[14px] text-brand-gray">
-            Torna quando l&apos;ordine sarà aperto.
+            {t.order.noOpenOrdersHint}
           </p>
         </div>
       </AppShell>

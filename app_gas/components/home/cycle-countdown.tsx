@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { formatDateTime } from "@/lib/utils";
+import { t } from "@/lib/i18n";
 import Link from "next/link";
 
 type Props = {
@@ -62,32 +63,31 @@ export function CycleCountdown({ title, orderCloseAt, orderOpenAt, pickupDate, p
           </div>
           <div className="mt-[3px] space-y-[2px]">
             <div className="font-mono text-[10px] text-brand-gray">
-              Chiude: {formatDateTime(orderCloseAt)}
+              {t.cycle.closes(formatDateTime(orderCloseAt))}
             </div>
             {pickupDate && (
               <div className="font-mono text-[10px] text-brand-gray">
-                {pickup2Date ? "Ritiro 1: " : "Ritiro: "}
-                {formatPickupSlot(pickupDate, pickupEndTime)}
+                {pickup2Date ? t.cycle.pickup1(formatPickupSlot(pickupDate, pickupEndTime)) : `${t.nav.order}: ${formatPickupSlot(pickupDate, pickupEndTime)}`}
               </div>
             )}
             {pickup2Date && (
               <div className="font-mono text-[10px] text-brand-gray">
-                Ritiro 2: {formatPickupSlot(pickup2Date, pickup2EndTime)}
+                {t.cycle.pickup2(formatPickupSlot(pickup2Date, pickup2EndTime))}
               </div>
             )}
           </div>
         </div>
         <span className="inline-flex items-center gap-1.5 rounded-full border border-brand-teal/20 bg-brand-teal-light px-2.5 py-0.5 font-mono text-[10px] font-semibold text-brand-teal">
           <span className="h-1.5 w-1.5 rounded-full bg-brand-teal opacity-75" />
-          Aperto
+          {t.cycle.open}
         </span>
       </div>
 
       <div className="mb-[14px] flex gap-2">
         {[
-          { num: days, unit: "Giorni" },
-          { num: hrs, unit: "Ore" },
-          { num: mins, unit: "Min" },
+          { num: days, unit: t.cycle.days },
+          { num: hrs, unit: t.cycle.hours },
+          { num: mins, unit: t.cycle.minutes },
         ].map(({ num, unit }) => (
           <div
             key={unit}
@@ -110,7 +110,7 @@ export function CycleCountdown({ title, orderCloseAt, orderOpenAt, pickupDate, p
         />
       </div>
       <div className="mt-[5px] font-mono text-[10px] text-brand-gray-light">
-        {hoursLeft > 0 ? `${hoursLeft} ore rimanenti` : "Chiusura imminente"}
+        {t.cycle.daysRemaining(hoursLeft)}
       </div>
 
       <div className="mt-3">
@@ -118,7 +118,7 @@ export function CycleCountdown({ title, orderCloseAt, orderOpenAt, pickupDate, p
           href="/ordine"
           className="inline-flex w-full items-center justify-center rounded-full bg-brand-orange px-[22px] py-[14px] text-sm font-bold text-white transition-[opacity,transform] duration-150 active:scale-[0.98]"
         >
-          Vai all&apos;ordine →
+          {t.cycle.goToOrder}
         </Link>
       </div>
     </div>

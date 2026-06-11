@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
+import { t } from "@/lib/i18n";
 import { formatDate, formatEur, formatEurSigned, getProductEmoji } from "@/lib/utils";
 import type { CycleHistoryEntry } from "@/lib/db/queries";
 
@@ -50,17 +51,17 @@ export function StoricoTabs({ orderHistory, movements, balance }: Props) {
     <>
       {/* Segmented tabs */}
       <div className="mb-5 flex rounded-[12px] bg-black/[0.07] p-1">
-        {(["ordini", "movimenti"] as const).map((t) => (
+        {(["ordini", "movimenti"] as const).map((tabKey) => (
           <button
-            key={t}
-            onClick={() => setTab(t)}
+            key={tabKey}
+            onClick={() => setTab(tabKey)}
             className={`flex-1 rounded-[10px] py-[9px] text-[13px] font-semibold transition-all ${
-              tab === t
+              tab === tabKey
                 ? "bg-white text-brand-near-black shadow-[0_1px_4px_rgba(45,43,41,0.10)]"
                 : "bg-transparent text-brand-gray"
             }`}
           >
-            {t === "ordini" ? "Ordini" : "Movimenti"}
+            {tabKey === "ordini" ? t.history.orders : t.history.movements}
           </button>
         ))}
       </div>
@@ -71,8 +72,8 @@ export function StoricoTabs({ orderHistory, movements, balance }: Props) {
           {orderHistory.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-16 text-center">
               <span className="mb-4 text-4xl">🛒</span>
-              <h2 className="text-[16px] font-bold text-brand-near-black">Nessun ordine</h2>
-              <p className="mt-1 text-[13px] text-brand-gray">I tuoi ordini passati appariranno qui.</p>
+              <h2 className="text-[16px] font-bold text-brand-near-black">{t.history.noOrders}</h2>
+              <p className="mt-1 text-[13px] text-brand-gray">{t.history.noOrdersHint}</p>
             </div>
           ) : (
             orderHistory.map((o) => {
@@ -103,13 +104,13 @@ export function StoricoTabs({ orderHistory, movements, balance }: Props) {
                         {formatEur(o.orderTotal)}
                       </span>
                       <span className="rounded-full bg-brand-teal-light px-2.5 py-0.5 font-mono text-[10px] text-brand-teal">
-                        {o.status === "open" ? "Aperto" : "Ritirato"}
+                        {o.status === "open" ? t.history.open : t.history.pickedUp}
                       </span>
                     </div>
                   </button>
                   {isOpen && (
                     <div className="px-4 py-[10px]">
-                      <div className="mb-[5px] font-mono text-[10px] text-brand-gray-light">Prodotti</div>
+                      <div className="mb-[5px] font-mono text-[10px] text-brand-gray-light">{t.history.products}</div>
                       <div className="divide-y divide-brand-border rounded-[12px] border border-brand-border bg-[#fdfdfd]">
                         {o.lines.map((l, index) => (
                           <div key={`${l.productName}-${index}`} className="flex items-start gap-3 px-3 py-2.5">
@@ -156,7 +157,7 @@ export function StoricoTabs({ orderHistory, movements, balance }: Props) {
                 balance < 0 ? "text-brand-red" : "text-brand-orange"
               }`}
             >
-              Saldo attuale
+              {t.history.currentBalance}
             </div>
             <div className="flex items-baseline gap-1">
               <span className="text-[18px] font-bold text-brand-near-black/30">€</span>
@@ -173,8 +174,8 @@ export function StoricoTabs({ orderHistory, movements, balance }: Props) {
           {movements.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-16 text-center">
               <span className="mb-4 text-4xl">💰</span>
-              <h2 className="text-[16px] font-bold text-brand-near-black">Nessun movimento</h2>
-              <p className="mt-1 text-[13px] text-brand-gray">I tuoi movimenti appariranno qui.</p>
+              <h2 className="text-[16px] font-bold text-brand-near-black">{t.history.noMovements}</h2>
+              <p className="mt-1 text-[13px] text-brand-gray">{t.history.noMovementsHint}</p>
             </div>
           ) : (
             <div className="overflow-hidden rounded-[18px] border border-brand-border bg-white shadow-[0_1px_2px_rgba(0,0,0,0.04)]">
@@ -182,7 +183,7 @@ export function StoricoTabs({ orderHistory, movements, balance }: Props) {
                 const isTopup = e.type === "topup";
                 const isPos = parseFloat(e.amount) >= 0;
                 const label =
-                  e.type === "topup" ? "Bonifico" : e.type === "order_charge" ? "Ordine" : "Rettifica";
+                  e.type === "topup" ? t.history.transfer : e.type === "order_charge" ? t.history.orderCharge : t.history.correction;
                 const fullLabel = label + (e.note ? " · " + e.note : "");
                 return (
                   <div

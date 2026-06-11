@@ -3,6 +3,7 @@
 import type { ReactNode } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { t } from "@/lib/i18n";
 
 type BottomNavProps = {
   isAdmin: boolean;
@@ -19,7 +20,7 @@ type NavItem = {
 const navItems: NavItem[] = [
   {
     href: "/",
-    label: "Home",
+    label: t.nav.home,
     exact: true,
     icon: (
       <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="2">
@@ -30,7 +31,7 @@ const navItems: NavItem[] = [
   },
   {
     href: "/ordine",
-    label: "Ordine",
+    label: t.nav.order,
     icon: (
       <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="2">
         <circle cx="9" cy="20" r="1.5" />
@@ -41,7 +42,7 @@ const navItems: NavItem[] = [
   },
   {
     href: "/storico",
-    label: "Storico",
+    label: t.nav.history,
     icon: (
       <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="2">
         <path d="M3 12a9 9 0 1 0 3-6.7" />
@@ -52,7 +53,7 @@ const navItems: NavItem[] = [
   },
   {
     href: "/guida",
-    label: "Guida",
+    label: t.nav.guide,
     icon: (
       <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="2">
         <circle cx="12" cy="12" r="9" />
@@ -63,7 +64,7 @@ const navItems: NavItem[] = [
   },
   {
     href: "/admin",
-    label: "Admin",
+    label: t.nav.admin,
     adminOnly: true,
     icon: (
       <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="2">

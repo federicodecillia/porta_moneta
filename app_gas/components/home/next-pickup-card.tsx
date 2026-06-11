@@ -1,3 +1,5 @@
+import { t } from "@/lib/i18n";
+import { formatTime } from "@/lib/i18n/format";
 import type { NextPickup } from "@/lib/db/queries";
 
 // Visible only when the member has at least one ordered cycle whose pickup
@@ -11,7 +13,7 @@ export function NextPickupCard({ pickup }: { pickup: NextPickup }) {
   const daysUntil = Math.floor(msUntil / (1000 * 60 * 60 * 24));
 
   const dayLabel = formatDayLabel(date, daysUntil);
-  const startTime = date.toLocaleTimeString("it-IT", { hour: "2-digit", minute: "2-digit" });
+  const startTime = formatTime(date);
   const timeRange = pickup.pickupEndTime ? `${startTime}–${pickup.pickupEndTime}` : startTime;
 
   return (
@@ -23,7 +25,7 @@ export function NextPickupCard({ pickup }: { pickup: NextPickup }) {
               <rect x="3" y="4" width="18" height="18" rx="2" />
               <path d="M16 2v4M8 2v4M3 10h18" />
             </svg>
-            {pickup.isSecondPickup ? "Secondo ritiro" : "Prossimo ritiro"}
+            {pickup.isSecondPickup ? t.cycle.secondPickup : t.cycle.nextPickup}
           </div>
           <div className="text-[15px] font-bold tracking-[-0.01em] text-brand-near-black">
             {dayLabel}
@@ -43,7 +45,7 @@ export function NextPickupCard({ pickup }: { pickup: NextPickup }) {
               {daysUntil}
             </div>
             <div className="font-mono text-[9px] uppercase tracking-[0.07em] text-brand-teal/80">
-              {daysUntil === 1 ? "giorno" : "giorni"}
+              {daysUntil === 1 ? t.cycle.days_singular : t.cycle.days_plural}
             </div>
           </div>
         )}
@@ -53,8 +55,8 @@ export function NextPickupCard({ pickup }: { pickup: NextPickup }) {
 }
 
 function formatDayLabel(date: Date, daysUntil: number): string {
-  if (daysUntil === 0) return "Oggi";
-  if (daysUntil === 1) return "Domani";
+  if (daysUntil === 0) return t.cycle.today;
+  if (daysUntil === 1) return t.cycle.tomorrow;
   return date.toLocaleDateString("it-IT", {
     weekday: "long",
     day: "numeric",

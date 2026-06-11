@@ -3,7 +3,9 @@
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "@/components/ui/toast";
-import { formatEur, formatDateTime, getProductEmoji } from "@/lib/utils";
+import { t } from "@/lib/i18n";
+import { formatDateTime } from "@/lib/i18n/format";
+import { formatEur, getProductEmoji } from "@/lib/utils";
 import type { SaveOrderLine } from "@/lib/actions/order";
 import { loadLastOrderForPrefill } from "@/lib/actions/order";
 
@@ -102,19 +104,13 @@ export function OrderForm({
       try {
         const result = await loadLastOrderForPrefill(cycleId);
         if (result.matched === 0) {
-          toast.warning(
-            result.cycleTitle
-              ? `Nessun prodotto del tuo ultimo ordine ("${result.cycleTitle}") è disponibile in questo ciclo.`
-              : "Non hai ordini precedenti da riproporre.",
-          );
+          toast.warning(t.order.noProductsFromLast(result.cycleTitle ?? undefined));
           return;
         }
         // Replace the draft entirely so the user sees exactly what gets
         // re-proposed. They can still tweak before confirming.
         setDraft(result.quantities);
-        toast.success(
-          `Riproposti ${result.matched} prodotti da "${result.cycleTitle}". Modifica e conferma.`,
-        );
+        toast.success(t.order.reproposeSuccess(result.matched, result.cycleTitle || ""));
       } catch (err) {
         toast.error(err instanceof Error ? err.message : "Errore");
       }
@@ -132,7 +128,7 @@ export function OrderForm({
         if (result.balanceWarning) {
           toast.warning(result.balanceWarning);
         } else {
-          toast.success("Ordine salvato ✓");
+          toast.success(t.order.savedSuccess);
         }
       } catch (err) {
         const message = err instanceof Error ? err.message : "Errore durante il salvataggio";
@@ -155,16 +151,16 @@ export function OrderForm({
       <div className="mb-1">
         <div className="flex items-center justify-between">
           <h1 className="text-[20px] font-black tracking-[-0.03em] text-brand-near-black">
-            Il tuo ordine
+            {t.order.yourOrder}
           </h1>
           <span className="inline-flex items-center gap-1.5 rounded-full border border-brand-teal/20 bg-brand-teal-light px-2.5 py-0.5 font-mono text-[10px] font-semibold text-brand-teal">
             <span className="h-1.5 w-1.5 rounded-full bg-brand-teal opacity-75" />
-            Aperto
+            {t.cycle.open}
           </span>
         </div>
         <p className="font-mono text-[10px] text-brand-gray mt-[3px]">
           {cycleTitle}
-          {orderCloseAt ? " · Chiude " + formatDateTime(orderCloseAt) : ""}
+          {orderCloseAt ? ` · ${t.cycle.closes(formatDateTime(orderCloseAt))}` : ""}
         </p>
       </div>
 
@@ -181,7 +177,7 @@ export function OrderForm({
             <path d="M3 12a9 9 0 1 0 3-6.7" />
             <path d="M3 4v4h4" />
           </svg>
-          Riproponi ultimo ordine
+          {t.order.reproposeLastOrder}
         </button>
       )}
 
@@ -190,7 +186,7 @@ export function OrderForm({
         <div key={category}>
           {category && (
             <div className="pt-4 pb-2 font-mono text-[9px] uppercase tracking-[0.10em] text-brand-gray-light">
-              {category}
+              {category === "Altro" ? t.order.otherCategory : category}
             </div>
           )}
           {prods.map((p) => {
@@ -224,7 +220,7 @@ export function OrderForm({
                   <div className="flex flex-shrink-0 items-center rounded-full bg-black/[0.06] p-0.5">
                     <button
                       onClick={() => changeQty(p.productId, 1)}
-                      aria-label="Aggiungi"
+                      aria-label={t.order.add}
                       className="flex h-8 w-8 items-center justify-center rounded-full text-[18px] font-light text-brand-gray"
                     >
                       +
@@ -234,7 +230,7 @@ export function OrderForm({
                   <div className="flex flex-shrink-0 items-center rounded-full bg-brand-orange-light p-0.5">
                     <button
                       onClick={() => changeQty(p.productId, -1)}
-                      aria-label="Meno"
+                      aria-label={t.order.less}
                       className="flex h-8 w-8 items-center justify-center rounded-full text-[18px] font-light text-brand-gray"
                     >
                       −
@@ -244,7 +240,7 @@ export function OrderForm({
                     </span>
                     <button
                       onClick={() => changeQty(p.productId, 1)}
-                      aria-label="Più"
+                      aria-label={t.order.more}
                       className="flex h-8 w-8 items-center justify-center rounded-full bg-brand-orange text-[18px] font-light text-white"
                     >
                       +
@@ -267,7 +263,7 @@ export function OrderForm({
             <div className="mb-3 flex items-end justify-between">
               <div>
                 <div className="font-mono text-[9px] uppercase tracking-[0.09em] text-brand-gray-light">
-                  Totale ordine
+                  {t.order.totalOrder}
                 </div>
                 <div className="mt-[2px] text-[24px] font-black tracking-[-0.03em] text-brand-near-black">
                   {formatEur(orderTotal)}
@@ -275,7 +271,7 @@ export function OrderForm({
               </div>
               <div className="text-right">
                 <div className="font-mono text-[9px] uppercase tracking-[0.09em] text-brand-gray-light">
-                  Saldo dopo
+                  {t.order.balanceAfter}
                 </div>
                 <div
                   className={`mt-[2px] font-mono text-[14px] font-bold ${
@@ -291,7 +287,7 @@ export function OrderForm({
               disabled={isPending}
               className="w-full rounded-full bg-brand-orange px-[22px] py-[14px] text-sm font-bold text-white transition-[opacity,transform] duration-150 active:scale-[0.98] disabled:opacity-40 disabled:cursor-not-allowed"
             >
-              {isPending ? "Salvataggio..." : "Conferma ordine"}
+              {isPending ? t.order.saving : t.order.confirmOrder}
             </button>
           </div>
         </div>
