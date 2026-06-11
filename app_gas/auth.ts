@@ -8,6 +8,11 @@ import { members } from "@/lib/db/schema";
 const googleConfigured = Boolean(process.env.AUTH_GOOGLE_ID && process.env.AUTH_GOOGLE_SECRET);
 const devLoginEmail = process.env.AUTH_DEV_LOGIN_EMAIL?.trim().toLowerCase();
 const devLoginEnabled = process.env.NODE_ENV !== "production" && Boolean(devLoginEmail);
+const demoModeEnabled = process.env.DEMO_MODE === "true";
+const DEMO_LOGIN_EMAILS: Record<string, string> = {
+  socio: "demo.socio@example.com",
+  admin: "demo.admin@example.com",
+};
 
 export const { auth, handlers, signIn, signOut } = NextAuth({
   providers: [
@@ -36,6 +41,37 @@ export const { auth, handlers, signIn, signOut } = NextAuth({
                 })
                 .from(members)
                 .where(or(eq(members.email, devLoginEmail!), eq(members.aliasEmail, devLoginEmail!)))
+                .limit(1);
+
+              if (!member?.active) return null;
+              return {
+                id: member.memberId,
+                name: member.fullName,
+                email: member.email,
+              };
+            },
+          }),
+        ]
+      : []),
+    ...(demoModeEnabled
+      ? [
+          Credentials({
+            id: "demo-login",
+            name: "Demo Login",
+            credentials: { profile: {} },
+            async authorize(credentials) {
+              const profile = credentials?.profile === "admin" ? "admin" : "socio";
+              const email = DEMO_LOGIN_EMAILS[profile];
+              const db = getDb();
+              const [member] = await db
+                .select({
+                  memberId: members.memberId,
+                  fullName: members.fullName,
+                  email: members.email,
+                  active: members.active,
+                })
+                .from(members)
+                .where(eq(members.email, email))
                 .limit(1);
 
               if (!member?.active) return null;

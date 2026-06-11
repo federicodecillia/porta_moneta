@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { auth, signIn } from "@/auth";
 import { Button } from "@/components/ui/button";
+import { DemoBanner } from "@/components/demo-banner";
 
 type LoginPageProps = {
   searchParams: Promise<Record<string, string | string[] | undefined>>;
@@ -13,6 +14,7 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
   const showConfigError = params.error === "Configuration";
   const hasGoogleAuth = Boolean(process.env.AUTH_GOOGLE_ID && process.env.AUTH_GOOGLE_SECRET);
   const hasDevLogin = process.env.NODE_ENV !== "production" && Boolean(process.env.AUTH_DEV_LOGIN_EMAIL);
+  const isDemo = process.env.DEMO_MODE === "true";
 
   if (session?.user?.email) {
     redirect("/");
@@ -20,10 +22,13 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
 
   return (
     <main className="mx-auto flex min-h-screen w-full max-w-[480px] flex-col items-center justify-center p-6">
+      <DemoBanner />
       <div className="w-full rounded-lg border border-pm-border bg-white p-6 shadow-sm">
         <h1 className="text-xl font-semibold">Porta Moneta - GAS</h1>
         <p className="text-pm-gray mt-2 text-sm">
-          Accedi con Google per continuare.
+          {isDemo
+            ? "Demo pubblica: entra con un click, senza registrazione."
+            : "Accedi con Google per continuare."}
         </p>
         {showAccessDenied ? (
           <p className="mt-3 rounded-md border border-red-300 bg-red-50 p-2 text-sm text-red-700">
@@ -60,7 +65,31 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
               </Button>
             </form>
           ) : null}
-          {!hasGoogleAuth && !hasDevLogin ? (
+          {isDemo ? (
+            <>
+              <form
+                action={async () => {
+                  "use server";
+                  await signIn("demo-login", { profile: "socio", redirectTo: "/" });
+                }}
+              >
+                <Button type="submit" variant="teal" block>
+                  Entra come Socio (demo)
+                </Button>
+              </form>
+              <form
+                action={async () => {
+                  "use server";
+                  await signIn("demo-login", { profile: "admin", redirectTo: "/" });
+                }}
+              >
+                <Button type="submit" variant="orange" block>
+                  Entra come Admin (demo)
+                </Button>
+              </form>
+            </>
+          ) : null}
+          {!hasGoogleAuth && !hasDevLogin && !isDemo ? (
             <p className="rounded-md border border-pm-border bg-pm-warm-white p-2 text-sm text-pm-gray">
               Aggiungi le variabili auth in .env.local per abilitare il login locale.
             </p>

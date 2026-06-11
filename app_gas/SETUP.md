@@ -176,3 +176,11 @@ cp .env.local .env.local.bak
 npx vercel env pull .env.local --environment=production
 # poi reincorpora a mano AUTH_SECRET e DATABASE_URL
 ```
+
+## Demo mode
+
+`DEMO_MODE=true` enables one-click "Socio"/"Admin" demo logins and disables
+outbound email. It is meant ONLY for the public demo deployment (separate
+Vercel project + separate Neon database). Never set it on the production
+project. Seed/reset demo data with `npm run db:seed:demo` (reads
+`.env.demo.local`).

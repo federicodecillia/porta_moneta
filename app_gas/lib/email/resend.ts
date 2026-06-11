@@ -30,6 +30,9 @@ export function getMailFromDefault(): string | null {
 export async function sendMail(
   opts: SendMailOpts,
 ): Promise<{ ok: true; id?: string } | { error: string }> {
+  if (process.env.DEMO_MODE === "true") {
+    return { error: "Ambiente demo: invio email disabilitato" };
+  }
   const apiKey = process.env.RESEND_API_KEY;
   const from = opts.from?.trim() || process.env.MAIL_FROM;
   if (!apiKey) return { error: "RESEND_API_KEY non configurata" };
