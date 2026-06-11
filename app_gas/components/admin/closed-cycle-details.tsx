@@ -4,6 +4,7 @@ import { useCallback, useState, useTransition } from "react";
 import { adminGetCycleOrderDetails } from "@/lib/actions/admin-cycles";
 import { adminUpdateOrderLineActuals } from "@/lib/actions/admin";
 import { formatEur, getProductEmoji } from "@/lib/utils";
+import { formatNumber } from "@/lib/i18n/format";
 import { toast } from "@/components/ui/toast";
 import { EditClosedOrderModal } from "./edit-closed-order-modal";
 import { t } from "@/lib/i18n";
@@ -267,11 +268,7 @@ function OrderLineRow({ line, onSaved }: { line: OrderDetail; onSaved: () => voi
                     : line.quantity;
                 const qtyLabel =
                   line.actualQuantity != null
-                    ? parseFloat(line.actualQuantity)
-                        .toFixed(3)
-                        .replace(/0+$/, "")
-                        .replace(/\.$/, "")
-                        .replace(".", ",")
+                    ? formatNumber(parseFloat(line.actualQuantity))
                     : String(line.quantity);
                 const showBreakdown = effQty > 0;
                 const effUnit = showBreakdown ? effective / effQty : null;

@@ -22,3 +22,7 @@ export function formatDateTime(d: Date | string, opts?: Intl.DateTimeFormatOptio
   const date = typeof d === "string" ? new Date(d) : d;
   return date.toLocaleString(tag, opts ?? { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" });
 }
+
+export function formatNumber(value: number, maxDecimals = 3): string {
+  return new Intl.NumberFormat(tag, { maximumFractionDigits: maxDecimals }).format(value);
+}

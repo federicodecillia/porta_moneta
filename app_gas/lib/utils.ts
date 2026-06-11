@@ -1,12 +1,20 @@
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
+import {
+  formatMoney,
+  formatDate as formatDateIntl,
+  formatDateTime as formatDateTimeIntl,
+} from "@/lib/i18n/format";
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
+// Legacy helpers kept for their null-tolerant signatures and sign handling;
+// they delegate to the brand-aware Intl formatters so every call site follows
+// the deploy's locale and currency.
 export function formatEur(amount: number): string {
-  return "€" + Math.abs(amount).toFixed(2).replace(".", ",");
+  return formatMoney(Math.abs(amount));
 }
 
 export function formatEurSigned(amount: number): string {
@@ -15,29 +23,17 @@ export function formatEurSigned(amount: number): string {
 
 export function formatDate(date: Date | string | null | undefined): string {
   if (!date) return "";
-  return new Date(date).toLocaleDateString("it-IT", {
-    day: "numeric",
-    month: "short",
-    year: "numeric",
-  });
+  return formatDateIntl(new Date(date));
 }
 
 export function formatDateShort(date: Date | string | null | undefined): string {
   if (!date) return "";
-  return new Date(date).toLocaleDateString("it-IT", {
-    day: "numeric",
-    month: "short",
-  });
+  return formatDateIntl(new Date(date), { day: "numeric", month: "short" });
 }
 
 export function formatDateTime(date: Date | string | null | undefined): string {
   if (!date) return "";
-  return new Date(date).toLocaleString("it-IT", {
-    day: "numeric",
-    month: "short",
-    hour: "2-digit",
-    minute: "2-digit",
-  });
+  return formatDateTimeIntl(new Date(date));
 }
 
 export function getRoleLabel(role: string): string {
