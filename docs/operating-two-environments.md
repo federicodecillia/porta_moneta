@@ -25,10 +25,10 @@ flag:
 
 With the flag unset (production) none of that code path is reachable.
 
-Both Vercel projects are connected to this repo with **Root Directory `app_gas`**
-and **Production Branch `main`**. A merge to `main` rebuilds both deployments
-automatically, each with its own env. Features stay in sync by construction:
-it is the same commit.
+Both Vercel projects are connected to this repo with **Production Branch `main`**
+and **Root Directory at repo root** (empty / not set). A merge to `main` rebuilds
+both deployments automatically, each with its own env. Features stay in sync by
+construction: it is the same commit.
 
 **When adding a feature, ask how it behaves under `DEMO_MODE`.** If it introduces
 an external side-effect (email, payments, third-party calls), add a demo guard
@@ -46,12 +46,12 @@ npm run db:push
 node --env-file=.env.demo.local node_modules/drizzle-kit/bin.cjs push
 ```
 
-If you add a table or a non-null column, update `app_gas/scripts/seed-demo.ts`
+If you add a table or a non-null column, update `scripts/seed-demo.ts`
 too, otherwise the nightly reset (`.github/workflows/demo-reset.yml`) will fail.
 
 ## Changelogs: shared product, separate demo
 
-- **Product changelog** — `app_gas/CHANGELOG.md` + `CHANGELOG.it.md`. Real app
+- **Product changelog** — `CHANGELOG.md` + `CHANGELOG.it.md`. Real app
   features (orders, ledger, analytics). Applies to both environments. This is
   what members and repo visitors read.
 - **Demo-only changes** — `DEMO_MODE`, seed, nightly reset, demo login, banner —

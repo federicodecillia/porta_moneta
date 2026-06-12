@@ -10,12 +10,9 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 **Live**: gas.portamoneta.org
 
-## Active Codebase: `app_gas/`
-
-This is the only codebase. Everything is in `app_gas/`.
+## Codebase structure
 
 ```
-app_gas/
 ├── app/                        # Next.js App Router pages
 │   ├── page.tsx                # Home: saldo hero, ciclo aperto, ultimi movimenti
 │   ├── ordine/page.tsx         # Order form with per-product steppers
@@ -57,10 +54,9 @@ app_gas/
 
 ## Development Commands
 
-All commands from `app_gas/` directory:
+All commands from repo root:
 
 ```bash
-cd app_gas
 npm run dev          # Start dev server at http://localhost:3000
 npm run build        # Production build
 npm run db:push      # Push Drizzle schema to Neon (needs DATABASE_URL in .env.local)
@@ -69,7 +65,7 @@ npm run db:studio    # Drizzle Studio (visual DB browser)
 
 **Deploy**: push to `main` → Vercel auto-deploys. Feature branches create preview deployments.
 
-**Vercel Root Directory**: `app_gas` (set in project settings)
+**Vercel Root Directory**: repo root (empty / not set)
 
 ## Two environments: production + demo
 
@@ -104,10 +100,10 @@ members actually read should be in Italian.
   English only.
 - **UI strings** (toasts, button labels, page copy, notification bodies):
   Italian — these reach real Italian-speaking users.
-- **Two changelogs**: [`app_gas/CHANGELOG.md`](./app_gas/CHANGELOG.md) (English) and
-  [`app_gas/CHANGELOG.it.md`](./app_gas/CHANGELOG.it.md) (Italian) follow the
+- **Two changelogs**: [`CHANGELOG.md`](./CHANGELOG.md) (English) and
+  [`CHANGELOG.it.md`](./CHANGELOG.it.md) (Italian) follow the
   [Keep a Changelog](https://keepachangelog.com/) format and loose SemVer.
-  They live inside `app_gas/` (not the repo root) so they are part of the
+  They live at the repo root (the Next.js app root) so they are part of the
   Vercel deploy artifact — the in-app `/changelog` page reads them at runtime.
 
 ### Updating the changelog
