@@ -54,15 +54,15 @@ async function main() {
     createdAt: daysFromNow(-90),
     updatedAt: now,
   });
-  const demoAdmin = mk("Alice Demo (Admin)", "demo.admin@example.com", "admin");
-  const demoSocio = mk("Sofia Demo (Socio)", "demo.socio@example.com", "socio");
+  const demoAdmin = mk("Alice Smith (Admin)", "demo.admin@example.com", "admin");
+  const demoSocio = mk("Sofia Brown (Member)", "demo.socio@example.com", "socio");
   const others = [
-    mk("Marco Rossi", "marco.rossi@example.com", "attivo"),
-    mk("Giulia Bianchi", "giulia.bianchi@example.com", "socio"),
-    mk("Luca Ferrari", "luca.ferrari@example.com", "attivo"),
-    mk("Elena Conti", "elena.conti@example.com", "socio"),
-    mk("Paolo Greco", "paolo.greco@example.com", "socio"),
-    mk("Chiara Moretti", "chiara.moretti@example.com", "attivo"),
+    mk("James Miller", "james.miller@example.com", "attivo"),
+    mk("Emma Johnson", "emma.johnson@example.com", "socio"),
+    mk("Oliver Taylor", "oliver.taylor@example.com", "attivo"),
+    mk("Sophia Williams", "sophia.williams@example.com", "socio"),
+    mk("Lucas Martin", "lucas.martin@example.com", "socio"),
+    mk("Isabella Garcia", "isabella.garcia@example.com", "attivo"),
   ];
   const allMembers = [demoAdmin, demoSocio, ...others];
   await db.insert(members).values(allMembers);
@@ -81,9 +81,9 @@ async function main() {
     active: true,
     createdAt: daysFromNow(-90),
   });
-  const ortofrutta = mkSupplier("Azienda Agricola La Collina", "Ortofrutta", "ordini@lacollina.example.com");
-  const forno = mkSupplier("Forno del Borgo", "Panificati", "forno@borgo.example.com");
-  const apicoltura = mkSupplier("Apicoltura Miele Vivo", "Dispensa", "info@mielevivo.example.com");
+  const ortofrutta = mkSupplier("Green Valley Farm", "Fruit & Veg", "orders@greenvalley.example.com");
+  const forno = mkSupplier("Hillside Bakery", "Bakery", "info@hillsidebakery.example.com");
+  const apicoltura = mkSupplier("Riverside Organics", "Pantry", "contact@riversidemiel.example.com");
   await db.insert(suppliers).values([ortofrutta, forno, apicoltura]);
 
   type CatalogItem = {
@@ -91,15 +91,15 @@ async function main() {
     unit: string | null; unitPrice: string; category: string; emoji: string;
   };
   const catalog: CatalogItem[] = [
-    { supplierId: ortofrutta.supplierId, supplierName: ortofrutta.name, name: "Pomodori ciliegino", format: "cassetta 1 kg", unit: "kg", unitPrice: "3.50", category: "Verdura", emoji: "🍅" },
-    { supplierId: ortofrutta.supplierId, supplierName: ortofrutta.name, name: "Zucchine", format: "1 kg", unit: "kg", unitPrice: "2.80", category: "Verdura", emoji: "🥒" },
-    { supplierId: ortofrutta.supplierId, supplierName: ortofrutta.name, name: "Insalata gentile", format: "cespo", unit: "pz", unitPrice: "1.50", category: "Verdura", emoji: "🥬" },
-    { supplierId: ortofrutta.supplierId, supplierName: ortofrutta.name, name: "Pesche", format: "2 kg", unit: "kg", unitPrice: "5.40", category: "Frutta", emoji: "🍑" },
-    { supplierId: ortofrutta.supplierId, supplierName: ortofrutta.name, name: "Limoni non trattati", format: "1 kg", unit: "kg", unitPrice: "3.20", category: "Frutta", emoji: "🍋" },
-    { supplierId: forno.supplierId, supplierName: forno.name, name: "Pane casereccio", format: "pagnotta 1 kg", unit: "pz", unitPrice: "4.50", category: "Panificati", emoji: "🍞" },
-    { supplierId: forno.supplierId, supplierName: forno.name, name: "Focaccia alle olive", format: "teglia", unit: "pz", unitPrice: "6.00", category: "Panificati", emoji: "🫓" },
-    { supplierId: apicoltura.supplierId, supplierName: apicoltura.name, name: "Miele millefiori", format: "vasetto 500 g", unit: "pz", unitPrice: "8.50", category: "Dispensa", emoji: "🍯" },
-    { supplierId: apicoltura.supplierId, supplierName: apicoltura.name, name: "Miele di acacia", format: "vasetto 500 g", unit: "pz", unitPrice: "10.00", category: "Dispensa", emoji: "🍯" },
+    { supplierId: ortofrutta.supplierId, supplierName: ortofrutta.name, name: "Cherry Tomatoes", format: "Crate 1 kg", unit: "kg", unitPrice: "3.50", category: "Vegetables", emoji: "🍅" },
+    { supplierId: ortofrutta.supplierId, supplierName: ortofrutta.name, name: "Zucchini", format: "1 kg", unit: "kg", unitPrice: "2.80", category: "Vegetables", emoji: "🥒" },
+    { supplierId: ortofrutta.supplierId, supplierName: ortofrutta.name, name: "Butter Lettuce", format: "head", unit: "pcs", unitPrice: "1.50", category: "Vegetables", emoji: "🥬" },
+    { supplierId: ortofrutta.supplierId, supplierName: ortofrutta.name, name: "Peaches", format: "2 kg", unit: "kg", unitPrice: "5.40", category: "Fruit", emoji: "🍑" },
+    { supplierId: ortofrutta.supplierId, supplierName: ortofrutta.name, name: "Untreated Lemons", format: "1 kg", unit: "kg", unitPrice: "3.20", category: "Fruit", emoji: "🍋" },
+    { supplierId: forno.supplierId, supplierName: forno.name, name: "Rustic Bread", format: "loaf 1 kg", unit: "pcs", unitPrice: "4.50", category: "Bakery", emoji: "🍞" },
+    { supplierId: forno.supplierId, supplierName: forno.name, name: "Olive Focaccia", format: "tray", unit: "pcs", unitPrice: "6.00", category: "Bakery", emoji: "🫓" },
+    { supplierId: apicoltura.supplierId, supplierName: apicoltura.name, name: "Wildflower Honey", format: "jar 500 g", unit: "pcs", unitPrice: "8.50", category: "Pantry", emoji: "🍯" },
+    { supplierId: apicoltura.supplierId, supplierName: apicoltura.name, name: "Acacia Honey", format: "jar 500 g", unit: "pcs", unitPrice: "10.00", category: "Pantry", emoji: "🍯" },
   ];
   await db.insert(supplierProducts).values(
     catalog.map((c) => ({
@@ -142,9 +142,9 @@ async function main() {
     closedAt: status === "closed" ? daysFromNow(closeDay, 22) : null,
     supplierId: null,
   });
-  const cycleOld = mkCycle("Ortofrutta e forno — ciclo 1", -16, -14, "closed");
-  const cyclePrev = mkCycle("Ortofrutta e miele — ciclo 2", -9, -7, "closed");
-  const cycleOpen = mkCycle("Ortofrutta e forno — questa settimana", -1, 5, "open");
+  const cycleOld = mkCycle("Vegetables and Bread — Cycle 1", -16, -14, "closed");
+  const cyclePrev = mkCycle("Vegetables and Honey — Cycle 2", -9, -7, "closed");
+  const cycleOpen = mkCycle("Vegetables and Bread — This week", -1, 5, "open");
   await db.insert(orderCycles).values([cycleOld, cyclePrev, cycleOpen]);
 
   // Per-cycle products copied from the catalog (first 7 items per cycle).
@@ -220,7 +220,7 @@ async function main() {
       type: "topup",
       amount: "100.00",
       cycleId: null,
-      note: "Ricarica iniziale",
+      note: "Initial top-up",
       createdBy: demoAdmin.email,
       createdAt: daysFromNow(-30),
       updatedAt: null,
@@ -238,7 +238,7 @@ async function main() {
         type: "order_charge",
         amount: (-total).toFixed(2),
         cycleId: cycle.cycleId,
-        note: "Addebito ordine",
+        note: "Order charge",
         createdBy: demoAdmin.email,
         createdAt: cycle.closedAt!,
         updatedAt: null,
@@ -251,7 +251,7 @@ async function main() {
         type: "shipping_charge",
         amount: "-1.50",
         cycleId: cycle.cycleId,
-        note: "Spedizione",
+        note: "Shipping",
         createdBy: demoAdmin.email,
         createdAt: cycle.closedAt!,
         updatedAt: null,
@@ -269,8 +269,8 @@ async function main() {
       memberId: demoSocio.memberId,
       role: null,
       type: "topup_received",
-      title: "Ricarica registrata",
-      body: "La tua ricarica di 100,00 euro e' stata registrata.",
+      title: "Transfer received",
+      body: "Your transfer of 100.00 EUR has been received.",
       href: "/storico",
       readAt: daysFromNow(-29),
       createdAt: daysFromNow(-30),
@@ -280,8 +280,8 @@ async function main() {
       memberId: demoSocio.memberId,
       role: null,
       type: "order_closed",
-      title: "Ordine chiuso",
-      body: `E' stato chiuso "${cyclePrev.title}". Controlla lo storico per il dettaglio.`,
+      title: "Order closed",
+      body: `"${cyclePrev.title}" has been closed. Check the history for details.`,
       href: `/storico?cycleId=${cyclePrev.cycleId}`,
       readAt: null,
       createdAt: cyclePrev.closedAt!,
