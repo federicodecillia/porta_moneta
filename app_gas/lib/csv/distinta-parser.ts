@@ -95,7 +95,7 @@ export async function parseSupplierDistinta(
       warnings: [],
       errors: [
         !meta
-          ? "Foglio _meta mancante: il file non sembra una distinta generata dall'app. Riscarica la distinta dal ciclo."
+          ? t.errors.distintaMetaSheetMissing
           : t.errors.distintaSheetMissing,
       ],
     };

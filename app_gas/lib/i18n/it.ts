@@ -833,6 +833,8 @@ export const it = {
     importApplyError: "Errore importazione",
     cannotDeleteMemberWithData: "Non è possibile eliminare un socio con ordini o movimenti. Disattivalo invece.",
     distintaSheetMissing: "Foglio Distinta mancante: verifica di aver caricato il file giusto.",
+    distintaMetaSheetMissing:
+      "Foglio _meta mancante: il file non sembra una distinta generata dall'app. Riscarica la distinta dal ciclo.",
     distintaMatrixCoordsMissing: "Coordinate della matrice mancanti nel foglio _meta.",
     distintaMappingEmpty: "Mappatura prodotti/soci vuota nel foglio _meta.",
     cycleNoLongerInDb: "Ciclo non più presente nel database.",
