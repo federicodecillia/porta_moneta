@@ -12,7 +12,7 @@
  *   - Members whose surname does not appear in the sheet are left without
  *     any ledger entry (balance = 0).
  *
- * Usage (from the `app_gas/` directory):
+ * Usage (from the repo root):
  *   node --env-file=.env.local scripts/reconcile-balances.mjs            # dry-run
  *   node --env-file=.env.local scripts/reconcile-balances.mjs --apply    # actually mutate
  *

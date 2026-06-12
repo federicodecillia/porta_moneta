@@ -9,7 +9,7 @@ balance. Admins manage cycles, products, suppliers, top-ups, and analytics.
 |---|---|
 | 🧪 **Try the public demo** | **[porta-moneta-demo.vercel.app](https://porta-moneta-demo.vercel.app)** — one-click login, fake data |
 | 🟢 **Live site (members only)** | [gas.portamoneta.org](https://gas.portamoneta.org) |
-| 📋 **Changelog** | [English](./app_gas/CHANGELOG.md) · [Italiano](./app_gas/CHANGELOG.it.md) |
+| 📋 **Changelog** | [English](./CHANGELOG.md) · [Italiano](./CHANGELOG.it.md) |
 
 ![Porta Moneta GAS — member and admin walkthrough](./docs/demo.gif)
 
@@ -79,7 +79,6 @@ analytics dashboard is rendered with pure CSS and inline SVG.
 ## Project structure
 
 ```
-app_gas/
 ├── app/                       # Next.js App Router
 │   ├── page.tsx               # Home: balance hero, open cycles, recent ledger
 │   ├── ordine/                # Order form (per-product +/- steppers)
@@ -191,7 +190,7 @@ in English, so the repo is readable by anyone.
 
 ## Local development
 
-See [app_gas/SETUP.md](app_gas/SETUP.md) for the full step-by-step setup
+See [SETUP.md](SETUP.md) for the full step-by-step setup
 (env vars from Vercel, `AUTH_SECRET` and `DATABASE_URL` for the Sensitive
 vars that `vercel env pull` doesn't export, schema sync via Drizzle Kit,
 etc.).
@@ -199,7 +198,6 @@ etc.).
 Quick start once `.env.local` is in place:
 
 ```bash
-cd app_gas
 npm install
 npm run db:push     # apply schema.ts to Neon
 npm run dev         # http://localhost:3000
@@ -219,10 +217,9 @@ Other scripts:
 ## Deployment
 
 Pushing to `main` triggers a Vercel production deploy. Feature branches
-get automatic preview deployments. Vercel's project root is set to
-`app_gas/`. Schema migrations to Neon are run manually with
-`npm run db:push` from the local laptop before merging breaking changes,
-so the database is always one step ahead of the live code.
+get automatic preview deployments. Schema migrations to Neon are run
+manually with `npm run db:push` from the local laptop before merging
+breaking changes, so the database is always one step ahead of the live code.
 
 ---
 

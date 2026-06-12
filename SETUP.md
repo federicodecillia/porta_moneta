@@ -13,7 +13,7 @@ proprio Mac. Tempo richiesto: 5 minuti se hai già accesso a Vercel e Neon.
 
 ```bash
 git clone https://github.com/federicodecillia/porta_moneta.git
-cd porta_moneta/app_gas
+cd porta_moneta
 npm install
 ```
 

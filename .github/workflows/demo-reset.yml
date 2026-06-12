@@ -24,14 +24,12 @@ jobs:
         with:
           node-version: 24
           cache: npm
-          cache-dependency-path: app_gas/package-lock.json
+          cache-dependency-path: package-lock.json
 
       - name: Install dependencies
-        working-directory: app_gas
         run: npm ci
 
       - name: Seed demo database
-        working-directory: app_gas
         env:
           DATABASE_URL: ${{ secrets.DEMO_DATABASE_URL }}
           DEMO_MODE: "true"

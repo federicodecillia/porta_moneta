@@ -35,8 +35,7 @@ const FILE_BY_LANG: Record<ChangelogLanguage, string> = {
 };
 
 /** Reads + parses a changelog file. The files live inside the Next.js app
- * root (process.cwd() at runtime), so Vercel includes them in the deploy
- * since its project root is set to app_gas/. */
+ * root (process.cwd() at runtime), so Vercel includes them in the deploy. */
 export async function loadChangelog(
   lang: ChangelogLanguage,
 ): Promise<ChangelogVersion[]> {
