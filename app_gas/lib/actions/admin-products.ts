@@ -207,11 +207,11 @@ export async function adminInspectSupplierListing(
 ): Promise<{ data?: WizardInspectionResult; error?: string }> {
   try {
     await requireAdmin();
-    if (!filename || !base64) return { error: "File mancante" };
+    if (!filename || !base64) return { error: t.errors.fileMissing };
 
     const buf = Buffer.from(base64, "base64");
     const inspection = await inspectListing(buf, filename);
-    if (!inspection.sheets.length) return { error: "File vuoto o illeggibile" };
+    if (!inspection.sheets.length) return { error: t.errors.fileEmptyOrUnreadable };
 
     const db = getDb();
     const sups = await db
@@ -232,7 +232,7 @@ export async function adminInspectSupplierListing(
       },
     };
   } catch (e) {
-    return { error: e instanceof Error ? e.message : "Errore lettura file" };
+    return { error: e instanceof Error ? e.message : t.errors.xlsxReadError };
   }
 }
 
@@ -367,10 +367,10 @@ export async function adminPreviewSupplierListingImport(
   try {
     await requireAdmin();
     if (!input.supplier.existingId && !input.supplier.newName?.trim()) {
-      return { error: "Seleziona o crea un fornitore" };
+      return { error: t.errors.selectOrCreateSupplier };
     }
     if (input.mapping.name === undefined || input.mapping.unitPrice === undefined) {
-      return { error: "Mappa almeno le colonne Nome e Prezzo" };
+      return { error: t.errors.mapNameAndPrice };
     }
 
     const existing = input.supplier.existingId
@@ -405,7 +405,7 @@ export async function adminPreviewSupplierListingImport(
     }
     return { data: { diff } };
   } catch (e) {
-    return { error: e instanceof Error ? e.message : "Errore generazione anteprima" };
+    return { error: e instanceof Error ? e.message : t.errors.importPreviewError };
   }
 }
 
@@ -415,7 +415,7 @@ export async function adminApplySupplierListingImport(
   try {
     const admin = await requireAdmin();
     if (input.mapping.name === undefined || input.mapping.unitPrice === undefined) {
-      return { error: "Mappa almeno le colonne Nome e Prezzo" };
+      return { error: t.errors.mapNameAndPrice };
     }
 
     const db = getDb();
@@ -425,7 +425,7 @@ export async function adminApplySupplierListingImport(
     let supplierId = input.supplier.existingId ?? "";
     if (!supplierId) {
       const name = input.supplier.newName?.trim();
-      if (!name) return { error: "Nome fornitore mancante" };
+      if (!name) return { error: t.errors.supplierNameMissing };
       supplierId = genId("sup");
       await db.insert(suppliers).values({
         supplierId,
@@ -602,7 +602,7 @@ export async function adminApplySupplierListingImport(
       },
     };
   } catch (e) {
-    return { error: e instanceof Error ? e.message : "Errore importazione" };
+    return { error: e instanceof Error ? e.message : t.errors.importApplyError };
   }
 }
 

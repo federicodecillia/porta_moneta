@@ -261,7 +261,7 @@ async function performCycleClose(
             type: "order_charge",
             amount: (-parseFloat(r.total)).toFixed(2),
             cycleId,
-            note: "Addebito ordine",
+            note: t.ledger.orderCharge,
             createdBy: adminEmail,
             createdAt: now,
           })),
@@ -296,14 +296,19 @@ async function performCycleClose(
             const totalCharged = orderTotal + shippingShare;
             const body =
               shippingShare > 0
-                ? `E' stato chiuso "${cycle.title}". Ti e' stato addebitato ${formatMoney(totalCharged)} (ordine ${formatMoney(orderTotal)} + spedizione ${formatMoney(shippingShare)}).`
-                : `E' stato chiuso "${cycle.title}". Ti e' stato addebitato ${formatMoney(orderTotal)}.`;
+                ? t.notificationsServer.orderClosedBodyWithShipping(
+                    cycle.title,
+                    formatMoney(totalCharged),
+                    formatMoney(orderTotal),
+                    formatMoney(shippingShare),
+                  )
+                : t.notificationsServer.orderClosedBody(cycle.title, formatMoney(orderTotal));
             return {
               notificationId: genId("not"),
               memberId: r.memberId,
               role: null,
               type: "order_closed",
-              title: "Ordine chiuso",
+              title: t.notificationsServer.orderClosedTitle,
               body,
               href: `/storico?cycleId=${cycleId}`,
               readAt: null,
@@ -471,7 +476,7 @@ async function recomputeShippingForClosedCycle(
         .update(ledgerEntries)
         .set({
           amount: (-newShare).toFixed(2),
-          note: "Spedizione rettificata",
+          note: t.ledger.shippingAdjusted,
           updatedAt: now,
           updatedBy: adminEmail,
         })
@@ -484,7 +489,7 @@ async function recomputeShippingForClosedCycle(
         type: "shipping_charge",
         amount: (-newShare).toFixed(2),
         cycleId,
-        note: "Spedizione rettificata",
+        note: t.ledger.shippingAdjusted,
         createdBy: adminEmail,
         createdAt: now,
       });
@@ -618,7 +623,7 @@ export async function adminUpdateCycle(
     revalidatePath("/");
     return { adjustedMembers };
   } catch (e) {
-    return { error: e instanceof Error ? e.message : "Errore nell'aggiornamento del ciclo" };
+    return { error: e instanceof Error ? e.message : t.errors.cycleUpdateError };
   }
 }
 
@@ -724,7 +729,7 @@ export async function adminUpdateCycleProduct(
     revalidatePath("/ordine");
     return {};
   } catch (e: unknown) {
-    return { error: e instanceof Error ? e.message : "Errore" };
+    return { error: e instanceof Error ? e.message : t.errors.genericError };
   }
 }
 
@@ -737,7 +742,7 @@ export async function adminRecordTopup(
   entryDate: string,
 ) {
   const admin = await requireAdmin();
-  if (amount <= 0) throw new Error("L'importo deve essere positivo");
+  if (amount <= 0) throw new Error(t.errors.amountMustBePositive);
 
   const db = getDb();
   const [member] = await db
@@ -745,7 +750,7 @@ export async function adminRecordTopup(
     .from(members)
     .where(eq(members.memberId, memberId))
     .limit(1);
-  if (!member) throw new Error("Socio non trovato");
+  if (!member) throw new Error(t.errors.memberNotFound);
 
   const now = new Date();
   const entryId = genId("led");
@@ -770,8 +775,8 @@ export async function adminRecordTopup(
   await createNotification(db, {
     memberId,
     type: "topup_received",
-    title: "Bonifico ricevuto",
-    body: `Il tuo bonifico di ${amount.toFixed(2).replace(".", ",")} euro e' stato ricevuto. Il tuo nuovo credito e' ${newBalance.toFixed(2).replace(".", ",")} euro.`,
+    title: t.notificationsServer.topupReceivedTitle,
+    body: t.notificationsServer.topupReceivedBody(formatMoney(amount), formatMoney(newBalance)),
     href: "/storico",
     createdAt: now,
   });
@@ -814,10 +819,10 @@ export async function adminGetSupplierEmailDefaults(cycleId: string): Promise<
       .leftJoin(suppliers, eq(orderCycles.supplierId, suppliers.supplierId))
       .where(eq(orderCycles.cycleId, cycleId))
       .limit(1);
-    if (!cycle) return { error: "Ciclo non trovato" };
-    if (cycle.status !== "closed") return { error: "Il ciclo non e' chiuso" };
+    if (!cycle) return { error: t.errors.cycleNotFound };
+    if (cycle.status !== "closed") return { error: t.errors.cycleNotClosed };
     if (!cycle.supplierId || !cycle.supplierName)
-      return { error: "Il ciclo non ha un fornitore associato" };
+      return { error: t.errors.cycleNoSupplier };
     // A missing supplier email is NOT an error: the admin can type the
     // recipient directly in the dialog. We just leave the `to` field empty
     // so they know what's missing.
@@ -834,7 +839,7 @@ export async function adminGetSupplierEmailDefaults(cycleId: string): Promise<
       supplierName: cycle.supplierName,
     };
   } catch (e) {
-    return { error: e instanceof Error ? e.message : "Errore" };
+    return { error: e instanceof Error ? e.message : t.errors.genericError };
   }
 }
 
@@ -870,20 +875,20 @@ export async function adminSendSupplierEmail(
       .leftJoin(suppliers, eq(orderCycles.supplierId, suppliers.supplierId))
       .where(eq(orderCycles.cycleId, cycleId))
       .limit(1);
-    if (!cycle) return { error: "Ciclo non trovato" };
-    if (cycle.status !== "closed") return { error: "Il ciclo non e' chiuso" };
+    if (!cycle) return { error: t.errors.cycleNotFound };
+    if (cycle.status !== "closed") return { error: t.errors.cycleNotClosed };
     if (!cycle.supplierId || !cycle.supplierName)
-      return { error: "Il ciclo non ha un fornitore associato" };
+      return { error: t.errors.cycleNoSupplier };
 
     const to = overrides?.to?.trim() || cycle.supplierEmail || "";
-    if (!to) return { error: "Indirizzo destinatario mancante" };
+    if (!to) return { error: t.errors.recipientMissing };
 
     const { buildSupplierDistinta } = await import("@/lib/csv/distinta-builder");
     let distinta: Awaited<ReturnType<typeof buildSupplierDistinta>>;
     try {
       distinta = await buildSupplierDistinta(cycleId);
     } catch (e) {
-      return { error: e instanceof Error ? e.message : "Errore costruzione distinta" };
+      return { error: e instanceof Error ? e.message : t.errors.distintaBuildError };
     }
 
     const { supplierOrderEmail } = await import("@/lib/email/templates");
@@ -930,7 +935,7 @@ export async function adminSendSupplierEmail(
 
     return { ok: true, recipient: to, rowCount: distinta.productCount };
   } catch (e) {
-    return { error: e instanceof Error ? e.message : "Errore nell'invio email" };
+    return { error: e instanceof Error ? e.message : t.errors.emailSendError };
   }
 }
 
@@ -978,9 +983,9 @@ export async function adminUpdateOrderLineActuals(input: {
       .innerJoin(orderCycles, eq(orders.cycleId, orderCycles.cycleId))
       .where(eq(orders.orderLineId, input.orderLineId))
       .limit(1);
-    if (!line) return { error: "Riga ordine non trovata" };
+    if (!line) return { error: t.errors.orderLineNotFound };
     if (line.cycleStatus !== "closed")
-      return { error: "Il ciclo non e' chiuso: usa la modifica ordine normale" };
+      return { error: t.errors.cycleNotClosedUseNormal };
 
     // Parse + validate inputs.
     const parseNum = (s: string | null): number | null => {
@@ -991,9 +996,9 @@ export async function adminUpdateOrderLineActuals(input: {
     const newActualQty = parseNum(input.actualQuantity);
     const newActualTotal = parseNum(input.actualLineTotal);
     if (newActualQty !== null && Number.isNaN(newActualQty))
-      return { error: "Quantita effettiva non valida" };
+      return { error: t.errors.actualQtyInvalid };
     if (newActualTotal !== null && Number.isNaN(newActualTotal))
-      return { error: "Totale effettivo non valido" };
+      return { error: t.errors.actualTotalInvalid };
 
     const unitPrice = parseFloat(line.unitPriceSnapshot);
     const originalTotal = parseFloat(line.lineTotal);
@@ -1034,7 +1039,6 @@ export async function adminUpdateOrderLineActuals(input: {
       // Sign convention: positive `delta` means the member overpaid (refund)
       // — same as adminEditClosedOrder so /storico renders consistently.
       const now = new Date();
-      const fmt = (n: number) => n.toFixed(2).replace(".", ",");
       const noteParts: string[] = [];
       if (newActualQty !== null) {
         const qtyText = Number.isInteger(newActualQty)
@@ -1045,7 +1049,7 @@ export async function adminUpdateOrderLineActuals(input: {
           `${line.productName}: ${line.quantity}${unit ? ` ${unit}` : ""} ordinati, ${qtyText}${unit ? ` ${unit}` : ""} ricevuti`,
         );
       } else if (newActualTotal !== null) {
-        noteParts.push(`${line.productName}: costo aggiornato a ${fmt(newEffective)} EUR`);
+        noteParts.push(`${line.productName}: costo aggiornato a ${formatMoney(newEffective)} EUR`);
       } else {
         noteParts.push(`${line.productName}: rettifica annullata`);
       }
@@ -1068,7 +1072,7 @@ export async function adminUpdateOrderLineActuals(input: {
         memberId: line.memberId,
         type: "order_adjusted",
         title: `Ordine "${line.cycleTitle}" rettificato`,
-        body: `${noteParts.join(" · ")} · ${direction} di ${fmt(Math.abs(delta))} EUR sul tuo saldo.`,
+        body: `${noteParts.join(" · ")} · ${direction} di ${formatMoney(Math.abs(delta))} EUR sul tuo saldo.`,
         href: "/storico",
       });
     }
@@ -1098,7 +1102,7 @@ export async function adminUpdateOrderLineActuals(input: {
     revalidatePath("/");
     return { ok: true, newOrderTotal, correctionAmount };
   } catch (e) {
-    return { error: e instanceof Error ? e.message : "Errore nella rettifica" };
+    return { error: e instanceof Error ? e.message : t.errors.correctionError };
   }
 }
 
@@ -1134,9 +1138,9 @@ export async function adminEditClosedOrder(input: EditClosedOrderInput) {
     .from(orderCycles)
     .where(eq(orderCycles.cycleId, input.cycleId))
     .limit(1);
-  if (!cycle) throw new Error("Ciclo non trovato");
+  if (!cycle) throw new Error(t.errors.cycleNotFound);
   if (cycle.status !== "closed") {
-    throw new Error("L'ordine si può modificare in questo modo solo dopo la chiusura del ciclo");
+    throw new Error(t.errors.orderEditOnlyAfterClose);
   }
 
   const [member] = await db
@@ -1144,7 +1148,7 @@ export async function adminEditClosedOrder(input: EditClosedOrderInput) {
     .from(members)
     .where(eq(members.memberId, input.memberId))
     .limit(1);
-  if (!member) throw new Error("Socio non trovato");
+  if (!member) throw new Error(t.errors.memberNotFound);
 
   // Pull the current order rows so we can compute the delta.
   const previousLines = await db
@@ -1183,7 +1187,7 @@ export async function adminEditClosedOrder(input: EditClosedOrderInput) {
   // against client-side tampering and stale UI state.
   for (const line of cleanLines) {
     if (!productMap.has(line.productId)) {
-      throw new Error("Prodotto non valido per questo ciclo");
+      throw new Error(t.errors.productNotValidForCycle);
     }
   }
 
@@ -1253,19 +1257,18 @@ export async function adminEditClosedOrder(input: EditClosedOrderInput) {
     .where(eq(ledgerEntries.memberId, input.memberId));
   const newBalance = parseFloat(balanceRow?.total ?? "0");
 
-  const fmt = (n: number) => `${n.toFixed(2).replace(".", ",")} euro`;
   const dirSentence =
     Math.abs(delta) <= epsilon
-      ? `Il tuo ordine in "${cycle.title}" e' stato aggiornato, il saldo non cambia.`
+      ? t.notificationsServer.orderModifiedBodyNoChange(cycle.title)
       : delta > 0
-        ? `Il tuo ordine in "${cycle.title}" e' stato modificato dall'admin: addebito aggiuntivo di ${fmt(delta)}.`
-        : `Il tuo ordine in "${cycle.title}" e' stato modificato dall'admin: rimborso di ${fmt(-delta)}.`;
+        ? t.notificationsServer.orderModifiedBodyCharge(cycle.title, formatMoney(delta))
+        : t.notificationsServer.orderModifiedBodyRefund(cycle.title, formatMoney(-delta));
 
   await createNotification(db, {
     memberId: input.memberId,
     type: "order_corrected",
-    title: "Ordine modificato",
-    body: `${dirSentence} Nuovo saldo: ${fmt(newBalance)}.`,
+    title: t.notificationsServer.orderModifiedTitle,
+    body: t.notificationsServer.orderModifiedBody(dirSentence, formatMoney(newBalance)),
     href: `/storico?cycleId=${input.cycleId}`,
     createdAt: now,
   });
@@ -1331,7 +1334,7 @@ export async function adminDeleteMember(memberId: string): Promise<{ error?: str
 
     if (parseInt(orderCount?.n ?? "0") > 0 || parseInt(ledgerCount?.n ?? "0") > 0) {
       return {
-        error: "Non è possibile eliminare un socio con ordini o movimenti. Disattivalo invece.",
+        error: t.errors.cannotDeleteMemberWithData,
       };
     }
 
@@ -1340,7 +1343,7 @@ export async function adminDeleteMember(memberId: string): Promise<{ error?: str
     revalidatePath("/admin");
     return {};
   } catch (e) {
-    return { error: e instanceof Error ? e.message : "Errore" };
+    return { error: e instanceof Error ? e.message : t.errors.genericError };
   }
 }
 
@@ -1357,8 +1360,8 @@ export type UpsertMemberInput = {
 
 export async function adminUpsertMember(data: UpsertMemberInput) {
   const admin = await requireAdmin();
-  if (!data.fullName?.trim()) throw new Error("Nome obbligatorio");
-  if (!data.email?.trim()) throw new Error("Email obbligatoria");
+  if (!data.fullName?.trim()) throw new Error(t.errors.fieldRequired("Nome"));
+  if (!data.email?.trim()) throw new Error(t.errors.fieldRequired("Email"));
 
   const aliasEmail = data.aliasEmail?.toLowerCase().trim() || null;
   const db = getDb();
@@ -1411,7 +1414,7 @@ export type UpsertSupplierInput = {
 
 export async function adminUpsertSupplier(data: UpsertSupplierInput) {
   const admin = await requireAdmin();
-  if (!data.name?.trim()) throw new Error("Nome obbligatorio");
+  if (!data.name?.trim()) throw new Error(t.errors.fieldRequired("Nome"));
 
   const db = getDb();
   const now = new Date();
@@ -1468,14 +1471,14 @@ export async function adminDeleteSupplier(supplierId: string): Promise<{ error?:
       .from(orderCycles)
       .where(eq(orderCycles.supplierId, supplierId));
     if (parseInt(cycleCount?.n ?? "0") > 0) {
-      return { error: "Non è possibile eliminare un fornitore con cicli associati. Archivialo invece." };
+      return { error: t.errors.cannotDeleteSupplierWithCycles };
     }
     await db.delete(suppliers).where(eq(suppliers.supplierId, supplierId));
     await writeAudit(db, admin.email, "delete_supplier", "supplier", supplierId);
     revalidatePath("/admin");
     return {};
   } catch (e) {
-    return { error: e instanceof Error ? e.message : "Errore" };
+    return { error: e instanceof Error ? e.message : t.errors.genericError };
   }
 }
 
@@ -1508,7 +1511,7 @@ export async function adminUpsertCatalogProduct(data: UpsertCatalogProductInput)
         .where(eq(supplierProducts.catalogProductId, data.catalogProductId))
         .limit(1);
 
-      if (!existing) return { error: "Prodotto non trovato a catalogo" };
+      if (!existing) return { error: t.errors.catalogProductNotFound };
 
       const pricePerKg =
         data.pricePerKg != null && !Number.isNaN(data.pricePerKg)
@@ -1583,7 +1586,7 @@ export async function adminUpsertCatalogProduct(data: UpsertCatalogProductInput)
       return {};
     }
   } catch (e) {
-    return { error: e instanceof Error ? e.message : "Errore" };
+    return { error: e instanceof Error ? e.message : t.errors.genericError };
   }
 }
 
@@ -1596,13 +1599,13 @@ export async function adminArchiveCatalogProduct(catalogProductId: string, activ
     revalidatePath("/admin");
     return {};
   } catch (e) {
-    return { error: e instanceof Error ? e.message : "Errore" };
+    return { error: e instanceof Error ? e.message : t.errors.genericError };
   }
 }
 
 export async function adminLoadFromCatalog(cycleId: string, catalogProductIds: string[]): Promise<{error?: string; count?: number}> {
   try {
-    if (!catalogProductIds.length) return { error: "Nessun prodotto selezionato" };
+    if (!catalogProductIds.length) return { error: t.errors.noProductsSelected };
     const admin = await requireAdmin();
     const db = getDb();
 
@@ -1611,7 +1614,7 @@ export async function adminLoadFromCatalog(cycleId: string, catalogProductIds: s
       .from(supplierProducts)
       .where(and(inArray(supplierProducts.catalogProductId, catalogProductIds), eq(supplierProducts.active, true)));
 
-    if (!selectedProducts.length) return { error: "Prodotti non trovati o non attivi" };
+    if (!selectedProducts.length) return { error: t.errors.productsNotFoundOrInactive };
 
     await upsertCycleProducts(db, cycleId, selectedProducts.map(p => ({
       name: p.name,
@@ -1633,7 +1636,7 @@ export async function adminLoadFromCatalog(cycleId: string, catalogProductIds: s
 
     return { count: selectedProducts.length };
   } catch (e) {
-    return { error: e instanceof Error ? e.message : "Errore" };
+    return { error: e instanceof Error ? e.message : t.errors.genericError };
   }
 }
 
@@ -1658,7 +1661,7 @@ export async function adminCleanupIncompleteProducts(): Promise<{error?: string}
     revalidatePath("/admin");
     return {};
   } catch (e) {
-    return { error: e instanceof Error ? e.message : "Errore" };
+    return { error: e instanceof Error ? e.message : t.errors.genericError };
   }
 }
 
@@ -1672,7 +1675,7 @@ export async function adminRemoveProductFromCycle(productId: string): Promise<{e
     revalidatePath("/ordine");
     return {};
   } catch (e) {
-    return { error: e instanceof Error ? e.message : "Errore" };
+    return { error: e instanceof Error ? e.message : t.errors.genericError };
   }
 }
 
@@ -1709,7 +1712,7 @@ export async function adminBuildSupplierDistinta(
     const r = await buildSupplierDistinta(cycleId);
     return { ok: true, filename: r.filename, base64: r.content.toString("base64") };
   } catch (e) {
-    return { error: e instanceof Error ? e.message : "Errore generazione distinta" };
+    return { error: e instanceof Error ? e.message : t.errors.distintaGenerationError };
   }
 }
 
@@ -1730,7 +1733,7 @@ export async function adminPreviewDistintaImport(input: {
     const preview = await parseSupplierDistinta(buf, input.cycleId);
     return { ok: true, preview };
   } catch (e) {
-    return { error: e instanceof Error ? e.message : "Errore lettura distinta" };
+    return { error: e instanceof Error ? e.message : t.errors.distintaReadError };
   }
 }
 
@@ -1821,7 +1824,7 @@ export async function adminApplyDistintaImport(input: {
             .update(ledgerEntries)
             .set({
               amount: newAmount.toFixed(2),
-              note: "Spedizione da distinta fornitore",
+              note: t.ledger.shippingFromSupplier,
               updatedAt: now,
               updatedBy: admin.email,
             })
@@ -1834,7 +1837,7 @@ export async function adminApplyDistintaImport(input: {
             type: "shipping_charge",
             amount: newAmount.toFixed(2),
             cycleId: input.cycleId,
-            note: "Spedizione da distinta fornitore",
+            note: t.ledger.shippingFromSupplier,
             createdBy: admin.email,
             createdAt: now,
           });
@@ -1854,28 +1857,27 @@ export async function adminApplyDistintaImport(input: {
 
     // 3) Per-member roll-up notification (one extra notification on top of
     // the per-line ones from step 1 — gives the socio the full picture).
-    const fmt = (n: number) => n.toFixed(2).replace(".", ",");
     for (const memberId of affected) {
       const lineChanges = linesByMember.get(memberId) ?? [];
       const shipChange = shippingByMember.get(memberId);
       const bits: string[] = [];
       if (lineChanges.length > 0) {
         const subset = lineChanges.slice(0, 3).map(
-          (l) => `${l.product}: ${fmt(l.oldTotal)} → ${fmt(l.newTotal)} €`,
+          (l) => `${l.product}: ${formatMoney(l.oldTotal)} → ${formatMoney(l.newTotal)} €`,
         );
         const more = lineChanges.length > 3 ? ` (+${lineChanges.length - 3} altre)` : "";
         bits.push(`Prodotti aggiornati dal fornitore: ${subset.join("; ")}${more}.`);
       }
       if (shipChange) {
         bits.push(
-          `Spedizione: ${fmt(shipChange.oldShipping)} → ${fmt(shipChange.newShipping)} €.`,
+          `Spedizione: ${formatMoney(shipChange.oldShipping)} → ${formatMoney(shipChange.newShipping)} €.`,
         );
       }
       if (bits.length === 0) continue;
       await createNotification(db, {
         memberId,
         type: "order_adjusted",
-        title: "Pesata fornitore registrata",
+        title: t.notificationsServer.pesataRegistrataTitle,
         body: bits.join(" "),
         href: "/storico",
       });
@@ -1907,6 +1909,6 @@ export async function adminApplyDistintaImport(input: {
       affectedMembers: affected.size,
     };
   } catch (e) {
-    return { error: e instanceof Error ? e.message : "Errore applicazione distinta" };
+    return { error: e instanceof Error ? e.message : t.errors.importApplyError };
   }
 }

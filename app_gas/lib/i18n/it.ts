@@ -743,6 +743,31 @@ export const it = {
       importAddedToCycle: (n: number) => `${n} nel ciclo`,
     },
   },
+  notificationsServer: {
+    orderClosedTitle: "Ordine chiuso",
+    orderClosedBody: (title: string, total: string) =>
+      `È stato chiuso "${title}". Ti è stato addebitato ${total}.`,
+    orderClosedBodyWithShipping: (title: string, total: string, order: string, shipping: string) =>
+      `È stato chiuso "${title}". Ti è stato addebitato ${total} (ordine ${order} + spedizione ${shipping}).`,
+    topupReceivedTitle: "Bonifico ricevuto",
+    topupReceivedBody: (amount: string, balance: string) =>
+      `Il tuo bonifico di ${amount} è stato ricevuto. Il tuo nuovo credito è ${balance}.`,
+    orderModifiedTitle: "Ordine modificato",
+    orderModifiedBodyNoChange: (title: string) =>
+      `Il tuo ordine in "${title}" è stato aggiornato, il saldo non cambia.`,
+    orderModifiedBodyCharge: (title: string, amount: string) =>
+      `Il tuo ordine in "${title}" è stato modificato dall'admin: addebito aggiuntivo di ${amount}.`,
+    orderModifiedBodyRefund: (title: string, amount: string) =>
+      `Il tuo ordine in "${title}" è stato modificato dall'admin: rimborso di ${amount}.`,
+    orderModifiedBody: (sentence: string, balance: string) =>
+      `${sentence} Nuovo saldo: ${balance}.`,
+    pesataRegistrataTitle: "Pesata fornitore registrata",
+  },
+  ledger: {
+    orderCharge: "Addebito ordine",
+    shippingAdjusted: "Spedizione rettificata",
+    shippingFromSupplier: "Spedizione da distinta fornitore",
+  },
   errors: {
     memberNotFound: "Socio non trovato",
     cycleNotOpen: "Il ciclo non è più aperto",
@@ -762,6 +787,34 @@ export const it = {
     cycleCreationError: "Errore nella creazione del ciclo",
     importError: "Errore durante l'importazione",
     generationError: "Errore generazione template",
+    cycleUpdateError: "Errore nell'aggiornamento del ciclo",
+    cycleNotClosed: "Il ciclo non è chiuso",
+    cycleNoSupplier: "Il ciclo non ha un fornitore associato",
+    recipientMissing: "Indirizzo destinatario mancante",
+    distintaBuildError: "Errore costruzione distinta",
+    emailSendError: "Errore nell'invio email",
+    orderLineNotFound: "Riga ordine non trovata",
+    cycleNotClosedUseNormal: "Il ciclo non è chiuso: usa la modifica ordine normale",
+    actualQtyInvalid: "Quantità effettiva non valida",
+    actualTotalInvalid: "Totale effettivo non valido",
+    correctionError: "Errore nella rettifica",
+    orderEditOnlyAfterClose: "L'ordine si può modificare in questo modo solo dopo la chiusura del ciclo",
+    productNotValidForCycle: "Prodotto non valido per questo ciclo",
+    amountMustBePositive: "L'importo deve essere positivo",
+    cannotDeleteSupplierWithCycles: "Non è possibile eliminare un fornitore con cicli associati. Archivialo invece.",
+    catalogProductNotFound: "Prodotto non trovato a catalogo",
+    noProductsSelected: "Nessun prodotto selezionato",
+    productsNotFoundOrInactive: "Prodotti non trovati o non attivi",
+    fileMissing: "File mancante",
+    fileEmptyOrUnreadable: "File vuoto o illeggibile",
+    selectOrCreateSupplier: "Seleziona o crea un fornitore",
+    mapNameAndPrice: "Mappa almeno le colonne Nome e Prezzo",
+    supplierNameMissing: "Nome fornitore mancante",
+    distintaReadError: "Errore lettura distinta",
+    distintaGenerationError: "Errore generazione distinta",
+    importPreviewError: "Errore generazione anteprima",
+    importApplyError: "Errore importazione",
+    cannotDeleteMemberWithData: "Non è possibile eliminare un socio con ordini o movimenti. Disattivalo invece.",
   },
   email: {
     supplierOrderSubject: (appName: string, cycleTitle: string) => `${appName} — ${cycleTitle}`,

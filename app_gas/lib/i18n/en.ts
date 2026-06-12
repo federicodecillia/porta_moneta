@@ -742,6 +742,31 @@ export const en: Strings = {
       importAddedToCycle: (n: number) => `${n} in cycle`,
     },
   },
+  notificationsServer: {
+    orderClosedTitle: "Order closed",
+    orderClosedBody: (title: string, total: string) =>
+      `"${title}" has been closed. You have been charged ${total}.`,
+    orderClosedBodyWithShipping: (title: string, total: string, order: string, shipping: string) =>
+      `"${title}" has been closed. You have been charged ${total} (order ${order} + shipping ${shipping}).`,
+    topupReceivedTitle: "Transfer received",
+    topupReceivedBody: (amount: string, balance: string) =>
+      `Your transfer of ${amount} has been received. Your new balance is ${balance}.`,
+    orderModifiedTitle: "Order updated",
+    orderModifiedBodyNoChange: (title: string) =>
+      `Your order in "${title}" has been updated, balance unchanged.`,
+    orderModifiedBodyCharge: (title: string, amount: string) =>
+      `Your order in "${title}" was modified by an admin: additional charge of ${amount}.`,
+    orderModifiedBodyRefund: (title: string, amount: string) =>
+      `Your order in "${title}" was modified by an admin: refund of ${amount}.`,
+    orderModifiedBody: (sentence: string, balance: string) =>
+      `${sentence} New balance: ${balance}.`,
+    pesataRegistrataTitle: "Supplier weighing recorded",
+  },
+  ledger: {
+    orderCharge: "Order charge",
+    shippingAdjusted: "Shipping adjusted",
+    shippingFromSupplier: "Shipping from supplier sheet",
+  },
   errors: {
     memberNotFound: "Member not found",
     cycleNotOpen: "The cycle is no longer open",
@@ -761,6 +786,34 @@ export const en: Strings = {
     cycleCreationError: "Error creating cycle",
     importError: "Import error",
     generationError: "Error generating template",
+    cycleUpdateError: "Error updating cycle",
+    cycleNotClosed: "The cycle is not closed",
+    cycleNoSupplier: "The cycle has no associated supplier",
+    recipientMissing: "Recipient address missing",
+    distintaBuildError: "Error building order sheet",
+    emailSendError: "Error sending email",
+    orderLineNotFound: "Order line not found",
+    cycleNotClosedUseNormal: "The cycle is not closed: use normal order editing",
+    actualQtyInvalid: "Invalid actual quantity",
+    actualTotalInvalid: "Invalid actual total",
+    correctionError: "Error saving correction",
+    orderEditOnlyAfterClose: "Orders can only be modified this way after the cycle is closed",
+    productNotValidForCycle: "Product not valid for this cycle",
+    amountMustBePositive: "Amount must be positive",
+    cannotDeleteSupplierWithCycles: "Cannot delete a supplier with associated cycles. Archive it instead.",
+    catalogProductNotFound: "Catalog product not found",
+    noProductsSelected: "No products selected",
+    productsNotFoundOrInactive: "Products not found or inactive",
+    fileMissing: "File missing",
+    fileEmptyOrUnreadable: "File empty or unreadable",
+    selectOrCreateSupplier: "Select or create a supplier",
+    mapNameAndPrice: "Map at least Name and Price columns",
+    supplierNameMissing: "Supplier name missing",
+    distintaReadError: "Error reading order sheet",
+    distintaGenerationError: "Error generating order sheet",
+    importPreviewError: "Error generating preview",
+    importApplyError: "Import error",
+    cannotDeleteMemberWithData: "Cannot delete a member with orders or movements. Deactivate instead.",
   },
   email: {
     supplierOrderSubject: (appName: string, cycleTitle: string) => `${appName} — ${cycleTitle}`,

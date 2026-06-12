@@ -319,7 +319,7 @@ export function LedgerEntryRow({ entry }: { entry: LedgerEntry }) {
           ) : (
             entry.note ?? "—"
           )}
-          {entry.cycleTitle && entry.note && entry.note !== "Addebito ordine" && (
+          {entry.cycleTitle && entry.note && entry.note !== t.ledger.orderCharge && (
             <span className="ml-1 text-brand-gray-light">· {entry.note}</span>
           )}
         </span>
