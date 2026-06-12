@@ -9,6 +9,8 @@ import {
   products,
 } from "@/lib/db/schema";
 import { DISTINTA_FORMAT_VERSION } from "./distinta-builder";
+import { t } from "@/lib/i18n";
+import { formatMoney } from "@/lib/i18n/format";
 
 const EPS = 0.005;
 
@@ -94,7 +96,7 @@ export async function parseSupplierDistinta(
       errors: [
         !meta
           ? "Foglio _meta mancante: il file non sembra una distinta generata dall'app. Riscarica la distinta dal ciclo."
-          : "Foglio Distinta mancante: verifica di aver caricato il file giusto.",
+          : t.errors.distintaSheetMissing,
       ],
     };
   }
@@ -131,7 +133,7 @@ export async function parseSupplierDistinta(
     memberColStart == null ||
     memberColEnd == null
   ) {
-    errors.push("Coordinate della matrice mancanti nel foglio _meta.");
+    errors.push(t.errors.distintaMatrixCoordsMissing);
   }
   if (errors.length > 0) {
     return { cycleId: expectedCycleId, cycleTitle, corrections: [], shippingChanges: [], warnings, errors };
@@ -157,7 +159,7 @@ export async function parseSupplierDistinta(
   }
 
   if (productByRow.size === 0 || memberByCol.size === 0) {
-    errors.push("Mappatura prodotti/soci vuota nel foglio _meta.");
+    errors.push(t.errors.distintaMappingEmpty);
     return { cycleId, cycleTitle, corrections: [], shippingChanges: [], warnings, errors };
   }
 
@@ -174,11 +176,11 @@ export async function parseSupplierDistinta(
     .where(eq(orderCycles.cycleId, cycleId))
     .limit(1);
   if (!cycle) {
-    errors.push("Ciclo non più presente nel database.");
+    errors.push(t.errors.cycleNoLongerInDb);
     return { cycleId, cycleTitle, corrections: [], shippingChanges: [], warnings, errors };
   }
   if (cycle.status !== "closed") {
-    errors.push("Il ciclo non è chiuso: la distinta si può applicare solo a cicli chiusi.");
+    errors.push(t.errors.cycleNotClosedDistinta);
     return { cycleId, cycleTitle: cycle.title, corrections: [], shippingChanges: [], warnings, errors };
   }
 
@@ -225,7 +227,7 @@ export async function parseSupplierDistinta(
         // typed a non-zero value here, surface a warning and skip.
         if (newTotal != null && Math.abs(newTotal) >= EPS) {
           warnings.push(
-            `${memberName} · ${productName}: ${newTotal.toFixed(2).replace(".", ",")} € inserito ma non c'era un ordine — ignorato.`,
+            t.errors.distintaWarningNoOrder(memberName, productName, formatMoney(newTotal)),
           );
         }
         continue;

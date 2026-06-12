@@ -369,7 +369,7 @@ export async function buildSupplierDistinta(cycleId: string): Promise<DistintaBu
 
   // ── Total-per-member row (formulas) ──
   const TOTAL_ROW = r;
-  ws.getCell(r, 1).value = "Totale per socio";
+  ws.getCell(r, 1).value = t.csv.totalPerMember;
   ws.getCell(r, 1).font = { bold: true };
   ws.mergeCells(r, 1, r, REF_COLS);
   for (let c = 1; c <= REF_COLS; c++) {
@@ -424,15 +424,15 @@ export async function buildSupplierDistinta(cycleId: string): Promise<DistintaBu
   // Read-only itemized list — one row per (socio, prodotto). Same rows we
   // built the matrix from, sorted alphabetically Socio → Prodotto → Varietà
   // so the supplier can scan everything a single member ordered in one block.
-  const riep = wb.addWorksheet("Riepilogo Ordini Soci");
+  const riep = wb.addWorksheet(t.csv.riepSheetName);
   const riepHeaders = [
     "Socio",
     "Prodotto",
     "Varietà",
     "Formato",
-    "Qta ordinata",
-    "Prezzo unitario (€)",
-    "Totale ordinato (€)",
+    t.csv.riepColQtyOrdered,
+    t.csv.riepColUnitPrice,
+    t.csv.riepColTotalOrdered,
   ];
   for (let i = 0; i < riepHeaders.length; i++) {
     const c = riep.getCell(1, i + 1);
@@ -479,13 +479,13 @@ export async function buildSupplierDistinta(cycleId: string): Promise<DistintaBu
   // Aggregated qty + amount per product, sorted by the same sortOrder/name
   // the matrix uses, so reading top-to-bottom matches what the supplier
   // sees in Distinta.
-  const totp = wb.addWorksheet("Totali per prodotto");
+  const totp = wb.addWorksheet(t.csv.totpSheetName);
   const totpHeaders = [
     "Prodotto",
     "Varietà",
     "Formato",
-    "Qta totale ordinata",
-    "Importo totale (€)",
+    t.csv.totpColQtyTotal,
+    t.csv.totpColAmountTotal,
   ];
   for (let i = 0; i < totpHeaders.length; i++) {
     const c = totp.getCell(1, i + 1);

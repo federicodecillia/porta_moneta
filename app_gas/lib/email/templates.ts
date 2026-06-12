@@ -1,6 +1,6 @@
 import { brand } from "@/lib/brand";
 import { t } from "@/lib/i18n";
-import { formatMoney } from "@/lib/i18n/format";
+import { formatMoney, formatDateTime } from "@/lib/i18n/format";
 
 type SupplierEmailInput = {
   cycleTitle: string;
@@ -11,7 +11,7 @@ type SupplierEmailInput = {
 };
 
 const formatPickup = (d: Date): string =>
-  d.toLocaleString("it-IT", {
+  formatDateTime(d, {
     weekday: "long",
     day: "numeric",
     month: "long",

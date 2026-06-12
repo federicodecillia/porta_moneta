@@ -18,16 +18,14 @@ import { t } from "@/lib/i18n";
 // Help copy shared by every product form (catalog + cycle edit). Centralising
 // it keeps the wording consistent across the admin UI.
 const HELP = {
-  nome: "Es: Mela rossa, Insalata, Pane integrale. È quello che vede il socio nel form ordine.",
-  varieta: "Es: Bio, Stark, Granny Smith. Aggiungilo se ne esiste più di una variante.",
-  formato: 'Cosa porti al socio per quel prezzo. Es: "Sacco 2kg", "Cestino", "Mazzo", "Cassetta".',
-  prezzo: "Quanto paga il socio per UN formato (es. €5 per il sacco da 2kg). Decimali con virgola o punto.",
-  prezzoKg:
-    "Opzionale: prezzo al chilo come riferimento (es. €2,50/kg). Comodo per prodotti a peso così i soci confrontano.",
-  categoria:
-    "Serve a raggruppare i prodotti nel form ordine. Scegli dall'elenco o aggiungine una nuova.",
-  icona: "Emoji mostrata accanto al prodotto. Clicca per scegliere o cercare.",
-  note: 'Note libere, mostrate al socio. Es: "Coltivata in serra", "Da consumare entro 3 giorni".',
+  nome: t.admin.products.helpNome,
+  varieta: t.admin.products.helpVarieta,
+  formato: t.admin.products.helpFormato,
+  prezzo: t.admin.products.helpPrezzo,
+  prezzoKg: t.admin.products.helpPrezzoKg,
+  categoria: t.admin.products.helpCategoria,
+  icona: t.admin.products.helpIcona,
+  note: t.admin.products.helpNote,
 } as const;
 
 // ── Catalog Product Form ──────────────────────────────────────────────────────

@@ -1,4 +1,5 @@
 import { Resend } from "resend";
+import { t } from "@/lib/i18n";
 
 type Attachment = {
   filename: string;
@@ -31,7 +32,7 @@ export async function sendMail(
   opts: SendMailOpts,
 ): Promise<{ ok: true; id?: string } | { error: string }> {
   if (process.env.DEMO_MODE === "true") {
-    return { error: "Ambiente demo: invio email disabilitato" };
+    return { error: t.errors.demoEmailDisabled };
   }
   const apiKey = process.env.RESEND_API_KEY;
   const from = opts.from?.trim() || process.env.MAIL_FROM;
@@ -49,9 +50,9 @@ export async function sendMail(
       text: opts.text,
       ...(opts.attachments ? { attachments: opts.attachments } : {}),
     });
-    if (error) return { error: error.message || "Errore invio email" };
+    if (error) return { error: error.message || t.errors.emailSendFailed };
     return { ok: true, id: data?.id };
   } catch (e) {
-    return { error: e instanceof Error ? e.message : "Errore invio email" };
+    return { error: e instanceof Error ? e.message : t.errors.emailSendFailed };
   }
 }

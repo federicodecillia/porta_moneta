@@ -18,13 +18,13 @@ import { formatEur } from "@/lib/utils";
 import { t } from "@/lib/i18n";
 
 const HELP_FIELDS = {
-  nome: "Es: Mela rossa, Insalata, Pane integrale. È quello che vede il socio nel form ordine.",
-  varieta: "Es: Bio, Stark, Granny Smith. Aggiungilo se ne esiste più di una variante.",
-  formato: 'Cosa porti al socio per quel prezzo. Es: "Sacco 2kg", "Cestino", "Mazzo".',
-  prezzo: "Quanto paga il socio per UN formato. Decimali con virgola o punto.",
-  prezzoKg: "Opzionale: prezzo al chilo come riferimento. Comodo per prodotti a peso.",
-  categoria: "Serve a raggruppare i prodotti nel form ordine. Scegli o aggiungi una nuova.",
-  note: "Note libere, mostrate al socio.",
+  nome: t.admin.suppliers.helpNome,
+  varieta: t.admin.suppliers.helpVarieta,
+  formato: t.admin.suppliers.helpFormato,
+  prezzo: t.admin.suppliers.helpPrezzo,
+  prezzoKg: t.admin.suppliers.helpPrezzoKg,
+  categoria: t.admin.suppliers.helpCategoria,
+  note: t.admin.suppliers.helpNote,
 } as const;
 
 type Supplier = {
