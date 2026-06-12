@@ -249,6 +249,9 @@ export const it = {
       searchPlaceholder: "Cerca…",
       selectPlaceholder: "— seleziona —",
       noSupplier: "— nessuno —",
+      roleAdmin: "Admin",
+      roleMember: "Socio",
+      roleUser: "Utente",
     },
     cycle: {
       tabLabel: "Ciclo",
@@ -730,6 +733,87 @@ export const it = {
       importSkipped: (n: number) => `${n} invariati`,
       importInvalid: (n: number) => `${n} scartati`,
       importAddedToCycle: (n: number) => `${n} nel ciclo`,
+    },
+  },
+  errors: {
+    memberNotFound: "Socio non trovato",
+    cycleNotOpen: "Il ciclo non è più aperto",
+    accessDenied: "Non hai accesso a questo ciclo",
+    productNotFound: (id: string) => `Prodotto non trovato: ${id}`,
+    cycleNotFound: "Ciclo non trovato",
+    unauthorized: "Accesso non autorizzato",
+    fieldRequired: (field: string) => `${field} obbligatorio/a`,
+    invalidPrice: "Prezzo non valido",
+    csvEmpty: "Il file CSV è vuoto o contiene solo l'intestazione.",
+    csvInvalid: "Nessun prodotto valido trovato nel CSV.",
+    csvReadError: "Impossibile leggere il file",
+    xlsxReadError: "Errore lettura file",
+    productNotInCycle: (id: string) => `Prodotto non appartenente al ciclo: ${id}`,
+    cycleNotFoundOrAlreadyClosed: "Il ciclo non è aperto (potrebbe essere già stato chiuso)",
+    genericError: "Errore",
+    cycleCreationError: "Errore nella creazione del ciclo",
+    importError: "Errore durante l'importazione",
+    generationError: "Errore generazione template",
+  },
+  email: {
+    supplierOrderSubject: (appName: string, cycleTitle: string) => `${appName} — ${cycleTitle}`,
+    supplierOrderBody: (input: {
+      appName: string;
+      orgName: string;
+      cycleTitle: string;
+      pickupDate?: string | null;
+      grandTotal: string;
+      productCount: number;
+      memberCount: number;
+    }) => {
+      const pickupLine = input.pickupDate
+        ? `Data ritiro prevista: ${input.pickupDate}.`
+        : "Data ritiro: da concordare.";
+      return `Buongiorno,
+
+in allegato la distinta dell'ordine di ${input.appName} per il ciclo "${input.cycleTitle}".
+
+Il file Excel ha una riga per ogni prodotto e una colonna per ogni socio. Le celle gialle sono già pre-compilate con il preventivo: dopo la pesata, modifichi solo le celle dove il costo effettivo è diverso (lasciando le altre invariate). La riga "Spedizione" indica la quota per socio (anche questa modificabile se varia). I totali per socio e per prodotto si ricalcolano da soli.
+
+Quando ha finito, ci rimandi il file in risposta a questa email — lo carichiamo nell'app con un click e i saldi dei soci vengono aggiornati automaticamente.
+
+Riepilogo del preventivo: ${input.grandTotal} euro su ${input.productCount} ${input.productCount === 1 ? "prodotto" : "prodotti"} per ${input.memberCount} ${input.memberCount === 1 ? "socio" : "soci"}.
+${pickupLine}
+
+Il file è in formato .xlsx, si apre con Excel, LibreOffice e Google Sheets senza problemi.
+
+Grazie,
+${input.orgName}
+`;
+    },
+  },
+  csv: {
+    distintaSheetName: "Distinta",
+    distintaTitle: (cycleTitle: string, supplierName?: string) =>
+      `${cycleTitle} — Distinta fornitore${supplierName ? ` (${supplierName})` : ""}`,
+    distintaInstructions:
+      'Compila le celle gialle con il costo effettivo (in euro) per ciascun socio. La riga "Spedizione" e il "Totale per socio" sono auto-calcolati. Non rinominare le colonne soci né eliminare il foglio _meta — servono per ricaricare la distinta nell\'app.',
+    columnProduct: "Prodotto",
+    columnVariant: "Varietà",
+    columnFormat: "Formato",
+    columnPricePerUnit: "€/pz",
+    columnPricePerKg: "€/kg",
+    columnNotes: "Note",
+    columnTotalProduct: "Totale prodotto",
+    columnShipping: "Spedizione",
+    columnTotalPerMember: "Totale per socio",
+    shippingLabel: "Spedizione",
+    shippingProportional: "Spedizione (quota proporzionale)",
+    productTemplate: {
+      sheetName: "Prodotti",
+      columnName: "Nome",
+      columnVariant: "Varietà",
+      columnFormat: "Formato",
+      columnPrice: "Prezzo",
+      columnPricePerKg: "Prezzo/kg",
+      columnCategory: "Categoria",
+      columnEmoji: "Icona",
+      columnNotes: "Note",
     },
   },
 };

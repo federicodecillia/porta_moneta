@@ -249,6 +249,9 @@ export const en: Strings = {
       searchPlaceholder: "Search…",
       selectPlaceholder: "— select —",
       noSupplier: "— none —",
+      roleAdmin: "Admin",
+      roleMember: "Member",
+      roleUser: "User",
     },
     cycle: {
       tabLabel: "Cycle",
@@ -729,6 +732,87 @@ export const en: Strings = {
       importSkipped: (n: number) => `${n} unchanged`,
       importInvalid: (n: number) => `${n} discarded`,
       importAddedToCycle: (n: number) => `${n} in cycle`,
+    },
+  },
+  errors: {
+    memberNotFound: "Member not found",
+    cycleNotOpen: "The cycle is no longer open",
+    accessDenied: "You don't have access to this cycle",
+    productNotFound: (id: string) => `Product not found: ${id}`,
+    cycleNotFound: "Cycle not found",
+    unauthorized: "Unauthorized access",
+    fieldRequired: (field: string) => `${field} is required`,
+    invalidPrice: "Invalid price",
+    csvEmpty: "The CSV file is empty or contains only the header.",
+    csvInvalid: "No valid products found in the CSV.",
+    csvReadError: "Unable to read file",
+    xlsxReadError: "File read error",
+    productNotInCycle: (id: string) => `Product does not belong to this cycle: ${id}`,
+    cycleNotFoundOrAlreadyClosed: "The cycle is not open (it may have already been closed)",
+    genericError: "Error",
+    cycleCreationError: "Error creating cycle",
+    importError: "Import error",
+    generationError: "Error generating template",
+  },
+  email: {
+    supplierOrderSubject: (appName: string, cycleTitle: string) => `${appName} — ${cycleTitle}`,
+    supplierOrderBody: (input: {
+      appName: string;
+      orgName: string;
+      cycleTitle: string;
+      pickupDate?: string | null;
+      grandTotal: string;
+      productCount: number;
+      memberCount: number;
+    }) => {
+      const pickupLine = input.pickupDate
+        ? `Expected pickup date: ${input.pickupDate}.`
+        : "Pickup date: to be agreed upon.";
+      return `Hello,
+
+please find attached the order sheet for ${input.appName} for the cycle "${input.cycleTitle}".
+
+The Excel file has one row per product and one column per member. Yellow cells are already pre-filled with the estimate: after weighing, edit only the cells where the actual cost differs (leaving the others unchanged). The "Shipping" row shows the share per member (also editable if it varies). Totals per member and per product are auto-calculated.
+
+When you're done, send the file back to us — we'll load it into the app with one click and members' balances will be updated automatically.
+
+Budget summary: ${input.grandTotal} EUR for ${input.productCount} ${input.productCount === 1 ? "product" : "products"} for ${input.memberCount} ${input.memberCount === 1 ? "member" : "members"}.
+${pickupLine}
+
+The file is in .xlsx format and opens without issues in Excel, LibreOffice, and Google Sheets.
+
+Thank you,
+${input.orgName}
+`;
+    },
+  },
+  csv: {
+    distintaSheetName: "Order Sheet",
+    distintaTitle: (cycleTitle: string, supplierName?: string) =>
+      `${cycleTitle} — Supplier Order Sheet${supplierName ? ` (${supplierName})` : ""}`,
+    distintaInstructions:
+      'Fill in the yellow cells with the actual cost (in EUR) for each member. The "Shipping" row and "Total per member" are auto-calculated. Do not rename member columns or delete the _meta sheet — they are needed to reload the sheet into the app.',
+    columnProduct: "Product",
+    columnVariant: "Variety",
+    columnFormat: "Format",
+    columnPricePerUnit: "€/unit",
+    columnPricePerKg: "€/kg",
+    columnNotes: "Notes",
+    columnTotalProduct: "Product total",
+    columnShipping: "Shipping",
+    columnTotalPerMember: "Total per member",
+    shippingLabel: "Shipping",
+    shippingProportional: "Shipping (proportional share)",
+    productTemplate: {
+      sheetName: "Products",
+      columnName: "Name",
+      columnVariant: "Variety",
+      columnFormat: "Format",
+      columnPrice: "Price",
+      columnPricePerKg: "Price/kg",
+      columnCategory: "Category",
+      columnEmoji: "Icon",
+      columnNotes: "Notes",
     },
   },
 };

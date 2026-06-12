@@ -3,6 +3,8 @@
 import { and, eq } from "drizzle-orm";
 import { redirect } from "next/navigation";
 import { auth } from "@/auth";
+import { t } from "@/lib/i18n";
+import { formatMoney } from "@/lib/i18n/format";
 import { getDb } from "@/lib/db/client";
 import { auditLog, orders } from "@/lib/db/schema";
 import {
@@ -25,15 +27,15 @@ export async function saveOrder(
   if (!email) redirect("/login");
 
   const member = await getMemberByEmail(email);
-  if (!member) throw new Error("Socio non trovato");
+  if (!member) throw new Error(t.errors.memberNotFound);
 
   const cycles = await getOpenCycles();
   const cycle = cycles.find((c) => c.cycleId === cycleId);
   if (!cycle) {
-    throw new Error("Il ciclo non è più aperto");
+    throw new Error(t.errors.cycleNotOpen);
   }
   if (!canAccessCycle(cycle.accessLevel, member.role)) {
-    throw new Error("Non hai accesso a questo ciclo");
+    throw new Error(t.errors.accessDenied);
   }
 
   const cycleProducts = await getCycleProducts(cycleId);
@@ -51,7 +53,7 @@ export async function saveOrder(
     await db.insert(orders).values(
       newLines.map((l) => {
         const product = productMap.get(l.productId);
-        if (!product) throw new Error(`Prodotto non trovato: ${l.productId}`);
+        if (!product) throw new Error(t.errors.productNotFound(l.productId));
         const lineTotal = (parseFloat(product.unitPrice) * l.quantity).toFixed(2);
         return {
           orderLineId: crypto.randomUUID(),
@@ -89,7 +91,7 @@ export async function saveOrder(
     success: true,
     balanceWarning:
       afterBalance < 0
-        ? `Attenzione: dopo l'ordine il tuo saldo sarà €${Math.abs(afterBalance).toFixed(2).replace(".", ",")} negativo.`
+        ? `Attenzione: dopo l'ordine il tuo saldo sarà ${formatMoney(Math.abs(afterBalance))} negativo.`
         : null,
   };
 }
@@ -105,7 +107,7 @@ export async function loadLastOrderForPrefill(
   if (!email) redirect("/login");
 
   const member = await getMemberByEmail(email);
-  if (!member) throw new Error("Socio non trovato");
+  if (!member) throw new Error(t.errors.memberNotFound);
 
   const result = await getLastMemberOrderForPrefill(member.memberId, cycleId);
   return { ...result, matched: Object.keys(result.quantities).length };

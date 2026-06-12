@@ -2,6 +2,7 @@
 
 import { eq, and, asc, sql } from "drizzle-orm";
 import { auth } from "@/auth";
+import { t } from "@/lib/i18n";
 import { getDb } from "@/lib/db/client";
 import {
   ledgerEntries,
@@ -15,7 +16,7 @@ async function requireAdmin() {
   const session = await auth();
   const email = session?.user?.email;
   const role = (session?.user as { role?: string } | undefined)?.role;
-  if (!email || role !== "admin") throw new Error("Accesso non autorizzato");
+  if (!email || role !== "admin") throw new Error(t.errors.unauthorized);
   return { email };
 }
 
@@ -78,7 +79,7 @@ export async function adminGetCycleOrderDetails(cycleId: string) {
 
     return { success: true, orders: rows, shipping };
   } catch (e) {
-    return { error: e instanceof Error ? e.message : "Errore" };
+    return { error: e instanceof Error ? e.message : t.errors.genericError };
   }
 }
 
@@ -162,6 +163,6 @@ export async function adminGetEditClosedOrderBootstrap(
       },
     };
   } catch (e) {
-    return { error: e instanceof Error ? e.message : "Errore" };
+    return { error: e instanceof Error ? e.message : t.errors.genericError };
   }
 }

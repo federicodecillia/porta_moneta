@@ -1,5 +1,6 @@
 import { and, eq, sql } from "drizzle-orm";
 import ExcelJS from "exceljs";
+import { t } from "@/lib/i18n";
 import { brand } from "@/lib/brand";
 import { getDb } from "@/lib/db/client";
 import {
@@ -106,7 +107,7 @@ export async function buildSupplierDistinta(cycleId: string): Promise<DistintaBu
     .leftJoin(suppliers, eq(orderCycles.supplierId, suppliers.supplierId))
     .where(eq(orderCycles.cycleId, cycleId))
     .limit(1);
-  if (!cycle) throw new Error("Ciclo non trovato");
+  if (!cycle) throw new Error(t.errors.cycleNotFound);
 
   // All order lines for the cycle, joined with member and product metadata.
   // Sorted alphabetically by product name (with variant as tiebreaker) then
@@ -144,7 +145,7 @@ export async function buildSupplierDistinta(cycleId: string): Promise<DistintaBu
     )) as Row[];
 
   if (rows.length === 0) {
-    throw new Error("Nessun ordine in questo ciclo");
+    throw new Error(t.errors.genericError);
   }
 
   // Per-member shipping currently on file (absolute value — ledger stores
@@ -213,15 +214,14 @@ export async function buildSupplierDistinta(cycleId: string): Promise<DistintaBu
   // R1: title — merged
   ws.mergeCells(1, 1, 1, lastCol);
   const titleCell = ws.getCell(1, 1);
-  titleCell.value = `${cycle.title} — Distinta fornitore${cycle.supplierName ? ` (${cycle.supplierName})` : ""}`;
+  titleCell.value = t.csv.distintaTitle(cycle.title, cycle.supplierName ?? undefined);
   titleCell.font = { name: "Calibri", size: 14, bold: true };
   titleCell.alignment = { vertical: "middle", horizontal: "left" };
 
   // R2: instructions — merged
   ws.mergeCells(2, 1, 2, lastCol);
   const instrCell = ws.getCell(2, 1);
-  instrCell.value =
-    "Compila le celle gialle con il costo effettivo (in euro) per ciascun socio. La riga \"Spedizione\" e il \"Totale per socio\" sono auto-calcolati. Non rinominare le colonne soci né eliminare il foglio _meta — servono per ricaricare la distinta nell'app.";
+  instrCell.value = t.csv.distintaInstructions;
   instrCell.font = { name: "Calibri", size: 10, italic: true, color: { argb: "FF555555" } };
   instrCell.alignment = { vertical: "middle", horizontal: "left", wrapText: true };
   ws.getRow(2).height = 36;
@@ -229,14 +229,14 @@ export async function buildSupplierDistinta(cycleId: string): Promise<DistintaBu
   // R4: header
   const HEADER_ROW = 4;
   const headers = [
-    "Prodotto",
-    "Varietà",
-    "Formato",
-    "€/pz",
-    "€/kg",
-    "Note",
+    t.csv.columnProduct,
+    t.csv.columnVariant,
+    t.csv.columnFormat,
+    t.csv.columnPricePerUnit,
+    t.csv.columnPricePerKg,
+    t.csv.columnNotes,
     ...memberOrder.map((mid) => memberName.get(mid) ?? "—"),
-    "Totale prodotto",
+    t.csv.columnTotalProduct,
   ];
   for (let i = 0; i < headers.length; i++) {
     const c = ws.getCell(HEADER_ROW, i + 1);
@@ -332,7 +332,7 @@ export async function buildSupplierDistinta(cycleId: string): Promise<DistintaBu
 
   // ── Shipping row ──
   const SHIPPING_ROW = r;
-  ws.getCell(r, 1).value = "Spedizione";
+  ws.getCell(r, 1).value = t.csv.shippingLabel;
   ws.getCell(r, 1).font = { bold: true };
   ws.mergeCells(r, 1, r, REF_COLS);
   for (let c = 1; c <= REF_COLS; c++) {

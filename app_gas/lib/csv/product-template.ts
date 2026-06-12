@@ -1,18 +1,19 @@
 import ExcelJS from "exceljs";
+import { t } from "@/lib/i18n";
 import { brand } from "@/lib/brand";
 
 const FILL_HEADER = "FF2D2B29";
 const FILL_EXAMPLE = "FFFAF8F5";
 
 const HEADERS = [
-  "Nome",
-  "Varietà",
-  "Formato",
-  "Prezzo",
-  "Prezzo/kg",
-  "Categoria",
-  "Icona",
-  "Note",
+  t.csv.productTemplate.columnName,
+  t.csv.productTemplate.columnVariant,
+  t.csv.productTemplate.columnFormat,
+  t.csv.productTemplate.columnPrice,
+  t.csv.productTemplate.columnPricePerKg,
+  t.csv.productTemplate.columnCategory,
+  t.csv.productTemplate.columnEmoji,
+  t.csv.productTemplate.columnNotes,
 ] as const;
 
 // One example per common GAS category so admins can copy-paste and adapt
@@ -43,7 +44,7 @@ export async function buildProductTemplate(): Promise<Buffer> {
   wb.creator = brand.appName;
   wb.created = new Date();
 
-  const ws = wb.addWorksheet("Prodotti");
+  const ws = wb.addWorksheet(t.csv.productTemplate.sheetName);
 
   ws.columns = [
     { width: 22 },

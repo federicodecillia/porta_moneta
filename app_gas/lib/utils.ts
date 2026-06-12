@@ -1,5 +1,6 @@
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
+import { t } from "@/lib/i18n";
 import {
   formatMoney,
   formatDate as formatDateIntl,
@@ -37,9 +38,9 @@ export function formatDateTime(date: Date | string | null | undefined): string {
 }
 
 export function getRoleLabel(role: string): string {
-  if (role === "admin") return "Admin";
-  if (role === "attivo") return "Socio";
-  if (role === "socio") return "Utente";
+  if (role === "admin") return t.admin.common.roleAdmin;
+  if (role === "attivo") return t.admin.common.roleMember;
+  if (role === "socio") return t.admin.common.roleUser;
   return role;
 }
 

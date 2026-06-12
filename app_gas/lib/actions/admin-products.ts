@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { eq } from "drizzle-orm";
 import { auth } from "@/auth";
+import { t } from "@/lib/i18n";
 import { getDb } from "@/lib/db/client";
 import { supplierProducts, auditLog, suppliers } from "@/lib/db/schema";
 import { getProductEmoji, getProductEmojiOrNull, guessProductCategory } from "@/lib/utils";
@@ -15,7 +16,7 @@ async function requireAdmin() {
   const session = await auth();
   const email = session?.user?.email;
   const role = (session?.user as { role?: string } | undefined)?.role;
-  if (!email || role !== "admin") throw new Error("Accesso non autorizzato");
+  if (!email || role !== "admin") throw new Error(t.errors.unauthorized);
   return { email };
 }
 
@@ -30,7 +31,7 @@ export async function adminImportProductsCsv(supplierId: string, csvText: string
     const now = new Date();
 
     const lines = csvText.split(/\r?\n/).filter(line => line.trim() !== "");
-    if (lines.length <= 1) return { error: "Il file CSV è vuoto o contiene solo l'intestazione." };
+    if (lines.length <= 1) return { error: t.errors.csvEmpty };
 
     // Skip header
     const rows = lines.slice(1);
@@ -120,9 +121,9 @@ export async function adminImportProductsCsv(supplierId: string, csvText: string
       return { success: true, count: results.length };
     }
 
-    return { error: "Nessun prodotto valido trovato nel CSV." };
+    return { error: t.errors.csvInvalid };
   } catch (e) {
-    return { error: e instanceof Error ? e.message : "Errore durante l'importazione" };
+    return { error: e instanceof Error ? e.message : t.errors.importError };
   }
 }
 
@@ -135,7 +136,7 @@ export async function adminBuildProductTemplate(): Promise<
     const buf = await buildProductTemplate();
     return { base64: buf.toString("base64"), filename: "template_prodotti.xlsx" };
   } catch (e) {
-    return { error: e instanceof Error ? e.message : "Errore generazione template" };
+    return { error: e instanceof Error ? e.message : t.errors.generationError };
   }
 }
 
@@ -145,10 +146,10 @@ export async function adminImportProductsXlsx(supplierId: string, base64: string
     const db = getDb();
     const now = new Date();
 
-    if (!supplierId) return { error: "Fornitore mancante." };
+    if (!supplierId) return { error: t.errors.fieldRequired("Fornitore") };
     const buf = Buffer.from(base64, "base64");
     const rows = await parseProductTemplate(buf);
-    if (rows.length === 0) return { error: "Nessun prodotto valido trovato nel file Excel." };
+    if (rows.length === 0) return { error: t.errors.csvInvalid };
 
     const values = rows.map((r) => ({
       catalogProductId: genId("cp"),
@@ -180,7 +181,7 @@ export async function adminImportProductsXlsx(supplierId: string, base64: string
     revalidatePath("/admin");
     return { success: true, count: values.length };
   } catch (e) {
-    return { error: e instanceof Error ? e.message : "Errore durante l'importazione" };
+    return { error: e instanceof Error ? e.message : t.errors.importError };
   }
 }
 

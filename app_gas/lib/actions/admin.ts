@@ -3,6 +3,8 @@
 import { revalidatePath } from "next/cache";
 import { eq, and, sql, inArray } from "drizzle-orm";
 import { auth } from "@/auth";
+import { t } from "@/lib/i18n";
+import { formatMoney } from "@/lib/i18n/format";
 import { brand } from "@/lib/brand";
 import { getDb } from "@/lib/db/client";
 import { auditLog, ledgerEntries, members, notifications, orderCycles, orders, products, suppliers, supplierProducts } from "@/lib/db/schema";
@@ -12,7 +14,7 @@ async function requireAdmin(): Promise<{ email: string }> {
   const session = await auth();
   const email = session?.user?.email;
   const role = (session?.user as { role?: string } | undefined)?.role;
-  if (!email || role !== "admin") throw new Error("Accesso non autorizzato");
+  if (!email || role !== "admin") throw new Error(t.errors.unauthorized);
   return { email };
 }
 
@@ -144,8 +146,8 @@ function computeShippingShares(
 export async function adminCreateCycle(data: CreateCycleInput): Promise<{error?: string}> {
   try {
     const admin = await requireAdmin();
-    if (!data.title?.trim()) return { error: "Titolo obbligatorio" };
-    if (!data.orderCloseAt) return { error: "Data chiusura ordine obbligatoria" };
+    if (!data.title?.trim()) return { error: t.errors.fieldRequired("Titolo") };
+    if (!data.orderCloseAt) return { error: t.errors.fieldRequired("Data chiusura ordine") };
 
     const db = getDb();
 
@@ -181,7 +183,7 @@ export async function adminCreateCycle(data: CreateCycleInput): Promise<{error?:
     revalidatePath("/");
     return {};
   } catch (e) {
-    return { error: e instanceof Error ? e.message : "Errore nella creazione del ciclo" };
+    return { error: e instanceof Error ? e.message : t.errors.cycleCreationError };
   }
 }
 
@@ -215,8 +217,8 @@ async function performCycleClose(
       .from(orderCycles)
       .where(eq(orderCycles.cycleId, cycleId))
       .limit(1);
-    if (!existing) throw new Error("Ciclo non trovato");
-    throw new Error("Il ciclo non è aperto (potrebbe essere già stato chiuso)");
+    if (!existing) throw new Error(t.errors.cycleNotFound);
+    throw new Error(t.errors.cycleNotFoundOrAlreadyClosed);
   }
 
   const cycle = closed[0];
@@ -294,8 +296,8 @@ async function performCycleClose(
             const totalCharged = orderTotal + shippingShare;
             const body =
               shippingShare > 0
-                ? `E' stato chiuso "${cycle.title}". Ti e' stato addebitato ${totalCharged.toFixed(2).replace(".", ",")} euro (ordine ${orderTotal.toFixed(2).replace(".", ",")} + spedizione ${shippingShare.toFixed(2).replace(".", ",")}).`
-                : `E' stato chiuso "${cycle.title}". Ti e' stato addebitato ${orderTotal.toFixed(2).replace(".", ",")} euro.`;
+                ? `E' stato chiuso "${cycle.title}". Ti e' stato addebitato ${formatMoney(totalCharged)} (ordine ${formatMoney(orderTotal)} + spedizione ${formatMoney(shippingShare)}).`
+                : `E' stato chiuso "${cycle.title}". Ti e' stato addebitato ${formatMoney(orderTotal)}.`;
             return {
               notificationId: genId("not"),
               memberId: r.memberId,
@@ -488,12 +490,11 @@ async function recomputeShippingForClosedCycle(
       });
     }
 
-    const fmt = (n: number) => n.toFixed(2).replace(".", ",");
     await createNotification(db, {
       memberId: r.memberId,
       type: "order_adjusted",
       title: `Spedizione "${cycle.title}" aggiornata`,
-      body: `Le spese di spedizione del ciclo "${cycle.title}" sono state aggiornate: la tua quota e' passata da ${fmt(oldShare)} a ${fmt(newShare)} euro.`,
+      body: `Le spese di spedizione del ciclo "${cycle.title}" sono state aggiornate: la tua quota e' passata da ${formatMoney(oldShare)} a ${formatMoney(newShare)}.`,
       href: "/storico",
     });
 
@@ -536,7 +537,7 @@ export async function adminUpdateCycle(
       .from(orderCycles)
       .where(eq(orderCycles.cycleId, cycleId))
       .limit(1);
-    if (!before) return { error: "Ciclo non trovato" };
+    if (!before) return { error: t.errors.cycleNotFound };
 
     const isClosed = before.status === "closed";
     const shippingTouched =
