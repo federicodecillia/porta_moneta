@@ -781,6 +781,13 @@ export const en: Strings = {
     shippingAdjusted: "Shipping adjusted",
     shippingFromSupplier: "Shipping from supplier sheet",
   },
+  fields: {
+    title: "Title",
+    orderCloseDate: "Order close date",
+    name: "Name",
+    email: "Email",
+    supplier: "Supplier",
+  },
   errors: {
     noProductsInText: "No products found in the text",
     noProductsInSourceCycle: "No products in the source cycle",

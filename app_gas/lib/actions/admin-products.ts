@@ -146,7 +146,7 @@ export async function adminImportProductsXlsx(supplierId: string, base64: string
     const db = getDb();
     const now = new Date();
 
-    if (!supplierId) return { error: t.errors.fieldRequired("Fornitore") };
+    if (!supplierId) return { error: t.errors.fieldRequired(t.fields.supplier) };
     const buf = Buffer.from(base64, "base64");
     const rows = await parseProductTemplate(buf);
     if (rows.length === 0) return { error: t.errors.csvInvalid };

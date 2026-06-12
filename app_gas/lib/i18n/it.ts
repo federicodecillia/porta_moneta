@@ -782,6 +782,13 @@ export const it = {
     shippingAdjusted: "Spedizione rettificata",
     shippingFromSupplier: "Spedizione da distinta fornitore",
   },
+  fields: {
+    title: "Titolo",
+    orderCloseDate: "Data chiusura ordine",
+    name: "Nome",
+    email: "Email",
+    supplier: "Fornitore",
+  },
   errors: {
     noProductsInText: "Nessun prodotto trovato nel testo",
     noProductsInSourceCycle: "Nessun prodotto nel ciclo sorgente",

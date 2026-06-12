@@ -146,8 +146,8 @@ function computeShippingShares(
 export async function adminCreateCycle(data: CreateCycleInput): Promise<{error?: string}> {
   try {
     const admin = await requireAdmin();
-    if (!data.title?.trim()) return { error: t.errors.fieldRequired("Titolo") };
-    if (!data.orderCloseAt) return { error: t.errors.fieldRequired("Data chiusura ordine") };
+    if (!data.title?.trim()) return { error: t.errors.fieldRequired(t.fields.title) };
+    if (!data.orderCloseAt) return { error: t.errors.fieldRequired(t.fields.orderCloseDate) };
 
     const db = getDb();
 
@@ -1360,8 +1360,8 @@ export type UpsertMemberInput = {
 
 export async function adminUpsertMember(data: UpsertMemberInput) {
   const admin = await requireAdmin();
-  if (!data.fullName?.trim()) throw new Error(t.errors.fieldRequired("Nome"));
-  if (!data.email?.trim()) throw new Error(t.errors.fieldRequired("Email"));
+  if (!data.fullName?.trim()) throw new Error(t.errors.fieldRequired(t.fields.name));
+  if (!data.email?.trim()) throw new Error(t.errors.fieldRequired(t.fields.email));
 
   const aliasEmail = data.aliasEmail?.toLowerCase().trim() || null;
   const db = getDb();
@@ -1414,7 +1414,7 @@ export type UpsertSupplierInput = {
 
 export async function adminUpsertSupplier(data: UpsertSupplierInput) {
   const admin = await requireAdmin();
-  if (!data.name?.trim()) throw new Error(t.errors.fieldRequired("Nome"));
+  if (!data.name?.trim()) throw new Error(t.errors.fieldRequired(t.fields.name));
 
   const db = getDb();
   const now = new Date();
