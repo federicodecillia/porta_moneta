@@ -105,7 +105,6 @@ export const it = {
     unreadCountLabel: (n: number) => `${n} notifiche non lette`,
   },
   login: {
-    appName: "Porta Moneta",
     demoMessage: "Demo pubblica: entra con un click, senza registrazione.",
     continueMessage: "Accedi con Google per continuare.",
     accessDenied: "Accesso negato: la tua email non risulta tra i soci attivi.",
@@ -769,6 +768,8 @@ export const it = {
     shippingFromSupplier: "Spedizione da distinta fornitore",
   },
   errors: {
+    noProductsInText: "Nessun prodotto trovato nel testo",
+    noProductsInSourceCycle: "Nessun prodotto nel ciclo sorgente",
     memberNotFound: "Socio non trovato",
     cycleNotOpen: "Il ciclo non è più aperto",
     accessDenied: "Non hai accesso a questo ciclo",

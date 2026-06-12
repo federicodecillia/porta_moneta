@@ -657,7 +657,7 @@ function parseProductsText(text: string) {
 export async function adminLoadProducts(cycleId: string, text: string) {
   const admin = await requireAdmin();
   const parsed = parseProductsText(text);
-  if (parsed.length === 0) throw new Error("Nessun prodotto trovato nel testo");
+  if (parsed.length === 0) throw new Error(t.errors.noProductsInText);
 
   const db = getDb();
   await upsertCycleProducts(db, cycleId, parsed);
@@ -677,7 +677,7 @@ export async function adminDuplicateProducts(fromCycleId: string, toCycleId: str
     .from(products)
     .where(eq(products.cycleId, fromCycleId))
     .orderBy(products.sortOrder);
-  if (source.length === 0) throw new Error("Nessun prodotto nel ciclo sorgente");
+  if (source.length === 0) throw new Error(t.errors.noProductsInSourceCycle);
 
   await upsertCycleProducts(db, toCycleId, source);
 

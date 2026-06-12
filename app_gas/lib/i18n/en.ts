@@ -105,7 +105,6 @@ export const en: Strings = {
     unreadCountLabel: (n: number) => `${n} unread notifications`,
   },
   login: {
-    appName: "Porta Moneta",
     demoMessage: "Public demo: enter with one click, no registration required.",
     continueMessage: "Sign in with Google to continue.",
     accessDenied: "Access denied: your email is not listed as an active member.",
@@ -768,6 +767,8 @@ export const en: Strings = {
     shippingFromSupplier: "Shipping from supplier sheet",
   },
   errors: {
+    noProductsInText: "No products found in the text",
+    noProductsInSourceCycle: "No products in the source cycle",
     memberNotFound: "Member not found",
     cycleNotOpen: "The cycle is no longer open",
     accessDenied: "You don't have access to this cycle",
