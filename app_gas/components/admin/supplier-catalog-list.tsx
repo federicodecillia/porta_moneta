@@ -29,7 +29,7 @@ function groupProducts(products: ProductWithSupplier[], groupBy: GroupBy) {
   for (const product of products) {
     const key =
       groupBy === "category"
-        ? product.category?.trim() || "Senza categoria"
+        ? product.category?.trim() || t.common.noCategory
         : product.supplierName;
     groups.set(key, [...(groups.get(key) ?? []), product]);
   }

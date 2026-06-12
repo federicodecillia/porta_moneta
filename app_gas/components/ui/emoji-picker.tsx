@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { EMOJI_CATALOG, searchEmoji } from "@/lib/emoji-catalog";
+import { t } from "@/lib/i18n";
 
 type Props = {
   /** Form field name — used by FormData on the parent form. */
@@ -125,7 +126,7 @@ export function EmojiPicker({ name, value, onChange }: Props) {
           <div
             ref={popoverRef}
             role="dialog"
-            aria-label="Scegli un'emoji"
+            aria-label={t.common.chooseEmoji}
             style={{
               position: "fixed",
               left: coords.left,

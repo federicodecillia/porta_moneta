@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { brand } from "@/lib/brand";
 import { AppShell } from "@/components/app-shell";
 import { getUserRole, requireUserSession } from "@/lib/auth/session";
 import {
@@ -19,7 +20,10 @@ export default async function ChangelogPage({
   const role = getUserRole(session);
 
   const { lang: langParam } = await searchParams;
-  const lang: ChangelogLanguage = langParam === "en" ? "en" : "it";
+  const lang: ChangelogLanguage =
+    langParam === "en" || langParam === "it"
+      ? (langParam as ChangelogLanguage)
+      : brand.locale;
 
   const versions = await loadChangelog(lang);
   const t = strings[lang];

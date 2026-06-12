@@ -26,3 +26,10 @@ export function formatDateTime(d: Date | string, opts?: Intl.DateTimeFormatOptio
 export function formatNumber(value: number, maxDecimals = 3): string {
   return new Intl.NumberFormat(tag, { maximumFractionDigits: maxDecimals }).format(value);
 }
+
+// Pre-fills for editable numeric <input>s: Italian admins type decimal commas,
+// everyone else gets dots. The parse direction tolerates both separators.
+export function formatDecimalInput(value: number | string): string {
+  const s = typeof value === "number" ? String(value) : value;
+  return brand.locale === "it" ? s.replace(".", ",") : s;
+}

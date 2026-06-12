@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
+import { t } from "@/lib/i18n";
 
 /**
  * Built-in suggestions, ordered by typical GAS-shopping prevalence.
@@ -37,7 +38,7 @@ type Props = {
  * add a brand-new category. The selection is mirrored to a hidden
  * `<input name={name}>` so the parent form picks it up via FormData.
  */
-export function CategorySelect({ name, value, extra = [], placeholder = "Scegli una categoria" }: Props) {
+export function CategorySelect({ name, value, extra = [], placeholder = t.common.chooseCategory }: Props) {
   const [selected, setSelected] = useState(value ?? "");
   const [open, setOpen] = useState(false);
   const [adding, setAdding] = useState(false);
@@ -157,7 +158,7 @@ export function CategorySelect({ name, value, extra = [], placeholder = "Scegli 
                       confirmAdd();
                     }
                   }}
-                  placeholder="Nuova categoria…"
+                  placeholder={t.common.newCategoryPlaceholder}
                   className="flex-1 rounded-md border border-brand-border bg-white px-2 py-1 text-[12px] focus:outline-none focus:ring-2 focus:ring-brand-teal/30"
                 />
                 <button

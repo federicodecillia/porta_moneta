@@ -4,7 +4,7 @@ import { useCallback, useState, useTransition } from "react";
 import { adminGetCycleOrderDetails } from "@/lib/actions/admin-cycles";
 import { adminUpdateOrderLineActuals } from "@/lib/actions/admin";
 import { formatEur, getProductEmoji } from "@/lib/utils";
-import { formatNumber } from "@/lib/i18n/format";
+import { formatDecimalInput, formatNumber } from "@/lib/i18n/format";
 import { toast } from "@/components/ui/toast";
 import { EditClosedOrderModal } from "./edit-closed-order-modal";
 import { t } from "@/lib/i18n";
@@ -346,8 +346,8 @@ function OrderLineEditForm({
   onSave: (actualQuantity: string | null, actualLineTotal: string | null) => void;
 }) {
   const unitPrice = parseFloat(line.unitPrice);
-  const initialQty = (line.actualQuantity ?? String(line.quantity)).replace(".", ",");
-  const initialTotal = (line.actualLineTotal ?? line.lineTotal).replace(".", ",");
+  const initialQty = formatDecimalInput(line.actualQuantity ?? String(line.quantity));
+  const initialTotal = formatDecimalInput(line.actualLineTotal ?? line.lineTotal);
   const [qty, setQty] = useState(initialQty);
   const [total, setTotal] = useState(initialTotal);
   const [totalTouched, setTotalTouched] = useState(false);
@@ -358,7 +358,7 @@ function OrderLineEditForm({
     if (totalTouched) return;
     const n = parseFloat(v.replace(",", "."));
     if (Number.isFinite(n) && n >= 0) {
-      setTotal((Math.round(n * unitPrice * 100) / 100).toFixed(2).replace(".", ","));
+      setTotal(formatDecimalInput((Math.round(n * unitPrice * 100) / 100).toFixed(2)));
     }
   }
 

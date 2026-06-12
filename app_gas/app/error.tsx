@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
+import { t } from "@/lib/i18n";
 
 export default function Error({
   error,
@@ -22,13 +23,13 @@ export default function Error({
         <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-[#feecec] text-2xl">
           ⚠
         </div>
-        <p className="text-[15px] font-semibold text-[#2d2b29]">Qualcosa è andato storto</p>
-        <p className="mt-1 text-[13px] text-[#58595b]">{error.message || "Errore imprevisto"}</p>
+        <p className="text-[15px] font-semibold text-[#2d2b29]">{t.common.somethingWentWrong}</p>
+        <p className="mt-1 text-[13px] text-[#58595b]">{error.message || t.common.unexpectedError}</p>
         <button
           onClick={reset}
           className="mt-4 w-full rounded-xl bg-[#f5a623] py-2.5 text-[13px] font-bold text-white"
         >
-          Riprova
+          {t.common.retry}
         </button>
       </div>
     </div>
