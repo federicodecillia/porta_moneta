@@ -1,6 +1,6 @@
 # Operating two environments: production + demo
 
-wegrocery runs as **two Vercel deployments from this single repository and the
+WeGrocery runs as **two Vercel deployments from this single repository and the
 same `main` branch**. They share 100% of the code and differ only in environment
 variables.
 

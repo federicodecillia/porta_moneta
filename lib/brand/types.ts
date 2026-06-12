@@ -30,7 +30,7 @@ export type BrandConfig = {
   archiveCcEmail: string | null;
   /**
    * Show the app name next to the logo in the header.
-   * true for square icon logos (wegrocery default); false when the logo is a
+   * true for square icon logos (WeGrocery default); false when the logo is a
    * wordmark that already contains the name.
    */
   headerShowName: boolean;

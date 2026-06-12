@@ -1,10 +1,10 @@
 import type { BrandConfig } from "./types";
 
 export const DEFAULT_BRAND: BrandConfig = {
-  appName: "wegrocery",
-  shortName: "wegrocery",
+  appName: "WeGrocery",
+  shortName: "WeGrocery",
   description: "Group orders, shared ledger and supplier management for buying clubs and food co-ops",
-  orgName: "wegrocery",
+  orgName: "WeGrocery",
   locale: "en",
   currency: "EUR",
   logoUrl: "/logo.png",

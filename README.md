@@ -1,6 +1,6 @@
-<img src="./public/logo.png" alt="wegrocery" width="80" align="right" />
+<img src="./public/logo.png" alt="WeGrocery" width="80" align="right" />
 
-# wegrocery
+# WeGrocery
 
 **Open-source, white-label platform for food co-ops and buying groups.**
 Members place orders inside weekly cycles and track a prepaid ledger balance;
@@ -14,13 +14,13 @@ name, logo, colors, and language, configured by a single environment variable.
 | 🟢 **In production** | [gas.portamoneta.org](https://gas.portamoneta.org) — a Rome food co-op, members only |
 | 📋 **Changelog** | [English](./CHANGELOG.md) · [Italiano](./CHANGELOG.it.md) |
 
-![wegrocery — member and admin walkthrough](./docs/demo.gif)
+![WeGrocery — member and admin walkthrough](./docs/demo.gif)
 
 ---
 
 ## What is this?
 
-wegrocery runs the weekly purchasing cycle of a buying group: members order
+WeGrocery runs the weekly purchasing cycle of a buying group: members order
 within a time-boxed window, the system tracks each member's prepaid balance
 like a ledger, and an admin closes the cycle, charges everyone, splits
 shipping, and emails the order to the supplier.
@@ -72,7 +72,7 @@ nothing you do is permanent.
 ## White-label: run it for YOUR group
 
 Every deployment is branded by one env var, `NEXT_PUBLIC_BRAND_JSON`. No env
-var = the neutral wegrocery brand you see in the demo. Example:
+var = the neutral WeGrocery brand you see in the demo. Example:
 
 ```json
 {
@@ -265,7 +265,7 @@ Contributions are welcome — this is a real product used weekly by real
 groups, and improvements ship to every deployment. Open an
 [issue](https://github.com/federicodecillia/wegrocery/issues) for bugs or
 feature ideas, or send a PR (keep it focused; `npm test && npm run build`
-must stay green). If you run wegrocery for your own group, a star and a note
+must stay green). If you run WeGrocery for your own group, a star and a note
 about your setup help a lot.
 
 ---
