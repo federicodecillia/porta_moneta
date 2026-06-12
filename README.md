@@ -11,7 +11,7 @@ name, logo, colors, and language, configured by a single environment variable.
 | | |
 |---|---|
 | 🧪 **Try the public demo** | **[wegrocery-demo.vercel.app](https://wegrocery-demo.vercel.app)** — one-click login, fake data |
-| 🟢 **In production** | [gas.portamoneta.org](https://gas.portamoneta.org) — a Rome food co-op, members only |
+| 🟢 **In production** | [gas.portamoneta.org](https://gas.portamoneta.org) — a Milan residents' association, members only |
 | 📋 **Changelog** | [English](./CHANGELOG.md) · [Italiano](./CHANGELOG.it.md) |
 
 ![WeGrocery — member and admin walkthrough](./docs/demo.gif)
@@ -26,8 +26,9 @@ like a ledger, and an admin closes the cycle, charges everyone, splits
 shipping, and emails the order to the supplier.
 
 It is **not a toy demo**: it has been in production since 2025 for
-[Porta Moneta](https://www.portamoneta.org), a Rome-based food co-op (GAS,
-*Gruppo di Acquisto Solidale*) that uses it every week — real money math,
+[Porta Moneta](https://www.portamoneta.org), a Milan residents' association
+running a food-buying group (GAS, *Gruppo di Acquisto Solidale*) that uses it
+every week — real money math,
 real concurrency control, real members. Porta Moneta is the first white-label
 deployment of this codebase.
 
@@ -287,7 +288,6 @@ brand JSON.
 
 **Or get it done for you.** I set up turnkey, white-label instances — your
 logo, colors, language, and domain, like the Porta Moneta deployment — and
-build custom features on top. That's what I do:
-[gptchatbot.it](https://www.gptchatbot.it) ·
+build custom features on top. Get in touch:
 [LinkedIn](https://www.linkedin.com/in/federicodecillia) ·
 [GitHub](https://github.com/federicodecillia)

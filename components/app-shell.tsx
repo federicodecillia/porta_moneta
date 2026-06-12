@@ -14,16 +14,19 @@ type AppShellProps = {
   email: string;
   isAdmin: boolean;
   memberId: string;
-  /** Admin views get a wider card on large screens; member views stay phone-width. */
-  wide?: boolean;
 };
 
-export async function AppShell({ children, email, isAdmin, memberId, wide = false }: AppShellProps) {
+export async function AppShell({ children, email, isAdmin, memberId }: AppShellProps) {
   const unreadCount = await getUnreadNotificationCount(memberId);
 
   return (
     <div className="min-h-screen bg-brand-frame sm:p-6">
-      <div className={`mx-auto flex min-h-screen w-full max-w-[480px] flex-col bg-brand-warm-white sm:min-h-[calc(100vh-3rem)] sm:overflow-hidden sm:rounded-xl sm:border sm:border-brand-border sm:shadow-sm ${wide ? "md:max-w-[640px] lg:max-w-[960px]" : "md:max-w-[640px]"}`}>
+      {/* Same card widths on every view (member and admin) so navigating
+          between tabs never resizes the window. Keep in sync with the
+          loading.tsx skeletons and the OrderForm sticky footer. */}
+      {/* overflow-clip (not hidden): hidden would create a scroll container
+          and break position:sticky for BottomNav and the order footer. */}
+      <div className="mx-auto flex min-h-screen w-full max-w-[480px] flex-col bg-brand-warm-white sm:min-h-[calc(100vh-3rem)] sm:overflow-clip sm:rounded-xl sm:border sm:border-brand-border sm:shadow-sm md:max-w-[640px] lg:max-w-[960px]">
         <DemoBanner />
         <header className="border-b border-brand-border px-5 py-4">
           <div className="flex items-start justify-between gap-3">
